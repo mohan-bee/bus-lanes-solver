@@ -627,7 +627,20 @@ export function* routeCoupledPair(
             const pairInput: SimpleRouteJson = {
               ...input,
               connections: members,
-              buses: [],
+              // Reserve the bus's absolute minimum while this pair still has
+              // room to grow. Ordinary lanes otherwise occupy the space needed
+              // to lengthen the clock during final whole-bus matching.
+              buses: (input.buses ?? [])
+                .filter(
+                  (bus) => bus.minLength !== undefined && bus.minLength > 0,
+                )
+                .map((bus) => ({
+                  ...bus,
+                  connectionNames: bus.connectionNames.filter((name) =>
+                    pair.connectionNames.includes(name),
+                  ),
+                }))
+                .filter((bus) => bus.connectionNames.length > 0),
               differentialPairs: [pair],
             }
             let finished: Trace[] | undefined

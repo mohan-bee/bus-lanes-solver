@@ -1,0 +1,16 @@
+{
+  "inspectedImages": [
+    "regression.png",
+    "am3352/control-solved.png",
+    "am3352/right-solved.png",
+    "am3352/left-solved.png",
+    "am3352/above-solved.png",
+    "am3352/inner-layers-solved.png",
+    "am3352/inner-layers-right-solved.png",
+    "am3352/inner-layers-left-solved.png",
+    "am3352/inner-layers-above-solved.png",
+    "am3352/inner-layers-complete-ca-solved.png"
+  ],
+  "method": "Each final image opened individually after the exporter independently validated all nine completed outputs. Checked chip orientation, signal-layer panels, route continuity, tuning banks, and unclipped bounds. This visual review supplements native DRC and length checks.",
+  "failedOrIntermediateArtifactsIncluded": false
+}
