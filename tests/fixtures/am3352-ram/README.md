@@ -69,3 +69,8 @@ physical copper; there are no bottom-layer signal carriers.
 `core-am3352-unpowered.test.ts` also routes `native-input.json` directly, without
 adding the power-fanout fixtures. It preserves core's original copper-length,
 detour, and physical pair-spacing acceptance limits for the published preset.
+
+The `outer-layers` sample repeats RAM below AM3352 at (0, -27) mm with
+`input.allowedLayers = ["top", "bottom"]`. Both inner layers are reserved from
+signal carriers so they can be used for GND planes. Physical through-vias and
+all supplied power fanouts retain their original copper and provenance.

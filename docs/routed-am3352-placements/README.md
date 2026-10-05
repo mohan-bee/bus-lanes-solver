@@ -1,69 +1,60 @@
-# Eight powered AM3352/RAM routing placements
+# Ten powered AM3352/RAM routing samples
 
-The processor stays at (0, 0) mm. RAM moves below, right, left, and above it;
-each placement is tested with automatic signal layers and with only inner1/inner2.
-Every run computes routes from the original pads. Supplied power dogbones remain
-immutable obstacles, including their through-via barrels.
+The processor stays at (0, 0) mm; RAM is translated without rotating either chip.
+All ten declared samples completed from the native pads in the same actual benchmark run.
+All 47 signals pass connectivity, native combined-copper DRC, total pad-to-pad length
+matching and independent copper-quality/coupling checks. The 161 supplied power
+dogbones, including their physical barrels and provenance, remain unchanged.
 
-The strict local benchmark completes **8/8 within 60 seconds per sample**:
+The following measurements and routed PNG/SVG gallery come from that same run.
+Routing time includes length matching; the total column includes fixture and native
+validation. Times vary with machine and load. Every skew measures full pad-to-pad
+planar copper, including both terminal fanouts; via depth and package delay are
+not inferred. Values are rounded for display using the existing validation epsilon.
+The [actual benchmark report](benchmark-results.json) retains the measured lengths
+and complete validation results.
 
-| Sample | Routing | Including validation | Signals | Native DRC | Byte 0 / byte 1 skew | DQS0 / DQS1 / clock skew |
-| --- | ---: | ---: | --- | --- | --- | --- |
-| control | 11.820 s | 13.829 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.078 / 0.127 / 0.073 mm |
-| right | 11.672 s | 14.131 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.096 / 0.122 / 0.103 mm |
-| left | 16.875 s | 22.447 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.011 / 0.127 / 0.105 mm |
-| above | 22.219 s | 26.641 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.127 / 0.127 / 0.127 mm |
-| inner-layers | 23.005 s | 25.132 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.078 / 0.127 / 0.127 mm |
-| inner-layers-right | 27.804 s | 29.977 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.124 / 0.127 / 0.127 mm |
-| inner-layers-left | 37.722 s | 44.356 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.127 / 0.127 / 0.105 mm |
-| inner-layers-above | 48.481 s | 54.075 s | 47/47 | Pass | 0.635 / 0.635 mm | 0.127 / 0.127 / 0.127 mm |
+| Sample | Routing | Including validation | Signals | Carrier layer counts | Native DRC | BYTE0 / BYTE1 skew (mm) | Complete CA/CK skew (mm) | DQS0 / DQS1 / CK skew (mm) |
+| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |
+| [control](control-solved.png) | 40.101 s | 41.779 s | 47/47 | inner1: 19, inner2: 16, bottom: 12 | Pass | 0.635000 / 0.635000 | — | 0.077868 / 0.126884 / 0.072830 |
+| [right](right-solved.png) | 32.753 s | 35.117 s | 47/47 | inner1: 21, inner2: 18, bottom: 8 | Pass | 0.635000 / 0.635000 | — | 0.096047 / 0.121802 / 0.102644 |
+| [left](left-solved.png) | 42.872 s | 46.952 s | 47/47 | inner1: 18, inner2: 20, bottom: 9 | Pass | 0.635000 / 0.511147 | — | 0.010514 / 0.127000 / 0.105429 |
+| [above](above-solved.png) | 47.376 s | 50.778 s | 47/47 | inner1: 18, inner2: 15, bottom: 14 | Pass | 0.635000 / 0.635000 | — | 0.127000 / 0.127000 / 0.127000 |
+| [inner-layers](inner-layers-solved.png) | 60.213 s | 61.991 s | 47/47 | inner1: 24, inner2: 23 | Pass | 0.635000 / 0.635000 | — | 0.077868 / 0.126884 / 0.127000 |
+| [inner-layers-right](inner-layers-right-solved.png) | 87.219 s | 89.112 s | 47/47 | inner1: 22, inner2: 25 | Pass | 0.635000 / 0.635000 | — | 0.127000 / 0.127000 / 0.127000 |
+| [inner-layers-left](inner-layers-left-solved.png) | 185.754 s | 190.711 s | 47/47 | inner1: 28, inner2: 19 | Pass | 0.634990 / 0.634992 | — | 0.126990 / 0.000001 / 0.105429 |
+| [inner-layers-above](inner-layers-above-solved.png) | 230.217 s | 234.454 s | 47/47 | inner1: 21, inner2: 26 | Pass | 0.634991 / 0.634993 | — | 0.126915 / 0.126990 / 0.000001 |
+| [inner-layers-complete-ca](inner-layers-complete-ca-solved.png) | 279.835 s | 292.060 s | 47/47 | inner1: 19, inner2: 28 | Pass | 0.634990 / 0.634992 | 0.634994 | 0.075359 / 0.000000 / 0.066384 |
+| [outer-layers](outer-layers-solved.png) | 872.711 s | 877.015 s | 47/47 | top: 8, bottom: 39 | Pass | 0.635000 / 0.635000 | — | 0.019219 / 0.127000 / 0.127000 |
 
-Measurements use Bun 1.3.2 on macOS arm64. All samples have 47/47 signals,
-161 unchanged power dogbones, native combined-copper DRC, full pad-to-pad byte-bus
-skew ≤0.635 mm and differential-pair skew ≤0.127 mm (including numerical epsilon).
-Exterior pair spacing, self-clearance, and conventional-angle checks also pass.
-Routing includes length matching; the total column adds fixture/native validation.
-The [complete report](benchmark-results.json) retains quality and provenance data.
+The complete-CA sample matches all 24 address/control/clock members,
+with total copper lengths 61.650543–62.285537 mm,
+skew 0.634994 mm and the unchanged 0.635000 mm limit.
+The other nine samples retain the original two byte buses and three parent pairs.
+Byte-bus skew limits remain 0.635 mm and differential-pair limits remain 0.127 mm.
+The outer-layer sample restricts carriers to top and bottom while preserving
+all four physical layers and the fixed power copper.
 
-Run `./benchmark.sh --require-all-solved` to reproduce all eight measurements.
-Generate routed artifacts with
-`bun scripts/snapshot-routed-am3352.ts docs/routed-am3352-placements 60`.
-The exporter validates every declared sample before writing any images.
+## Routed gallery
 
-| RAM position | Automatic layers | Inner1/inner2 only |
-| --- | --- | --- |
-| Below | [Routed control](control-solved.png) | [Routed below](inner-layers-solved.png) |
-| Right | [Routed right](right-solved.png) | [Routed inner right](inner-layers-right-solved.png) |
-| Left | [Routed left](left-solved.png) | [Routed inner left](inner-layers-left-solved.png) |
-| Above | [Routed above](above-solved.png) | [Routed inner above](inner-layers-above-solved.png) |
+Each image was exported from accepted copper for its declared sample.
+The exporter and this gallery generator refuse partial, failed or unmatched runs.
 
-`footprint-comparison.json` records the earlier four-placement compaction study;
-it is historical evidence, not the current eight-placement benchmark.
+| Sample | RAM center (mm) | PNG | SVG |
+| --- | --- | --- | --- |
+| control | (0, -27) | [Routed PNG](control-solved.png) | [Routed SVG](control-solved.svg) |
+| right | (27, 0) | [Routed PNG](right-solved.png) | [Routed SVG](right-solved.svg) |
+| left | (-27, 0) | [Routed PNG](left-solved.png) | [Routed SVG](left-solved.svg) |
+| above | (0, 27) | [Routed PNG](above-solved.png) | [Routed SVG](above-solved.svg) |
+| inner-layers | (0, -27) | [Routed PNG](inner-layers-solved.png) | [Routed SVG](inner-layers-solved.svg) |
+| inner-layers-right | (27, 0) | [Routed PNG](inner-layers-right-solved.png) | [Routed SVG](inner-layers-right-solved.svg) |
+| inner-layers-left | (-27, 0) | [Routed PNG](inner-layers-left-solved.png) | [Routed SVG](inner-layers-left-solved.svg) |
+| inner-layers-above | (0, 27) | [Routed PNG](inner-layers-above-solved.png) | [Routed SVG](inner-layers-above-solved.svg) |
+| inner-layers-complete-ca | (0, -27) | [Routed PNG](inner-layers-complete-ca-solved.png) | [Routed SVG](inner-layers-complete-ca-solved.svg) |
+| outer-layers | (0, -27) | [Routed PNG](outer-layers-solved.png) | [Routed SVG](outer-layers-solved.svg) |
 
+Reproduce the measured run with:
 
-## Two-layer envelope compaction
-
-The combined signal bounding-box area decreases **29.4%**, from 4,981.89 to
-3,516.38 mm², relative to the merged #21 baseline (`e3725b4`). Every placement
-improves; automatic-layer routes retain their previous geometry.
-
-| RAM position | Before signal area | After signal area | Reduction | Middle envelope before → after |
-| --- | ---: | ---: | ---: | ---: |
-| Below | 474.66 mm² | 468.31 mm² | 1.3% | 365.95 → 363.35 mm² |
-| Right | 908.32 mm² | 880.43 mm² | 3.1% | 678.81 → 667.74 mm² |
-| Left | 1381.39 mm² | 983.29 mm² | 28.8% | 977.16 → 688.03 mm² |
-| Above | 2217.52 mm² | 1184.36 mm² | 46.6% | 1217.31 → 680.41 mm² |
-
-Banks reserve extra tuning space for bus members and for pairs with large shared
-length deficits; unconstrained controls need only copper clearance. Dense folded
-curves use the resulting narrower banks, with a bounded larger candidate budget
-before falling back to wider banks. A final control-only pass slides supporting
-lines inward without changing segment directions, increasing length, moving
-endpoints, or modifying paired/matched copper. Every candidate checks obstacle,
-trace, and self-clearance.
-
-No sample names or saved geometry enter these algorithms. The
-[before/after measurements](two-layer-envelope-comparison.json) also retain the
-unoccupied middle area and maximum center offset. Bounding-box area is a layout
-score, not a claim that every point inside the box contains copper. Fixed VCC/GND
-dogbones remain unchanged and can still determine the total board envelope.
+```sh
+./benchmark.sh --timeout-seconds 1800 --require-all-solved
+```

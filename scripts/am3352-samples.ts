@@ -17,6 +17,7 @@ export type Am3352SampleName =
   | "inner-layers-left"
   | "inner-layers-above"
   | "inner-layers-complete-ca"
+  | "outer-layers"
 export type Am3352Component = "soc" | "ram"
 export const am3352SamplePlacements = [
   { name: "control", ram: { x: 0, y: -27 } },
@@ -47,6 +48,11 @@ export const am3352SamplePlacements = [
     name: "inner-layers-complete-ca",
     ram: { x: 0, y: -27 },
     allowedLayers: ["inner1", "inner2"],
+  },
+  {
+    name: "outer-layers",
+    ram: { x: 0, y: -27 },
+    allowedLayers: ["top", "bottom"],
   },
 ] as const
 

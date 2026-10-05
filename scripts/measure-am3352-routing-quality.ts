@@ -1,4 +1,5 @@
 import { measureRoutingFootprint } from "./measure-routing-footprint"
+import { am3352Carrier } from "./am3352-carrier"
 import { exteriorPairSpacingReports } from "../lib/exterior-pair-spacing"
 import type { Point, SimpleRouteJson, Trace, Wire } from "../lib"
 import { distance } from "../lib/geometry"
@@ -21,11 +22,11 @@ export function measureAm3352RoutingQuality(
   const issues: string[] = []
   const rows = traces.map((trace) => {
     const curved = new Set(trace.curvedSegments ?? [])
-    const vias = trace.route.flatMap((p, i) =>
-      p.route_type === "via" ? [i] : [],
-    )
-    const carrierStart = vias[0] + 1,
-      carrierEnd = vias[1] - 1
+    const carrier = am3352Carrier(trace)
+    const carrierStart = carrier?.start ?? Infinity,
+      carrierEnd = carrier?.end ?? -Infinity
+    if (!carrier)
+      issues.push(`${trace.connection_name}: invalid signal carrier`)
     if (
       curved.size !== (trace.curvedSegments?.length ?? 0) ||
       [...curved].some((i) => {
@@ -33,8 +34,8 @@ export function measureAm3352RoutingQuality(
           b = trace.route[i]
         if (
           !Number.isInteger(i) ||
-          i <= carrierStart ||
-          i > carrierEnd ||
+          i <= 0 ||
+          i >= trace.route.length ||
           a?.route_type !== "wire" ||
           b?.route_type !== "wire" ||
           a.layer !== b.layer

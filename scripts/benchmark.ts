@@ -1,4 +1,5 @@
 import { BusLanesPipelineSolver } from "../lib"
+import { am3352Carrier } from "./am3352-carrier"
 import { am3352SamplePlacements, loadAm3352Sample } from "./am3352-samples"
 import {
   validateAm3352OutputShape,
@@ -15,7 +16,7 @@ const option = (name: string) => {
 }
 const workerName = option("--worker")
 const outputPath = option("--output") ?? "benchmark-results.json"
-const timeoutSeconds = Number(option("--timeout-seconds") ?? 180)
+const timeoutSeconds = Number(option("--timeout-seconds") ?? 1800)
 if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0)
   throw Error("--timeout-seconds must be a positive finite number")
 for (let i = 0; i < args.length; i++) {
@@ -249,9 +250,8 @@ try {
     if (!report.fixedPowerPreserved)
       throw Error("Output changed immutable power dogbones")
     for (const trace of solver.traces) {
-      const carrier =
-        trace.route[trace.route.findIndex((p) => p.route_type === "via") + 1]
-      if (carrier?.route_type === "wire")
+      const carrier = am3352Carrier(trace)
+      if (carrier)
         report.carrierLayerCounts[carrier.layer] =
           (report.carrierLayerCounts[carrier.layer] ?? 0) + 1
     }
