@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test"
+import { BusLanesSolver } from "../lib"
+import { am3352Carrier } from "../scripts/am3352-carrier"
 import {
   am3352SamplePlacements,
   loadAm3352NativeInput,
@@ -17,6 +19,7 @@ test("the AM3352 samples translate only RAM and retain every real power dogbone"
     "inner-layers-left",
     "inner-layers-above",
     "inner-layers-complete-ca",
+    "outer-layers",
   ])
   const control = await loadAm3352Sample("control")
   const ramComponentId = control.metadata.powerPadManifest.find(
@@ -297,3 +300,67 @@ for (const [unrestricted, restrictedName] of [
       validateAm3352Sample(restricted.input, restricted.metadata),
     ).rejects.toThrow("native board rules or signal constraints changed")
   })
+
+// The outer-layer control reserves inner copper for planes without altering
+// physical layer count, native terminals, or immutable power fanouts.
+test("outer-layers retains the control geometry and reserves inner carriers", async () => {
+  const control = await loadAm3352Sample("control")
+  const outer = await loadAm3352Sample("outer-layers")
+  expect(outer.input.allowedLayers).toEqual(["top", "bottom"])
+  expect({ ...outer.input, allowedLayers: undefined }).toEqual({
+    ...control.input,
+    allowedLayers: undefined,
+  })
+  expect(outer.metadata.placement).toEqual(control.metadata.placement)
+  expect(outer.metadata.fixedFanoutTraces).toEqual(
+    control.metadata.fixedFanoutTraces,
+  )
+  outer.input.allowedLayers!.push("inner1")
+  await expect(
+    validateAm3352Sample(outer.input, outer.metadata),
+  ).rejects.toThrow("native board rules or signal constraints changed")
+})
+
+test("the copper audit recognizes a computed top carrier without inventing terminal vias", async () => {
+  const { input, metadata } = await loadAm3352Sample("outer-layers")
+  const connection = input.connections[0]
+  const solver = new BusLanesSolver(
+    { ...input, connections: [connection], buses: [], differentialPairs: [] },
+    { denseSearch: true },
+  )
+  solver.solve()
+  expect(solver.solved).toBe(true)
+  expect(solver.traces).toHaveLength(1)
+  const trace = solver.traces[0]
+  expect(am3352Carrier(trace)?.layer).toBe("top")
+  expect(am3352Carrier(trace)?.viaCount).toBe(0)
+  const report = await validateAm3352Sample(input, metadata, [trace])
+  expect(report.combinedDrc?.valid).toBe(true)
+  expect(report.complete).toBe(false)
+  expect(report.issues).toContain(
+    "signals are not connected exactly once between original pads",
+  )
+  expect(report.quality?.issues).not.toContain(
+    `${connection.name}: invalid signal carrier`,
+  )
+  expect(report.issues).not.toContain(
+    `${connection.name}: expected a top surface route or two terminal dogbones and no carrier vias`,
+  )
+  // Adding a transition to a same-layer carrier cannot satisfy the independent
+  // audit. A single via would also leave the two original top pads disconnected.
+  const point = trace.route[1]
+  const withVia = {
+    ...trace,
+    route: [
+      trace.route[0],
+      {
+        ...point,
+        route_type: "via" as const,
+        from_layer: "top",
+        to_layer: "bottom",
+      },
+      ...trace.route.slice(1),
+    ],
+  }
+  expect(am3352Carrier(withVia)).toBeNull()
+})

@@ -2,6 +2,10 @@ import {
   SingleLayerConnectivitySolver,
   type SingleLayerConnectivityOptions,
 } from "./single-layer-connectivity-solver"
+import { retargetGeneratedEscape } from "./retarget-generated-escape"
+import { joinSignalEscapes } from "./join-signal-escapes"
+import { tuneGeneratedPairEscapes } from "./tune-generated-pair-escapes"
+import { routeFreshSurfaceBuses } from "./route-fresh-surface-buses"
 import { rebalancePairEscapes } from "./rebalance-pair-escapes"
 import { createTerminalViaClearanceChecker } from "./terminal-via-clearance"
 import {
@@ -46,7 +50,27 @@ export interface BusLanesPipelineOptions extends SolverOptions {
   connectivity?: SingleLayerConnectivityOptions
 }
 
-/** Board-world points in mm, +X right, +Y up. Adds only local terminal vias;
+function canRouteOnPadLayers(input: SimpleRouteJson) {
+  return (
+    input.allowedLayers?.length === 2 &&
+    input.allowedLayers.includes("top") &&
+    input.allowedLayers.includes("bottom") &&
+    input.connections.length > 0 &&
+    input.connections.every(
+      (connection) =>
+        connection.pointsToConnect.length === 2 &&
+        connection.pointsToConnect[0].layer ===
+          connection.pointsToConnect[1].layer &&
+        connection.pointsToConnect.every(
+          (point) =>
+            input.allowedLayers!.includes(point.layer) &&
+            isUnroutedComponentPad(input, connection, point),
+        ),
+    )
+  )
+}
+
+/** Board-world points in mm, +X right, +Y up. Adds owned terminal approaches;
  * the interconnect solver retains its strict fixed-layer contract. */
 export class BusLanesPipelineSolver extends BaseSolver {
   readonly input: SimpleRouteJson
@@ -312,8 +336,13 @@ export class BusLanesPipelineSolver extends BaseSolver {
     super()
     this.input = structuredClone(input)
     this.options = { smoothTuning: true, denseSearch: true, ...options }
+    // Surface routing negotiates carrier layers and owned approaches before
+    // matching and control repair. Its aggregate work reserve includes those
+    // stages; an explicitly supplied search budget remains authoritative.
+    const searchBudget = canRouteOnPadLayers(input) ? 2000000 : 200000
     this.MAX_ITERATIONS =
-      (options.maxSearchIterations ?? 200000) * Math.max(1, input.layerCount)
+      (options.maxSearchIterations ?? searchBudget) *
+      Math.max(1, input.layerCount)
     if (options.goal === "connectivity") {
       if (options.fanout === "none")
         throw Error("Connectivity routing requires local terminal vias")
@@ -383,6 +412,16 @@ export class BusLanesPipelineSolver extends BaseSolver {
       throw Error(
         "Pair approaches still separate outside native package fanouts",
       )
+    const tunedEscapes = yield* tuneGeneratedPairEscapes(
+      input,
+      refined,
+      this.escapes,
+      this.options,
+    )
+    if (tunedEscapes) {
+      this.escapes = tunedEscapes.escapes
+      return tunedEscapes.traces
+    }
     if (input.buses?.some((b) => b.maxLength !== undefined)) {
       const repaired = yield* rebalancePairEscapes(
         input,
@@ -646,7 +685,13 @@ export class BusLanesPipelineSolver extends BaseSolver {
     // congestion negotiation. Existing handoffs always keep their fixed layer.
     const terminalLayers = new Map<string, string[]>()
     for (const connection of this.input.connections) {
-      if (groups.some((group) => group.size > 2 && group.has(connection.name)))
+      const explicitPadLayer = connection.pointsToConnect.every((point) =>
+        this.input.allowedLayers?.includes(point.layer),
+      )
+      if (
+        !explicitPadLayer &&
+        groups.some((group) => group.size > 2 && group.has(connection.name))
+      )
         continue
       const vias = this.escapes
         .filter((t) => t.connection_name === connection.name)
@@ -662,7 +707,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
           ) &&
           vias.every(
             (via) =>
-              layer !== via.from_layer &&
+              (layer !== via.from_layer ||
+                this.input.allowedLayers?.includes(layer)) &&
               (
                 via.layers ??
                 physicalLayers.slice(
@@ -685,6 +731,22 @@ export class BusLanesPipelineSolver extends BaseSolver {
       ...this.input,
       connections: result.connections as SimpleRouteJson["connections"],
       traces: [...(this.input.traces ?? []), ...this.escapes],
+    }
+    if (
+      this.attempt === 0 &&
+      this.options.smoothTuning &&
+      this.options.denseSearch &&
+      (this.input.buses?.length ?? 0) > 1 &&
+      canRouteOnPadLayers(this.input)
+    ) {
+      this.sharedPackages = routeFreshSurfaceBuses(
+        this.input,
+        laneInput,
+        this.escapes,
+        terminalLayers,
+        this.childOptions(),
+      )
+      return
     }
     const busNames = new Set(laneInput.buses?.flatMap((b) => b.connectionNames))
     const multilayerBus = (laneInput.buses ?? []).some(
@@ -1039,52 +1101,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
           )!.layer
           const escapes = this.escapes
             .filter((t) => t.connection_name === lane.connection_name)
-            .map((t) => {
-              const via = t.route.find((p) => p.route_type === "via")!
-              return {
-                ...t,
-                route: t.route.map((p) =>
-                  p.route_type === "via"
-                    ? { ...p, to_layer: signalLayer }
-                    : p.layer === via.to_layer
-                      ? { ...p, layer: signalLayer }
-                      : p,
-                ),
-              }
-            })
-          const near = (
-            a: { x: number; y: number },
-            b: { x: number; y: number },
-          ) => Math.hypot(a.x - b.x, a.y - b.y) < 1e-8
-          const prefix = escapes.find((t) =>
-            near(t.route.at(-1)!, lane.route[0]),
-          )
-          const suffix = escapes.find(
-            (t) => t !== prefix && near(t.route.at(-1)!, lane.route.at(-1)!),
-          )
-          const prefixRoute = prefix?.route,
-            suffixRoute = suffix?.route
-          const reversed =
-            suffixRoute
-              ?.toReversed()
-              .map((p) =>
-                p.route_type === "via"
-                  ? { ...p, from_layer: p.to_layer, to_layer: p.from_layer }
-                  : p,
-              ) ?? []
-          const offset = (prefix?.route.length ?? 1) - 1
-          return {
-            ...lane,
-            coupledSection: lane.coupledSection?.map((i) => i + offset) as
-              | [number, number]
-              | undefined,
-            curvedSegments: lane.curvedSegments?.map((i) => i + offset),
-            route: [
-              ...(prefixRoute?.slice(0, -1) ?? []),
-              ...lane.route,
-              ...reversed.slice(1),
-            ],
-          }
+            .map((trace) => retargetGeneratedEscape(trace, signalLayer))
+          return joinSignalEscapes(lane, escapes)
         })
         if (
           busLengthReports(this.input, this.traces).some(

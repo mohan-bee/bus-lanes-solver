@@ -1,0 +1,69 @@
+import { expect, test } from "bun:test"
+import { checkSignalSelfShorts } from "../scripts/check-signal-self-shorts"
+import type { SimpleRouteJson, Trace, Wire } from "../lib"
+
+const wire = (x: number, y: number, layer = "top"): Wire => ({
+  route_type: "wire",
+  x,
+  y,
+  layer,
+  width: 0.1,
+})
+const input: SimpleRouteJson = {
+  layerCount: 4,
+  minTraceWidth: 0.1,
+  bounds: { minX: -2, maxX: 2, minY: -2, maxY: 2 },
+  obstacles: [],
+  connections: [{ name: "CONTROL", pointsToConnect: [wire(0, 0), wire(1, 0)] }],
+}
+const trace = (route: Trace["route"]): Trace => ({
+  type: "pcb_trace",
+  pcb_trace_id: "control",
+  connection_name: "CONTROL",
+  source_trace_id: "CONTROL",
+  route,
+})
+
+test("native self-short audit checks controls without a length-matched bus", () => {
+  const before = structuredClone(input)
+  expect(
+    checkSignalSelfShorts(input, [trace([wire(0, 0), wire(1, 0)])]),
+  ).toHaveLength(0)
+  expect(
+    checkSignalSelfShorts(input, [
+      trace([wire(0, 0), wire(1, 1), wire(0, 1), wire(1, 0)]),
+    ]),
+  ).toHaveLength(1)
+  expect(input).toEqual(before)
+})
+
+test("untimed control audit materializes through-via lands that bypass earlier copper", () => {
+  const via = (x: number, y: number, from_layer: string, to_layer: string) => ({
+    route_type: "via" as const,
+    x,
+    y,
+    from_layer,
+    to_layer,
+    layers: ["top", "inner1", "inner2", "bottom"],
+    via_diameter: 0.3,
+    via_hole_diameter: 0.15,
+  })
+  const candidate = trace([
+    wire(0, 0),
+    wire(1, 0),
+    wire(1, 1),
+    via(1, 1, "top", "bottom"),
+    wire(1, 1, "bottom"),
+    wire(0, 1, "bottom"),
+    wire(0, 0.14, "bottom"),
+    via(0, 0.14, "bottom", "top"),
+    wire(0, 0.14),
+    wire(-1, 0.14),
+  ])
+  // The wire runs do not touch; the second via's 0.3mm land is the bypass.
+  const withoutLands = structuredClone(candidate)
+  for (const point of withoutLands.route)
+    if (point.route_type === "via") point.via_diameter = 0.01
+  expect(checkSignalSelfShorts(input, [withoutLands])).toHaveLength(0)
+  expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(1)
+})

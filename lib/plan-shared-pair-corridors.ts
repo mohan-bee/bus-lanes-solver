@@ -12,6 +12,14 @@ interface Choice {
   layer: string
   traces: Trace[]
   length: number
+  provisional: boolean
+}
+
+const provisionalPlans = new WeakSet<Trace[]>()
+
+/** Search policy is transient and is never written into routed copper. */
+export function isProvisionalPairPlan(traces: Trace[]): boolean {
+  return provisionalPlans.has(traces)
 }
 
 /** Grow compatible pair domains together, so a shared-layer pair does not
@@ -20,12 +28,14 @@ export function* planSharedPairCorridors(
   input: SimpleRouteJson,
   terminalLayers: ReadonlyMap<string, string[]>,
   freshDogbones = false,
+  options: { preferPackageOnlyTuning?: boolean } = {},
 ): Generator<Trace[] | undefined> {
   const pairs = input.differentialPairs ?? []
   const bounded = input.buses?.some((bus) => bus.maxLength !== undefined)
   const domains: Choice[][] = pairs.map(() => [])
   const geometry = pairs.map(() => new Set<string>())
   const tried = new Set<string>()
+  const offeredShapes = new Set<string>()
   const fixed = fixedCopper(input)
   const conflicts = new RouteConflictIndex()
   const clearance =
@@ -48,7 +58,19 @@ export function* planSharedPairCorridors(
   const alternatives: (number | readonly [number, number])[] = freshDogbones
     ? [100, 2, 3, 0, 1, 101, 102, 103, 4, 104, 5, 105, 6, 106, 7, 107]
     : [1, 2, [0, 1], [1, 0], 0, [0, 2], [2, 0], 3, [1, 2], [2, 1], 4, 5, 6, 7]
-  for (const variant of alternatives) {
+  // Prefer corrections inside package approaches. A secondary provisional
+  // shape may still help ordinary lanes connect; final pipeline acceptance
+  // independently enforces physical coupling outside those approaches.
+  const searches = alternatives.flatMap((variant) =>
+    (freshDogbones && options.preferPackageOnlyTuning
+      ? [false, true]
+      : [false]
+    ).map((allowProvisionalPairTuning) => ({
+      variant,
+      allowProvisionalPairTuning,
+    })),
+  )
+  for (const { variant, allowProvisionalPairTuning } of searches) {
     for (const [index, pair] of pairs.entries()) {
       const members = pair.connectionNames.map(
         (name) => input.connections.find((c) => c.name === name)!,
@@ -88,6 +110,8 @@ export function* planSharedPairCorridors(
             {
               copper: [],
               penalty: 0,
+              preferPackageOnlyTuning: options.preferPackageOnlyTuning,
+              allowProvisionalPairTuning,
               ...(typeof variant === "number"
                 ? { variant: reserved ? variant - 100 : variant }
                 : { handoffOffsets: variant }),
@@ -114,12 +138,16 @@ export function* planSharedPairCorridors(
           )
         )
           continue
-        const key = JSON.stringify(state.value.map((t) => t.route))
+        const key = JSON.stringify([
+          allowProvisionalPairTuning,
+          state.value.map((t) => t.route),
+        ])
         if (geometry[index].has(key)) continue
         geometry[index].add(key)
         domains[index].push({
           id: serial++,
           layer,
+          provisional: allowProvisionalPairTuning,
           traces: state.value,
           length: state.value.reduce((sum, t) => sum + length(t.route), 0),
         })
@@ -131,7 +159,12 @@ export function* planSharedPairCorridors(
     const visit = (selected: Choice[], index: number) => {
       if (plans.length >= 256) return
       if (index === domains.length) {
-        const key = selected.map((c) => c.id).join(",")
+        const key = JSON.stringify([
+          selected.some((choice) => choice.provisional),
+          selected
+            .flatMap((choice) => choice.traces)
+            .map((trace) => trace.route),
+        ])
         if (!tried.has(key)) plans.push(selected)
         return
       }
@@ -171,15 +204,30 @@ export function* planSharedPairCorridors(
           : 0,
       ]),
     )
+    const shapeKey = (plan: Choice[]) =>
+      JSON.stringify(
+        plan.flatMap((choice) => choice.traces).map((trace) => trace.route),
+      )
     plans.sort(
       (a, b) =>
+        Number(offeredShapes.has(shapeKey(a))) -
+          Number(offeredShapes.has(shapeKey(b))) ||
         costs.get(a)! - costs.get(b)! ||
         a.reduce((sum, c) => sum + c.length, 0) -
           b.reduce((sum, c) => sum + c.length, 0),
     )
     for (const plan of plans) {
-      tried.add(plan.map((c) => c.id).join(","))
-      yield plan.flatMap((c) => c.traces)
+      const traces = plan.flatMap((choice) => choice.traces)
+      const provisional = plan.some((choice) => choice.provisional)
+      const key = JSON.stringify([
+        provisional,
+        traces.map((trace) => trace.route),
+      ])
+      if (tried.has(key)) continue
+      tried.add(key)
+      offeredShapes.add(shapeKey(plan))
+      if (provisional) provisionalPlans.add(traces)
+      yield traces
     }
   }
 }

@@ -48,6 +48,9 @@ export function* routeCoupledPair(
     history?: Float32Array
     variant?: number
     handoffOffsets?: readonly [number, number]
+    preferPackageOnlyTuning?: boolean
+    /** Provisional topology; final exterior coupling is still mandatory. */
+    allowProvisionalPairTuning?: boolean
   },
 ): Generator<void, Trace[] | null> {
   const members = pair.connectionNames.map(
@@ -343,6 +346,8 @@ export function* routeCoupledPair(
           [crossAxis]: p[crossAxis] + shift * envelope,
         }))
         const key = JSON.stringify([
+          negotiation?.preferPackageOnlyTuning ?? "legacy",
+          Boolean(negotiation?.allowProvisionalPairTuning),
           pair,
           layer,
           width,
@@ -667,22 +672,56 @@ export function* routeCoupledPair(
                 // Fresh two-ended escapes have no completed plane copper to
                 // bound a local correction. Retain established pre-fanouted
                 // choices; only retry those fresh banks inside their packages.
+                const memberNames = new Set(
+                  members.flatMap((c) => [c.name, c.source_trace_id ?? c.name]),
+                )
+                const memberEscapes = (pairInput.traces ?? []).filter(
+                  (t) =>
+                    memberNames.has(t.connection_name ?? "") ||
+                    memberNames.has(t.source_trace_id ?? ""),
+                )
                 const dogboneCounts = new Map<string, number>()
-                for (const t of pairInput.traces ?? [])
+                for (const t of memberEscapes)
                   dogboneCounts.set(
                     t.connection_name!,
                     (dogboneCounts.get(t.connection_name!) ?? 0) + 1,
                   )
                 const freshSignalEscapes =
-                  (pairInput.traces?.length ?? 0) > 0 &&
+                  memberEscapes.length === members.length * 2 &&
                   [...dogboneCounts.values()].every((n) => n === 2) &&
-                  pairInput.traces!.every(
+                  memberEscapes.every(
                     (t) =>
                       t.route.filter((p) => p.route_type === "via").length ===
                       1,
                   )
+                let preferPackageOnlyTuning =
+                  negotiation?.preferPackageOnlyTuning
+                if (preferPackageOnlyTuning === undefined) {
+                  // Preserve the existing search preference for inputs made
+                  // entirely of fresh signal dogbones. Surface planning opts
+                  // in explicitly so unrelated supplied copper cannot change
+                  // the classification of its paired members.
+                  const allEscapes = pairInput.traces ?? []
+                  const allCounts = new Map<string, number>()
+                  for (const escape of allEscapes)
+                    allCounts.set(
+                      escape.connection_name!,
+                      (allCounts.get(escape.connection_name!) ?? 0) + 1,
+                    )
+                  preferPackageOnlyTuning =
+                    allEscapes.length > 0 &&
+                    [...allCounts.values()].every((count) => count === 2) &&
+                    allEscapes.every(
+                      (escape) =>
+                        escape.route.filter(
+                          (point) => point.route_type === "via",
+                        ).length === 1,
+                    )
+                }
                 if (
                   freshSignalEscapes &&
+                  preferPackageOnlyTuning &&
+                  !negotiation?.allowProvisionalPairTuning &&
                   regions.length &&
                   tuned.some((t) =>
                     t.curvedSegments?.some(

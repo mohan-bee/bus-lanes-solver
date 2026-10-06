@@ -6,6 +6,14 @@ import type { SimpleRouteJson, Trace } from "../lib"
 export function checkSignalSelfShorts(input: SimpleRouteJson, traces: Trace[]) {
   const circuit: any[] = [
     { type: "pcb_board", pcb_board_id: "board", num_layers: input.layerCount },
+    // The native check selects traces through a matching bus. Audit untimed
+    // controls too, without changing the board's actual routing constraints.
+    {
+      type: "source_bus",
+      source_bus_id: "signal_self_short_audit",
+      max_length_skew: 0,
+      source_trace_ids: traces.map((trace) => trace.connection_name),
+    },
     ...(input.buses ?? []).map((bus) => ({
       type: "source_bus",
       source_bus_id: bus.busId,

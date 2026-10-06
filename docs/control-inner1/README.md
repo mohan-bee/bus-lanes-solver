@@ -37,29 +37,36 @@ quality measurements and immutable fanout provenance.
 
 ## Existing matched benchmark snapshots
 
-The nine declared matched benchmarks and their solver configuration are
-unchanged. These existing completed snapshots were inspected during this change;
-they are historical matched results, not images of timed-out benchmark runs:
+The ten declared matched benchmarks retain the latest main branch's routing
+configuration. The existing completed snapshots below were inspected after
+merging its top/bottom support; they are main's matched results, rather than
+images of timed-out runs from the earlier nine-case measurement.
 
 | Declared sample | Completed matched snapshot |
 | --- | --- |
-| control | [image](../routed-am3352-complete-ca/baseline/control-solved.png) |
-| right | [image](../routed-am3352-complete-ca/baseline/right-solved.png) |
-| left | [image](../routed-am3352-complete-ca/baseline/left-solved.png) |
-| above | [image](../routed-am3352-complete-ca/baseline/above-solved.png) |
-| inner-layers | [image](../routed-am3352-complete-ca/baseline/inner-layers-solved.png) |
-| inner-layers-right | [image](../routed-am3352-complete-ca/baseline/inner-layers-right-solved.png) |
-| inner-layers-left | [image](../routed-am3352-complete-ca/baseline/inner-layers-left-solved.png) |
-| inner-layers-above | [image](../routed-am3352-complete-ca/baseline/inner-layers-above-solved.png) |
-| inner-layers-complete-ca | [image](../routed-am3352-complete-ca/complete-ca-solved.png) |
+| control | [image](../routed-am3352-placements/control-solved.png) |
+| right | [image](../routed-am3352-placements/right-solved.png) |
+| left | [image](../routed-am3352-placements/left-solved.png) |
+| above | [image](../routed-am3352-placements/above-solved.png) |
+| inner-layers | [image](../routed-am3352-placements/inner-layers-solved.png) |
+| inner-layers-right | [image](../routed-am3352-placements/inner-layers-right-solved.png) |
+| inner-layers-left | [image](../routed-am3352-placements/inner-layers-left-solved.png) |
+| inner-layers-above | [image](../routed-am3352-placements/inner-layers-above-solved.png) |
+| inner-layers-complete-ca | [image](../routed-am3352-placements/inner-layers-complete-ca-solved.png) |
+| outer-layers | [image](../routed-am3352-placements/outer-layers-solved.png) |
 
-## Matched benchmark rerun
+## Matched benchmark on the original v0.0.21 base
 
-`./benchmark.sh --output work/benchmark-final.json` used the unchanged matched
+Before merging v0.0.22 main,
+`./benchmark.sh --output work/benchmark-final.json` used the matched
 goal and a 180-second limit per sample. Six cases passed complete connectivity,
 independent copper DRC, timing and pair-coupling validation. The final three
 timed out; their retained route counts are not accepted routing or matching
-passes. These are the same timeout cases seen before this change.
+passes. These were the same timeout cases seen before this change. Main now
+includes a tenth outer-layer case and uses an 1800-second budget; its separately
+recorded [10/10 matched report](../routed-am3352-placements/benchmark-results.json)
+uses that budget. The earlier nine-case report below remains labelled with its
+original base and 180-second limit.
 
 | Sample | Accepted | Runtime | Byte-bus skews (mm) | Final copper DRC |
 | --- | --- | ---: | --- | --- |
@@ -75,3 +82,11 @@ passes. These are the same timeout cases seen before this change.
 
 [The complete benchmark report](matched-benchmark.json) includes per-member total
 copper lengths, pair skews, provenance checks and timeout statuses.
+
+## Verification after merging v0.0.22 main
+
+Type checking, isolated package consumers and both the inner1 connectivity and
+top/bottom escape regressions passed after resolving the merge. The default
+matched control was rerun with `./benchmark.sh --worker control`: 47/47 signals,
+full DRC and matching accepted in 49.40 s.
+See its [independent matched report](merged-control-matched-report.json).

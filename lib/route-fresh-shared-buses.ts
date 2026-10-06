@@ -1,4 +1,5 @@
 import { repairSharedLayerConflicts } from "./repair-shared-layer-conflicts"
+import { normalizeSurfaceCarriers } from "./normalize-surface-carriers"
 import { BusLanesSolver } from "./bus-lanes-solver"
 import { planSharedPairCorridors } from "./plan-shared-pair-corridors"
 import { reachableSignalDogbones } from "./reachable-signal-dogbones"
@@ -244,7 +245,7 @@ export function* routeFreshSharedBuses(
     }
     let traces = [...state.retained, ...state.traces]
     if (traces.length !== native.connections.length) continue
-    const input: SimpleRouteJson = {
+    let input: SimpleRouteJson = {
       ...native,
       connections: native.connections.map((connection) => {
         const trace = traces.find((t) => t.connection_name === connection.name)!
@@ -255,6 +256,9 @@ export function* routeFreshSharedBuses(
       }),
       traces: [...(native.traces ?? []), ...state.escapes],
     }
+    const normalized = normalizeSurfaceCarriers(input, traces, state.escapes)
+    input = normalized.input
+    traces = normalized.traces
     const fixed = fixedCopper(input)
     for (let pass = 0; pass < 3; pass++) {
       for (let index = 0; index < traces.length; index++) {
@@ -286,7 +290,7 @@ export function* routeFreshSharedBuses(
         yield
       }
       if (matcher.solved)
-        return { input, traces: matcher.traces, escapes: state.escapes }
+        return { input, traces: matcher.traces, escapes: normalized.escapes }
     } finally {
       if (!matcher.solved && !matcher.failed) matcher.tryFinalAcceptance()
     }
