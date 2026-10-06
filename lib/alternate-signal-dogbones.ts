@@ -10,6 +10,78 @@ export function routeAlternateSignalDogbones(
   options: Parameters<typeof routeLocalSignalDogbones>[1],
   attempt: number,
 ): ReturnType<typeof routeLocalSignalDogbones> {
+  try {
+    return routeVariant(input, options, attempt)
+  } catch (error) {
+    if (
+      !(error instanceof Error) ||
+      error.message !== "No collision-free local dogbone assignment"
+    )
+      throw error
+    const targets = new Map(options.targetLayers)
+    const nativeLayer = (name: string) => {
+      const connection = input.connections.find((c) => c.name === name)
+      if (!connection || connection.pointsToConnect.length !== 2) return
+      const layer = connection.pointsToConnect[0].layer
+      if (
+        !connection.pointsToConnect.every((point) => point.layer === layer) ||
+        !input.allowedLayers?.includes(layer) ||
+        (input.buses ?? []).some(
+          (bus) =>
+            bus.connectionNames.includes(name) &&
+            bus.allowedLayers &&
+            !bus.allowedLayers.includes(layer),
+        )
+      )
+        return
+      return layer
+    }
+    let changed = false
+    for (const connection of input.connections) {
+      const layer = nativeLayer(connection.name)
+      if (!layer || targets.get(connection.name) === layer) continue
+      // A failed all-local assignment must not prevent native surface search.
+      // Only a connection with no legal local assignment in any quadrant is
+      // moved back to its original permitted plane. Fixed copper is untouched.
+      const single = {
+        ...input,
+        connections: [connection],
+        buses: [],
+        differentialPairs: [],
+      }
+      let possible = false
+      for (let quadrant = 0; quadrant < 4 && !possible; quadrant++) {
+        try {
+          routeVariant(single, options, quadrant)
+          possible = true
+        } catch {
+          /* Every local quadrant is an independent physical candidate. */
+        }
+      }
+      if (possible) continue
+      targets.set(connection.name, layer)
+      changed = true
+    }
+    if (!changed) throw error
+    // Differential partners share a carrier plane. A fallback is legal only
+    // when both partners can retain the same original permitted native plane.
+    for (const pair of input.differentialPairs ?? []) {
+      const [a, b] = pair.connectionNames
+      if (targets.get(a) === targets.get(b)) continue
+      const layer = nativeLayer(a)
+      if (!layer || nativeLayer(b) !== layer) throw error
+      targets.set(a, layer)
+      targets.set(b, layer)
+    }
+    return routeVariant(input, { ...options, targetLayers: targets }, attempt)
+  }
+}
+
+function routeVariant(
+  input: SimpleRouteJson,
+  options: Parameters<typeof routeLocalSignalDogbones>[1],
+  attempt: number,
+): ReturnType<typeof routeLocalSignalDogbones> {
   const delta = input.connections.reduce(
     (s, c) => ({
       x: s.x + c.pointsToConnect[1].x - c.pointsToConnect[0].x,
