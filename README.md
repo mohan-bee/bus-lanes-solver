@@ -28,6 +28,40 @@ const routed = solver.getOutput()
 
 Each connection must have exactly two terminals on the same fixed layer. The solver never emits vias, changes terminal layers, or falls back to a multilayer router. Existing copper and obstacles remain fixed. Geometric winding sweeps, seam rotations and reverse searches choose lane order; planar congestion, crossed lane orders, unsupported constraints, and exhausted search budgets produce explicit failures. A bounded visibility-graph search failure is not a proof that no continuous planar solution exists.
 
+## Single-layer connectivity experiment
+
+The powered AM3352 control can route all 47 signals on `inner1` using the
+pipeline's explicit connectivity goal:
+
+```ts
+const solver = new BusLanesPipelineSolver(
+  { ...input, allowedLayers: ["inner1"] },
+  {
+    goal: "connectivity",
+    connectivity: { fixedConnections: metadata.powerConnections },
+  },
+)
+solver.solve()
+if (!solver.solved) throw Error(solver.error ?? "Routing failed")
+const output = solver.getOutput()
+```
+
+This goal negotiates top-layer package escapes and the single carrier together,
+adds two plated signal vias per connection, preserves supplied fixed copper,
+and accepts only complete connectivity with zero copper DRC issues. The
+`fixedConnections` records identify existing copper that is not a new routing
+request. It supports uniform-width, two-terminal top-layer package pads and
+rectangular board bounds.
+
+**Connectivity is a separate stage, not DDR acceptance.** It retains the input's
+bus and pair constraints but does not enforce length matching, pair coupling or
+ordinary-corner refinement. The default `goal: "matched"` and the matched
+snapshot exporter keep their existing acceptance rules.
+
+Run `bun scripts/route-control-inner1.ts` to reproduce the completed route,
+independent audit, full copper length reports and accurately labelled snapshot
+in `work/control-inner1`. See [the measured result](docs/control-inner1/README.md).
+
 ## Review target
 
 The integrated preset routes the original TSX from the

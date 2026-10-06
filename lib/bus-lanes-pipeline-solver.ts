@@ -1,3 +1,7 @@
+import {
+  SingleLayerConnectivitySolver,
+  type SingleLayerConnectivityOptions,
+} from "./single-layer-connectivity-solver"
 import { rebalancePairEscapes } from "./rebalance-pair-escapes"
 import { createTerminalViaClearanceChecker } from "./terminal-via-clearance"
 import {
@@ -36,6 +40,10 @@ import type { SimpleRouteJson, SolverOptions, Trace } from "./types"
 
 export interface BusLanesPipelineOptions extends SolverOptions {
   fanout?: "auto" | "none"
+  /** Default matched goal includes timing and differential coupling. Connectivity
+   * explicitly requests only pad-to-pad routing and copper DRC on one carrier. */
+  goal?: "matched" | "connectivity"
+  connectivity?: SingleLayerConnectivityOptions
 }
 
 /** Board-world points in mm, +X right, +Y up. Adds only local terminal vias;
@@ -46,6 +54,7 @@ export class BusLanesPipelineSolver extends BaseSolver {
   phase = "resolve_layers"
   traces: Trace[] = []
   failureCode: string | null = null
+  private connectivitySolver?: SingleLayerConnectivitySolver
   private acceptedTraces?: Trace[]
   private envelopeOptimization?: Generator<void, void>
   /** Runs only after a complete accepted route exists. A budget interrupt or
@@ -305,6 +314,15 @@ export class BusLanesPipelineSolver extends BaseSolver {
     this.options = { smoothTuning: true, denseSearch: true, ...options }
     this.MAX_ITERATIONS =
       (options.maxSearchIterations ?? 200000) * Math.max(1, input.layerCount)
+    if (options.goal === "connectivity") {
+      if (options.fanout === "none")
+        throw Error("Connectivity routing requires local terminal vias")
+      this.connectivitySolver = new SingleLayerConnectivitySolver(
+        input,
+        options.connectivity,
+      )
+      this.phase = "connectivity_route"
+    }
   }
   getConstructorParams() {
     return [this.input, this.options]
@@ -843,6 +861,23 @@ export class BusLanesPipelineSolver extends BaseSolver {
       )
   }
   _step() {
+    if (this.connectivitySolver) {
+      const solver = this.connectivitySolver
+      solver.step()
+      this.stats = { ...solver.stats, goal: "connectivity" }
+      this.phase = solver.solved
+        ? "complete"
+        : solver.failed
+          ? "failed"
+          : "connectivity_route"
+      this.failed = solver.failed
+      this.error = solver.error
+      if (solver.solved) {
+        this.traces = structuredClone(solver.traces)
+        this.solved = true
+      }
+      return
+    }
     try {
       if (this.envelopeOptimization) {
         const step = this.envelopeOptimization.next()
@@ -1096,6 +1131,9 @@ export class BusLanesPipelineSolver extends BaseSolver {
     }
   }
   visualize() {
-    return this.child?.visualize() ?? { points: [], lines: [] }
+    return (
+      this.connectivitySolver?.visualize() ??
+      this.child?.visualize() ?? { points: [], lines: [] }
+    )
   }
 }

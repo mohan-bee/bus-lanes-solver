@@ -6,3 +6,8 @@ export {
 } from "./bus-lanes-pipeline-solver"
 export { exteriorPairSpacingReports } from "./exterior-pair-spacing"
 export { busLengthReports, pairLengthReports } from "./route-lengths"
+
+export {
+  SingleLayerConnectivitySolver,
+  type SingleLayerConnectivityOptions,
+} from "./single-layer-connectivity-solver"
