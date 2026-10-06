@@ -1,3 +1,7 @@
+import { length } from "./geometry"
+import { joinSignalEscapes } from "./join-signal-escapes"
+import { fixedRouteLength } from "./route-lengths"
+import { routeFinishedSurfacePairs } from "./route-finished-surface-pairs"
 import { finishSurfaceTiming } from "./finish-surface-timing"
 import { insertNativeSurfaceSignal } from "./insert-native-surface-signal"
 import { surfaceBusShortcutCandidates } from "./surface-bus-shortcuts"
@@ -49,6 +53,48 @@ export function* routeFreshSurfaceBuses(
   terminalLayers: ReadonlyMap<string, string[]>,
   options: SolverOptions,
 ): Generator<void, RepairedBusDogbones | null> {
+  // An explicitly requested prefix reserves paired growth before ordinary
+  // lanes occupy its shared corridor. Only permitted outer surfaces participate.
+  if (
+    options.strictSurfacePairPrefixes &&
+    native.connections.every((connection) =>
+      surfaceBridgeEligible(native, connection),
+    )
+  ) {
+    for (const preferNativePositiveMinimum of [true, false]) {
+      const paired = yield* routeFinishedSurfacePairs(
+        native,
+        allocation,
+        originalEscapes,
+        {
+          solverOptions: options,
+          anchorToFiniteCaps: true,
+          preferNativePositiveMinimum,
+        },
+      )
+      if (!paired) continue
+      const planning = surfaceOrdinaryPlanningInput(native, paired)
+      if (!planning) continue
+      const joint = yield* negotiateSurfaceRoutes(planning, paired, {
+        maxTimedVias: options.maxTimedSurfaceVias ?? 2,
+      })
+      if (!joint) continue
+      const restored: FlexibleSignalState = {
+        ...joint,
+        native,
+        pending: { ...joint.pending, buses: native.buses },
+      }
+      const finished = yield* finishSurfaceTiming(restored, options, {
+        preserveTiming: true,
+      })
+      if (finished)
+        return {
+          input: finished.pending,
+          traces: [...finished.retained, ...finished.traces],
+          escapes: finished.escapes,
+        }
+    }
+  }
   const seeds = routeFreshSurfaceSeeds(
     native,
     allocation,
@@ -91,6 +137,7 @@ export function* routeFreshSurfaceBuses(
               native,
               mergeTimingCheckpoint(native, candidate.state, timing),
               {
+                maxTimedVias: options.maxTimedSurfaceVias ?? 2,
                 frozenConnectionNames: new Set(
                   native.buses?.flatMap((bus) => bus.connectionNames),
                 ),
@@ -109,7 +156,9 @@ export function* routeFreshSurfaceBuses(
             }
           }
         }
-        const joint = yield* negotiateSurfaceRoutes(native, candidate.state)
+        const joint = yield* negotiateSurfaceRoutes(native, candidate.state, {
+          maxTimedVias: options.maxTimedSurfaceVias ?? 2,
+        })
         if (joint) {
           const finished = yield* finishSurfaceTiming(joint, options, {
             preserveTiming: true,
@@ -880,4 +929,54 @@ function* insertFreshPair(
     }
   }
   return null
+}
+
+/** Restrict an ordinary planning domain to copper lengths that cannot require
+ * further growth of held paired rails. The final result is always checked with
+ * original bounds; this clone selects a smaller legal search domain only. */
+export function surfaceOrdinaryPlanningInput(
+  native: SimpleRouteJson,
+  prefix: FlexibleSignalState,
+): SimpleRouteJson | null {
+  const pairedNames = new Set(
+    native.differentialPairs?.flatMap((pair) => pair.connectionNames),
+  )
+  const carriers = [...prefix.retained, ...prefix.traces]
+  const pairedLengths = new Map(
+    carriers
+      .filter((trace) => pairedNames.has(trace.connection_name!))
+      .map((trace) => [
+        trace.connection_name!,
+        length(
+          joinSignalEscapes(
+            trace,
+            prefix.escapes.filter(
+              (escape) => escape.connection_name === trace.connection_name,
+            ),
+          ).route,
+        ) + fixedRouteLength(native, trace.connection_name!),
+      ]),
+  )
+  if ([...pairedNames].some((name) => !pairedLengths.has(name))) return null
+  const buses = native.buses?.map((bus) => {
+    if (!Number.isFinite(bus.maxLengthSkew)) return bus
+    const lengths = bus.connectionNames.flatMap((name) =>
+      pairedLengths.has(name) ? [pairedLengths.get(name)!] : [],
+    )
+    if (!lengths.length) return bus
+    return {
+      ...bus,
+      maxLength: Math.min(
+        bus.maxLength ?? Infinity,
+        Math.min(...lengths) + bus.maxLengthSkew!,
+      ),
+    }
+  })
+  if (
+    buses?.some(
+      (bus) => (bus.maxLength ?? Infinity) < (bus.minLength ?? 0) - 1e-7,
+    )
+  )
+    return null
+  return { ...native, buses }
 }

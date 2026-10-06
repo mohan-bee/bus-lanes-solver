@@ -241,3 +241,63 @@ test("the pipeline stages explicitly requested native pad planes", () => {
   })
   expect(drc.issues).toEqual([])
 })
+
+test("the public pipeline finishes an explicitly requested strict pair without buses", () => {
+  const source = fixture(false)
+  const pair = source.differentialPairs![0]
+  const names = new Set(pair.connectionNames)
+  const input: SimpleRouteJson = {
+    ...source,
+    connections: source.connections.filter((connection) =>
+      names.has(connection.name),
+    ),
+    buses: [],
+  }
+  const before = structuredClone(input)
+  const solver = new BusLanesPipelineSolver(input, {
+    strictSurfacePairPrefixes: true,
+  })
+  solver.step()
+  expect(solver.phase).toBe("route_shared_layers")
+  solver.solve()
+  expect(solver.solved).toBe(true)
+  expect(solver.error).toBeNull()
+  expect(input).toEqual(before)
+  expect(solver.traces).toHaveLength(2)
+  const output = solver.getOutput()
+  const signals = output.traces!.filter((trace) =>
+    names.has(trace.connection_name!),
+  )
+  expect(signals).toHaveLength(2)
+  expect(pairLengthReports(input, signals)[0].matched).toBe(true)
+  expect(pairCouplingReports(input, signals)[0].matched).toBe(true)
+  for (const trace of signals) {
+    const connection = input.connections.find(
+      (candidate) => candidate.name === trace.connection_name,
+    )!
+    expect(
+      distance(trace.route[0], connection.pointsToConnect[0]),
+    ).toBeLessThan(1e-8)
+    expect(
+      distance(trace.route.at(-1)!, connection.pointsToConnect[1]),
+    ).toBeLessThan(1e-8)
+  }
+  expect(
+    output.traces!.find((trace) => trace.pcb_trace_id === "existing_supply"),
+  ).toEqual(input.traces![0])
+  const physical = {
+    ...input,
+    connections: [
+      ...input.connections,
+      { name: "SUPPLY", pointsToConnect: [] },
+    ],
+  }
+  const drc = validateRoutedCopperDrc({
+    inputSrj: physical,
+    routedSrj: { ...output, connections: physical.connections },
+    clearance: 0.08,
+    allowBlindAndBuriedVias: false,
+  } as unknown as Parameters<typeof validateRoutedCopperDrc>[0])
+  expect(drc.valid).toBe(true)
+  expect(drc.issues).toEqual([])
+})

@@ -35,6 +35,9 @@ export interface SurfaceBridgeOptions {
   maxVias?: number
   /** Raster memory budget; defaults to one million and is capped at four million cells. */
   maxGridCells?: number
+  /** Notify a bounded feasibility probe when its unfinished frontier reaches
+   * the expansion limit. Invalid inputs and exhausted frontiers do not notify. */
+  onSearchLimit?: () => void
 }
 export interface SurfaceBridgeRoute {
   carrier: Trace
@@ -70,6 +73,8 @@ export function surfaceBridgeEligible(
     input.allowedLayers.includes(physical.at(-1)!)
   )
 }
+
+export const surfaceBridgeYieldInterval = 64
 
 /** Search only the two explicitly permitted outer planes. A surface path may
  * hand off anywhere through manufactured barrels. Its carrier stays on one
@@ -398,7 +403,7 @@ export function* routeSurfaceBridge(
   while (queue.length && expanded < (options.maxExpansions ?? 1_500_000)) {
     const current = queue.pop()
     if (current.g > costs[current.id] + 1e-9) continue
-    if (++expanded % 64 === 0) yield
+    if (++expanded % surfaceBridgeYieldInterval === 0) yield
     if (
       current.count % 2 === 0 &&
       carrierLayers.includes(current.count === 0 ? surface : bridge) &&
@@ -496,6 +501,7 @@ export function* routeSurfaceBridge(
       }
     }
   }
+  if (queue.length) options.onSearchLimit?.()
   return null
 }
 

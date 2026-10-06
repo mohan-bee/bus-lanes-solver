@@ -206,3 +206,25 @@ test("member layer changes on the same request never reuse traces on the old lay
     ),
   ).toBe(true)
 })
+
+test("strict candidate validation cannot be bypassed by a warm geometric pair cache", () => {
+  const input = blockedPair()
+  solvePair(input)
+  let called = 0
+  function* reject(_traces: Trace[]): Generator<void, Trace[] | null> {
+    called++
+    return null
+  }
+  const generator = routeCoupledPair(
+    input,
+    input.differentialPairs![0],
+    fixedCopper(input),
+    { copper: [], penalty: 0, strictCandidate: reject },
+  )
+  let next = generator.next(),
+    count = 0
+  while (!next.done && count++ < 8000) next = generator.next()
+  expect(next.done).toBe(true)
+  expect(next.value).toBeNull()
+  expect(called).toBeGreaterThan(0)
+})

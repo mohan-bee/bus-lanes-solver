@@ -592,3 +592,97 @@ test("bounded atomic surface repairs resolve a five-net star while retaining sup
     ).toBe(true)
   }
 })
+
+test("four-via timed surface routing requires an explicit opt-in and preserves the native length cap", () => {
+  const native: SimpleRouteJson = {
+    layerCount: 4,
+    allowedLayers: ["top", "bottom"],
+    minTraceWidth: 0.1,
+    minTraceToPadEdgeClearance: 0.05,
+    minViaPadDiameter: 0.3,
+    minViaHoleDiameter: 0.15,
+    minViaHoleEdgeToViaHoleEdgeClearance: 0.15,
+    minBoardEdgeClearance: 0.05,
+    bounds: { minX: -4, maxX: 4, minY: -0.7, maxY: 0.7 },
+    connections: [
+      { name: "timed", pointsToConnect: [wire(-3, 0), wire(3, 0)] },
+    ],
+    buses: [
+      {
+        busId: "limited",
+        connectionNames: ["timed"],
+        allowedLayers: ["top", "bottom"],
+        maxLength: 8,
+      },
+    ],
+    obstacles: [-1.5, 0, 1.5].map((x, index) => ({
+      type: "rect",
+      center: { x, y: 0 },
+      width: 0.2,
+      height: 2,
+      layers: [index === 1 ? "bottom" : "top"],
+      connectedTo: [],
+    })),
+  }
+  const state: FlexibleSignalState = {
+      native,
+      pending: native,
+      escapes: [],
+      retained: [],
+      traces: [],
+    },
+    original = structuredClone(state)
+  const settings = {
+    maxRounds: 0,
+    maxExpansions: 40000,
+    maxInitialExpansions: 80000,
+    maxClosureExpansions: 40000,
+  }
+  expect(finish(negotiateSurfaceRoutes(native, state, settings))).toBeNull()
+  const result = finish(
+    negotiateSurfaceRoutes(native, state, { ...settings, maxTimedVias: 4 }),
+  )!
+  expect(result).toBeTruthy()
+  expect(finish(negotiateSurfaceRoutes(native, result, settings))).toBeNull()
+  const joined = joinSignalEscapes(result.traces[0], result.escapes)
+  const report = validateRoutedCopperDrc({
+    inputSrj: native,
+    routedSrj: { ...native, traces: [joined] },
+    clearance: 0.05,
+    allowBlindAndBuriedVias: false,
+  } as Parameters<typeof validateRoutedCopperDrc>[0])
+  expect(report.issues).toEqual([])
+  expect(
+    joined.route.filter((point) => point.route_type === "via"),
+  ).toHaveLength(4)
+  expect(result.pending.buses).toEqual(native.buses)
+  expect(state).toEqual(original)
+  expect(surfaceBridgeSelfShorts(native, native.connections[0], joined)).toBe(
+    false,
+  )
+  const length = joined.route
+    .slice(1)
+    .reduce(
+      (total, point, index) =>
+        total +
+        Math.hypot(
+          point.x - joined.route[index].x,
+          point.y - joined.route[index].y,
+        ),
+      0,
+    )
+  expect(length).toBeLessThanOrEqual(8)
+  const tooShort = {
+    ...native,
+    buses: [{ ...native.buses![0], maxLength: 5.9 }],
+  }
+  expect(
+    finish(
+      negotiateSurfaceRoutes(
+        tooShort,
+        { ...state, native: tooShort, pending: tooShort },
+        { ...settings, maxTimedVias: 4 },
+      ),
+    ),
+  ).toBeNull()
+})

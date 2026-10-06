@@ -92,6 +92,11 @@ export interface SimpleRouteJson {
   }>
 }
 export interface SolverOptions {
+  /** Finish coupled prefixes and check remaining-terminal reachability before
+   * surface lane negotiation. Defaults to the existing bus-first planner. */
+  strictSurfacePairPrefixes?: boolean
+  /** Explicit transition budget for timed ordinary surface candidates. */
+  maxTimedSurfaceVias?: 2 | 4
   smoothTuning?: boolean
   denseSearch?: boolean
   maxLaneIterations?: number

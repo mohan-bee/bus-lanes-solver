@@ -25,6 +25,7 @@ export interface SurfaceNegotiationOptions {
   maxClosureNeighbors?: number
   maxClosureFragments?: number
   maxUntimedVias?: number
+  maxTimedVias?: 2 | 4
   frozenConnectionNames?: ReadonlySet<string>
 }
 
@@ -115,6 +116,8 @@ export function* negotiateSurfaceRoutes(
           !owners.includes(trace.source_trace_id ?? ""),
       )
     return (
+      value.joined.route.filter((point) => point.route_type === "via").length <=
+        viaBudget(index) &&
       !value.joined.route.some(
         (point) =>
           point.route_type === "via" &&
@@ -179,12 +182,20 @@ export function* negotiateSurfaceRoutes(
       options.maxCandidateSearchNodes ?? 50000,
       options.maxSupportChecks ?? 500000,
     )
+  const viaBudget = (index: number): 2 | 4 =>
+    timed.has(targets[index].name)
+      ? options.maxTimedVias === 4
+        ? 4
+        : 2
+      : (options.maxUntimedVias ?? 4) >= 4
+        ? 4
+        : 2
   const preferredVias = (index: number): 2 | 4 =>
-    frozen.size > paired.size &&
-    !timed.has(targets[index].name) &&
-    (options.maxUntimedVias ?? 4) >= 4
-      ? 4
-      : 2
+    timed.has(targets[index].name)
+      ? (options.maxTimedVias ?? 2)
+      : frozen.size > paired.size && (options.maxUntimedVias ?? 4) >= 4
+        ? 4
+        : 2
   const compose = (selected: Candidate[]): FlexibleSignalState => {
     const traces = selected.map((value) => value.carrier),
       escapes = [
@@ -235,6 +246,7 @@ export function* negotiateSurfaceRoutes(
         : connection
     const result = yield* routeSurfaceBridge(input, reversed, {
       ...settings,
+      maxVias: Math.min(settings.maxVias ?? 2, viaBudget(index)),
       softTraces: soft,
     })
     if (!result) {
@@ -459,11 +471,13 @@ export function* negotiateSurfaceRoutes(
         ...hard,
         traces: [...hard.traces!, ...stable.map((value) => value.joined)],
       }
-    const viaLimits: Array<2 | 4> =
-      component.some((index) => !timed.has(targets[index].name)) &&
-      (options.maxUntimedVias ?? 4) >= 4
-        ? [4, 2]
-        : [2]
+    const viaLimits: Array<2 | 4> = component.some((index) =>
+      timed.has(targets[index].name)
+        ? (options.maxTimedVias ?? 2) >= 4
+        : (options.maxUntimedVias ?? 4) >= 4,
+    )
+      ? [4, 2]
+      : [2]
     for (const maxVias of viaLimits)
       for (const order of permutations(component))
         for (const gridStep of [0.05, 0.025])
@@ -485,7 +499,11 @@ export function* negotiateSurfaceRoutes(
                   {
                     gridStep,
                     maxGridCells: 4000000,
-                    maxVias: timed.has(targets[index].name) ? 2 : maxVias,
+                    maxVias:
+                      timed.has(targets[index].name) &&
+                      options.maxTimedVias !== 4
+                        ? 2
+                        : maxVias,
                     softPenalty: at ? 0 : softPenalty,
                     viaPenalty: 2,
                     maxExpansions: options.maxClosureExpansions ?? 2000000,

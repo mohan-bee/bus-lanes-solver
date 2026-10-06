@@ -718,7 +718,9 @@ export class BusLanesPipelineSolver extends BaseSolver {
       this.attempt === 0 &&
       this.options.smoothTuning &&
       this.options.denseSearch &&
-      (this.input.buses?.length ?? 0) > 1 &&
+      ((this.input.buses?.length ?? 0) > 1 ||
+        (this.options.strictSurfacePairPrefixes &&
+          (this.input.differentialPairs?.length ?? 0) > 0)) &&
       canRouteOnPadLayers(this.input)
     ) {
       this.sharedPackages = routeFreshSurfaceBuses(

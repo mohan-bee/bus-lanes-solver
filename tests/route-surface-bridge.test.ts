@@ -194,6 +194,37 @@ test("a legal native surface route uses no barrel and search exhaustion remains 
   ).toBeNull()
 })
 
+test("surface feasibility probes distinguish an expansion cutoff from an impossible native length bound", () => {
+  for (const maxExpansions of [1, 63, 64, 65]) {
+    const input = fixture()
+    let limited = false
+    expect(
+      finish(
+        routeSurfaceBridge(input, input.connections[0], {
+          maxExpansions,
+          onSearchLimit: () => {
+            limited = true
+          },
+        }),
+      ),
+    ).toBeNull()
+    expect(limited).toBe(true)
+    limited = false
+    expect(
+      finish(
+        routeSurfaceBridge(input, input.connections[0], {
+          maxExpansions,
+          maxLength: 5,
+          onSearchLimit: () => {
+            limited = true
+          },
+        }),
+      ),
+    ).toBeNull()
+    expect(limited).toBe(false)
+  }
+})
+
 test("untimed bridge validation checks contacts between both native-layer approaches", () => {
   const input = fixture(),
     connection = input.connections[0],

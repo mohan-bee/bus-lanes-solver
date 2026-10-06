@@ -1,4 +1,7 @@
-import { getCopperLayerNames } from "@tscircuit/fanout-solver"
+import {
+  getCopperLayerNames,
+  validateRoutedCopperDrc,
+} from "@tscircuit/fanout-solver"
 import { distance, length } from "./geometry"
 import { joinSignalEscapes } from "./join-signal-escapes"
 import { tuningPathIsSelfClear } from "./length-tuning"
@@ -16,7 +19,8 @@ import type { SimpleRouteJson, Trace, Wire } from "./types"
 /** Tune only explicitly caller-owned surface approaches of ordinary signals.
  * Every carrier and barrel stays fixed. Supplied input traces, paired corridors,
  * native pads, and all other connections stay hard and byte-identical.
- * Targets account for both approaches plus the unchanged carrier. */
+ * Tune one maximal planar run at a time, including between-via runs on either
+ * allowed outer layer. Targets include every held run, supplied fanout and carrier. */
 export function* tuneGeneratedOrdinaryEscapes(
   input: SimpleRouteJson,
   carriers: Trace[],
@@ -33,8 +37,11 @@ export function* tuneGeneratedOrdinaryEscapes(
   } | null
 > {
   const physical = getCopperLayerNames(input.layerCount)
-  const surface = physical[0]
-  if (!input.allowedLayers?.includes(surface)) return null
+  const outer = new Set([physical[0], physical.at(-1)!])
+  const allowed = new Set(
+    input.allowedLayers?.filter((layer) => outer.has(layer)),
+  )
+  if (!allowed.size) return null
   const carrierIds = new Set(carriers.map((t) => t.pcb_trace_id))
   const escapeIds = new Set(generatedEscapes.map((t) => t.pcb_trace_id))
   if (escapeIds.size !== generatedEscapes.length)
@@ -74,9 +81,8 @@ export function* tuneGeneratedOrdinaryEscapes(
       return (
         !paired.has(name) &&
         (!requested || requested.has(name)) &&
-        t.route.every((p) => p.route_type === "wire") &&
         t.route[0]?.route_type === "wire" &&
-        t.route[0].layer !== surface &&
+        t.route.every((p) => p.route_type === "wire" && allowed.has(p.layer)) &&
         deficit(t) > 1e-7
       )
     })
@@ -99,112 +105,210 @@ export function* tuneGeneratedOrdinaryEscapes(
       .filter((e) => e.connection_name === name)
       .sort((a, b) => length(b.route) - length(a.route))
     for (const oldEscape of candidates) {
-      const escape = escapes.find((e) => e === oldEscape)!
-      const viaIndex = escape.route.findIndex((p) => p.route_type === "via")
-      if (
-        viaIndex < 2 ||
-        escape.route.filter((p) => p.route_type === "via").length !== 1
+      const runs = ownedPlanarRuns(oldEscape, allowed).sort(
+        (a, b) => b.length - a.length,
       )
-        continue
-      const top = escape.route.slice(0, viaIndex)
-      const via = escape.route[viaIndex]
-      if (
-        via.route_type !== "via" ||
-        via.from_layer !== surface ||
-        top.some((p) => p.route_type !== "wire" || p.layer !== surface) ||
-        distance(top.at(-1)!, via) > 1e-8
-      )
-        continue
-      const pad = top[0] as Wire
-      const stub: Trace = { ...escape, route: top }
-      const stubInput: SimpleRouteJson = {
-        ...local,
-        connections: local.connections.map((c) =>
-          c.name === name
-            ? { ...c, pointsToConnect: [pad, top.at(-1)! as Wire] }
-            : c,
-        ),
-        traces: [
-          ...local.traces!.filter((t) => t !== escape),
+      for (const originalRun of runs) {
+        const escape = escapes.find(
+          (e) => e.pcb_trace_id === oldEscape.pcb_trace_id,
+        )!
+        const run = ownedPlanarRuns(escape, allowed).find(
+          (candidate) => candidate.ordinal === originalRun.ordinal,
+        )!
+        const planar = escape.route.slice(run.start, run.end + 1) as Wire[]
+        const pad = planar[0]
+        const stub: Trace = {
+          ...escape,
+          route: planar,
+          coupledSection: undefined,
+          curvedSegments: escape.curvedSegments
+            ?.filter((index) => index > run.start && index <= run.end)
+            .map((index) => index - run.start),
+        }
+        const held: Trace[] = [
           {
             ...escape,
-            pcb_trace_id: `${escape.pcb_trace_id}_held_barrel`,
-            route: escape.route.slice(viaIndex),
+            pcb_trace_id: `${escape.pcb_trace_id}_held_before_${run.ordinal}`,
+            route: escape.route.slice(0, run.start),
           },
-          ...carriers,
-        ],
-      }
-      let tuned: Trace
-      try {
-        tuned = tuneSmoothLengths(
-          stubInput,
-          [stub],
-          new Map([[name, targets.get(name)!]]),
           {
-            maxCandidates: options.maxCandidatesPerEscape ?? 4096,
-            packMeanders: true,
+            ...escape,
+            pcb_trace_id: `${escape.pcb_trace_id}_held_after_${run.ordinal}`,
+            route: escape.route.slice(run.end + 1),
           },
-        )[0]
-      } catch (error) {
-        if (!(error instanceof IncompleteLengthTuningError)) {
+        ].filter((t) => t.route.length)
+        const stubInput: SimpleRouteJson = {
+          ...local,
+          connections: local.connections.map((c) =>
+            c.name === name
+              ? { ...c, pointsToConnect: [pad, planar.at(-1)!] }
+              : c,
+          ),
+          traces: [
+            ...local.traces!.filter((t) => t !== escape),
+            ...held,
+            ...carriers,
+          ],
+        }
+        let tuned: Trace
+        try {
+          tuned = tuneSmoothLengths(
+            stubInput,
+            [stub],
+            new Map([[name, targets.get(name)!]]),
+            {
+              maxCandidates: Math.max(
+                0,
+                Math.floor(
+                  (options.maxCandidatesPerEscape ?? 4096) / runs.length,
+                ),
+              ),
+              packMeanders: true,
+            },
+          )[0]
+        } catch (error) {
+          if (!(error instanceof IncompleteLengthTuningError)) {
+            yield
+            continue
+          }
+          tuned = error.traces[0]
+        }
+        const added = length(tuned.route) - length(stub.route)
+        if (added < 1e-7) {
           yield
           continue
         }
-        tuned = error.traces[0]
-      }
-      const added = length(tuned.route) - length(stub.route)
-      if (added < 1e-7) {
-        yield
-        continue
-      }
-      const replacement: Trace = {
-        ...escape,
-        route: [...tuned.route, ...escape.route.slice(viaIndex)],
-        curvedSegments: tuned.curvedSegments,
-      }
-      const ownEscapes = escapes
-        .map((e) => (e === escape ? replacement : e))
-        .filter((e) => e.connection_name === name)
-      const joined = joinSignalEscapes(carrier, ownEscapes)
-      const others = carriers
-        .filter((t) => t.connection_name !== name)
-        .map((t) =>
-          joinSignalEscapes(
-            t,
-            escapes.filter((e) => e.connection_name === t.connection_name),
-          ),
+        const replacement: Trace = {
+          ...escape,
+          route: [
+            ...escape.route.slice(0, run.start),
+            ...tuned.route,
+            ...escape.route.slice(run.end + 1),
+          ],
+          curvedSegments: [
+            ...(escape.curvedSegments ?? []).filter(
+              (index) => index <= run.start,
+            ),
+            ...(tuned.curvedSegments ?? []).map((index) => index + run.start),
+            ...(escape.curvedSegments ?? [])
+              .filter((index) => index > run.end)
+              .map((index) => index + tuned.route.length - planar.length),
+          ].sort((a, b) => a - b),
+        }
+        const ownEscapes = escapes
+          .map((e) => (e === escape ? replacement : e))
+          .filter((e) => e.connection_name === name)
+        const joined = joinSignalEscapes(carrier, ownEscapes)
+        const others = carriers
+          .filter((t) => t.connection_name !== name)
+          .map((t) =>
+            joinSignalEscapes(
+              t,
+              escapes.filter((e) => e.connection_name === t.connection_name),
+            ),
+          )
+        const scene = new VectorScene(
+          input,
+          { ...originalConnection, pointsToConnect: [pad, planar.at(-1)!] },
+          pad.width,
+          fixedCopper({ ...input, traces: [...supplied, ...others] }),
         )
-      const scene = new VectorScene(
-        input,
-        { ...originalConnection, pointsToConnect: [pad, top.at(-1)! as Wire] },
-        pad.width,
-        fixedCopper({ ...input, traces: [...supplied, ...others] }),
-      )
-      if (
-        !scene.pathVisible(tuned.route) ||
-        !tuningPathIsSelfClear(
-          tuned.route,
-          pad.width +
-            (input.minTraceToPadEdgeClearance ??
-              input.defaultObstacleMargin ??
-              0.075),
-        ) ||
-        !createTerminalViaClearanceChecker(stubInput, stub, {
-          preserveExistingApproach: false,
-        })(tuned.route) ||
-        !routeAnglesAreConventional([joined]) ||
-        surfaceBridgeSelfShorts(input, originalConnection, joined) ||
-        length(joined.route) > maxLength + 1e-7 ||
-        length(joined.route) > targets.get(name)! + 1e-6
-      ) {
+        if (
+          tuned.route.some(
+            (p) =>
+              p.route_type !== "wire" ||
+              p.layer !== pad.layer ||
+              p.width !== pad.width,
+          ) ||
+          distance(tuned.route[0], planar[0]) > 1e-8 ||
+          distance(tuned.route.at(-1)!, planar.at(-1)!) > 1e-8 ||
+          !scene.pathVisible(tuned.route) ||
+          !tuningPathIsSelfClear(
+            tuned.route,
+            pad.width +
+              (input.minTraceToPadEdgeClearance ??
+                input.defaultObstacleMargin ??
+                0.075),
+          ) ||
+          !createTerminalViaClearanceChecker(stubInput, stub, {
+            preserveExistingApproach: false,
+          })(tuned.route) ||
+          !routeAnglesAreConventional([joined]) ||
+          surfaceBridgeSelfShorts(input, originalConnection, joined) ||
+          length(joined.route) +
+            fixedRouteLength({ ...input, traces: supplied }, name) >
+            maxLength + 1e-7 ||
+          length(joined.route) +
+            fixedRouteLength({ ...input, traces: supplied }, name) >
+            targets.get(name)! + 1e-6
+        ) {
+          yield
+          continue
+        }
+        // The pending connection may describe carrier handoff vias. Native DRC
+        // needs the real pad endpoints supplied by the complete owned approaches.
+        const physicalInput = {
+          ...input,
+          connections: input.connections.map((connection) => {
+            const route = [...others, joined].find(
+              (trace) => trace.connection_name === connection.name,
+            )
+            if (!route) return connection
+            return {
+              ...connection,
+              pointsToConnect: [
+                route.route[0] as Wire,
+                route.route.at(-1)! as Wire,
+              ],
+            }
+          }),
+        }
+        const drc = validateRoutedCopperDrc({
+          inputSrj: { ...physicalInput, traces: supplied },
+          routedSrj: {
+            ...physicalInput,
+            traces: [...supplied, ...others, joined],
+          },
+          clearance:
+            input.minTraceToPadEdgeClearance ??
+            input.defaultObstacleMargin ??
+            0.075,
+          allowBlindAndBuriedVias: false,
+        } as Parameters<typeof validateRoutedCopperDrc>[0])
+        if (
+          (!drc.valid && drc.issues.length === 0) ||
+          drc.issues.some(
+            (issue) =>
+              (!issue.traceId && !issue.otherTraceId) ||
+              issue.traceId === joined.pcb_trace_id ||
+              issue.otherTraceId === joined.pcb_trace_id,
+          )
+        ) {
+          yield
+          continue
+        }
+        escapes = escapes.map((e) => (e === escape ? replacement : e))
+        local = { ...local, traces: [...supplied, ...escapes] }
+        changed = true
         yield
-        continue
+        if (
+          length(joined.route) +
+            fixedRouteLength({ ...input, traces: supplied }, name) >=
+          targets.get(name)! - 1e-7
+        )
+          break
       }
-      escapes = escapes.map((e) => (e === escape ? replacement : e))
-      local = { ...local, traces: [...supplied, ...escapes] }
-      changed = true
-      yield
-      if (length(joined.route) >= targets.get(name)! - 1e-7) break
+      if (
+        length(
+          joinSignalEscapes(
+            carrier,
+            escapes.filter((e) => e.connection_name === name),
+          ).route,
+        ) +
+          fixedRouteLength({ ...input, traces: supplied }, name) >=
+        targets.get(name)! - 1e-7
+      )
+        break
     }
   }
   if (!changed) return null
@@ -212,12 +316,14 @@ export function* tuneGeneratedOrdinaryEscapes(
     unfinishedNames: string[] = []
   for (const carrier of eligible) {
     const name = carrier.connection_name!
-    const total = length(
-      joinSignalEscapes(
-        carrier,
-        escapes.filter((e) => e.connection_name === name),
-      ).route,
-    )
+    const total =
+      fixedRouteLength({ ...input, traces: supplied }, name) +
+      length(
+        joinSignalEscapes(
+          carrier,
+          escapes.filter((e) => e.connection_name === name),
+        ).route,
+      )
     ;(total >= targets.get(name)! - 1e-7 ? matchedNames : unfinishedNames).push(
       name,
     )
@@ -229,4 +335,55 @@ export function* tuneGeneratedOrdinaryEscapes(
     matchedNames,
     unfinishedNames,
   }
+}
+
+interface OwnedPlanarRun {
+  start: number
+  end: number
+  ordinal: number
+  length: number
+}
+/** Maximal continuous caller-owned wire runs; every intervening barrel is held. */
+function ownedPlanarRuns(
+  escape: Trace,
+  allowed: Set<string>,
+): OwnedPlanarRun[] {
+  const runs: OwnedPlanarRun[] = []
+  let ordinal = 0
+  for (let start = 0; start < escape.route.length; ) {
+    const first = escape.route[start]
+    if (first.route_type !== "wire") {
+      start++
+      continue
+    }
+    let end = start
+    while (end + 1 < escape.route.length) {
+      const next = escape.route[end + 1]
+      if (next.route_type !== "wire" || next.layer !== first.layer) break
+      end++
+    }
+    const before = escape.route[start - 1],
+      after = escape.route[end + 1]
+    const wires = escape.route.slice(start, end + 1) as Wire[]
+    if (
+      end > start &&
+      allowed.has(first.layer) &&
+      wires.every(
+        (p) =>
+          p.width === first.width && Number.isFinite(p.width) && p.width > 0,
+      ) &&
+      (!before ||
+        (before.route_type === "via" &&
+          before.to_layer === first.layer &&
+          distance(before, first) < 1e-8)) &&
+      (!after ||
+        (after.route_type === "via" &&
+          after.from_layer === first.layer &&
+          distance(after, wires.at(-1)!) < 1e-8))
+    )
+      runs.push({ start, end, ordinal, length: length(wires) })
+    ordinal++
+    start = end + 1
+  }
+  return runs
 }

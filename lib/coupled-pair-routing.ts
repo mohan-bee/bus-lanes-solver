@@ -51,6 +51,9 @@ export function* routeCoupledPair(
     preferPackageOnlyTuning?: boolean
     /** Provisional topology; final exterior coupling is still mandatory. */
     allowProvisionalPairTuning?: boolean
+    /** Optional whole-copper finalization. Rejected candidates leave the
+     * remaining package handoffs available to the caller's prefix search. */
+    strictCandidate?: (traces: Trace[]) => Generator<void, Trace[] | null>
   },
 ): Generator<void, Trace[] | null> {
   const members = pair.connectionNames.map(
@@ -115,6 +118,20 @@ export function* routeCoupledPair(
   const pairInBus = (input.buses ?? []).some((b) =>
     pair.connectionNames.some((n) => b.connectionNames.includes(n)),
   )
+  const extent = (
+    obstacle: SimpleRouteJson["obstacles"][number],
+    coordinate: "x" | "y",
+  ) => {
+    if (obstacle.shape === "circle") return obstacle.width / 2
+    const angle = ((obstacle.ccwRotationDegrees ?? 0) * Math.PI) / 180
+    return (
+      (coordinate === "x"
+        ? Math.abs(Math.cos(angle)) * obstacle.width +
+          Math.abs(Math.sin(angle)) * obstacle.height
+        : Math.abs(Math.sin(angle)) * obstacle.width +
+          Math.abs(Math.cos(angle)) * obstacle.height) / 2
+    )
+  }
   const handoffChoices = centers.map((p, i) => {
     const pads = originalPads
       .flat()
@@ -130,28 +147,20 @@ export function* routeCoupledPair(
     const s = i === 0 ? sign : -sign
     const edge = field.length
       ? s > 0
-        ? Math.max(
-            ...field.map(
-              (o) => o.center[axis] + (vertical ? o.height : o.width) / 2,
-            ),
-          )
-        : Math.min(
-            ...field.map(
-              (o) => o.center[axis] - (vertical ? o.height : o.width) / 2,
-            ),
-          )
+        ? Math.max(...field.map((o) => o.center[axis] + extent(o, axis)))
+        : Math.min(...field.map((o) => o.center[axis] - extent(o, axis)))
       : p[axis]
     const margin = 2 * width + gap + clearance
     const front = { ...p, [axis]: edge + s * margin }
     if (!field.length) return [front]
     const left =
-      Math.min(...field.map((o) => o.center.x - o.width / 2)) - margin
+      Math.min(...field.map((o) => o.center.x - extent(o, "x"))) - margin
     const right =
-      Math.max(...field.map((o) => o.center.x + o.width / 2)) + margin
+      Math.max(...field.map((o) => o.center.x + extent(o, "x"))) + margin
     const bottom =
-      Math.min(...field.map((o) => o.center.y - o.height / 2)) - margin
+      Math.min(...field.map((o) => o.center.y - extent(o, "y"))) - margin
     const top =
-      Math.max(...field.map((o) => o.center.y + o.height / 2)) + margin
+      Math.max(...field.map((o) => o.center.y + extent(o, "y"))) + margin
     const openFront = pairInBus
       ? front
       : i === 0
@@ -196,24 +205,18 @@ export function* routeCoupledPair(
       const reserve =
         Math.max(...sharingBuses.map((bus) => bus.connectionNames.length)) *
         (width + clearance)
-      const extent = (o: (typeof field)[number]) => {
-        const angle = ((o.ccwRotationDegrees ?? 0) * Math.PI) / 180
-        return (
-          (vertical
-            ? Math.abs(Math.cos(angle)) * o.width +
-              Math.abs(Math.sin(angle)) * o.height
-            : Math.abs(Math.sin(angle)) * o.width +
-              Math.abs(Math.cos(angle)) * o.height) / 2
-        )
-      }
       const low =
-        Math.min(...field.map((o) => o.center[crossAxis] - extent(o))) -
+        Math.min(
+          ...field.map((o) => o.center[crossAxis] - extent(o, crossAxis)),
+        ) -
         reserve -
         width -
         gap -
         clearance
       const high =
-        Math.max(...field.map((o) => o.center[crossAxis] + extent(o))) +
+        Math.max(
+          ...field.map((o) => o.center[crossAxis] + extent(o, crossAxis)),
+        ) +
         reserve +
         width +
         gap +
@@ -335,7 +338,8 @@ export function* routeCoupledPair(
     negotiation &&
     !negotiation.copper.length &&
     !negotiation.penalty &&
-    !negotiation.history
+    !negotiation.history &&
+    !negotiation.strictCandidate
       ? coupledPairCache(input, fixed)
       : undefined
   for (const { point: first, approachStep } of approachChoices)
@@ -754,6 +758,11 @@ export function* routeCoupledPair(
             }
             if (!finished) continue
             traces = finished
+            if (negotiation?.strictCandidate) {
+              const strict = yield* negotiation.strictCandidate(traces)
+              if (strict) return strict
+              continue
+            }
             // The polygon includes imaginary closures between separate pair
             // terminals. A lane may legally leave through those openings, so
             // check actual reachability before treating this as a sealed pocket.
