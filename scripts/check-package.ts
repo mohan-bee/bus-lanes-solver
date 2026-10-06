@@ -10,14 +10,20 @@ import { join, resolve } from "node:path"
 
 const root = resolve(import.meta.dir, "..")
 const temporary = mkdtempSync(join(tmpdir(), "solver-package-"))
-const run = async (command: string, args: string[], cwd = root): Promise<string> => {
+const run = async (
+  command: string,
+  args: string[],
+  cwd = root,
+): Promise<string> => {
   const capture = mkdtempSync(join(temporary, "command-"))
   const stdoutPath = join(capture, "stdout")
   const stderrPath = join(capture, "stderr")
   const child = Bun.spawn([command, ...args], {
     cwd,
     env: { ...process.env, npm_config_cache: join(temporary, "npm-cache") },
-    stdin: "ignore", stdout: Bun.file(stdoutPath), stderr: Bun.file(stderrPath),
+    stdin: "ignore",
+    stdout: Bun.file(stdoutPath),
+    stderr: Bun.file(stderrPath),
   })
   const code = await child.exited
   const stdout = readFileSync(stdoutPath, "utf8")
