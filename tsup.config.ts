@@ -10,4 +10,5 @@ export default defineConfig({
   noExternal: [/.*/],
   clean: true,
   outDir: "dist",
+  dts: true,
 })

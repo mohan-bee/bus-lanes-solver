@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process"
 import {
   mkdtempSync,
   mkdirSync,
@@ -11,18 +10,26 @@ import { join, resolve } from "node:path"
 
 const root = resolve(import.meta.dir, "..")
 const temporary = mkdtempSync(join(tmpdir(), "solver-package-"))
-const run = (command: string, args: string[], cwd = root) =>
-  execFileSync(command, args, {
+const run = async (command: string, args: string[], cwd = root): Promise<string> => {
+  const capture = mkdtempSync(join(temporary, "command-"))
+  const stdoutPath = join(capture, "stdout")
+  const stderrPath = join(capture, "stderr")
+  const child = Bun.spawn([command, ...args], {
     cwd,
     env: { ...process.env, npm_config_cache: join(temporary, "npm-cache") },
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
+    stdin: "ignore", stdout: Bun.file(stdoutPath), stderr: Bun.file(stderrPath),
   })
+  const code = await child.exited
+  const stdout = readFileSync(stdoutPath, "utf8")
+  const stderr = readFileSync(stderrPath, "utf8")
+  if (code !== 0) throw new Error(`${command} failed (${code}): ${stderr}`)
+  return stdout
+}
 
 try {
   // Pack the same artifact that npm publish sends to GitHub Packages.
   const [packed] = JSON.parse(
-    run("npm", [
+    await run("npm", [
       "pack",
       "--ignore-scripts",
       "--json",
@@ -47,7 +54,7 @@ try {
     join(consumer, "package.json"),
     JSON.stringify({ private: true, type: "module" }),
   )
-  run(
+  await run(
     "npm",
     [
       "install",
@@ -75,7 +82,7 @@ try {
   const source = `import { ${names.join(", ")} } from "${name}";\n${names.map((n) => `if (typeof ${n} !== "function") throw new Error("Missing ${n}");`).join("\n")}\n`
   writeFileSync(join(consumer, "consumer.js"), source)
   writeFileSync(join(consumer, "consumer.ts"), source)
-  run("node", ["consumer.js"], consumer)
+  await run("node", ["consumer.js"], consumer)
   writeFileSync(
     join(consumer, "tsconfig.json"),
     JSON.stringify({
@@ -91,7 +98,7 @@ try {
       files: ["consumer.ts"],
     }),
   )
-  run(
+  await run(
     "node",
     [
       join(root, "node_modules/typescript/bin/tsc"),

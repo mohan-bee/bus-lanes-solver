@@ -4,7 +4,7 @@
   },
   "entries": [
     {
-      "filePath": "lib/index.ts",
+      "filePath": "dist/index.d.ts",
       "outFile": "dist/index.d.ts",
       "libraries": {
         "inlinedLibraries": ["graphics-debug", "@tscircuit/solver-utils"]
