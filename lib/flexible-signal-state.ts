@@ -14,7 +14,8 @@ export interface FlexibleSignalState {
 export function signalLayers(input: SimpleRouteJson, connection: Connection) {
   return (input.allowedLayers ?? getCopperLayerNames(input.layerCount)).filter(
     (layer) =>
-      !connection.pointsToConnect.some((point) => point.layer === layer) &&
+      (!connection.pointsToConnect.some((point) => point.layer === layer) ||
+        input.allowedLayers?.includes(layer)) &&
       (input.buses ?? []).every(
         (bus) =>
           !bus.connectionNames.includes(connection.name) ||

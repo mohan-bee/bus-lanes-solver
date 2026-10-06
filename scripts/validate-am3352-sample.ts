@@ -1,4 +1,5 @@
 import { withAm3352CaBus } from "./am3352-ca-bus"
+import { am3352Carrier } from "./am3352-carrier"
 import { validateRoutedCopperDrc } from "@tscircuit/fanout-solver"
 import type { SimpleRouteJson, Trace, Terminal, Wire } from "../lib"
 import { distance } from "../lib/geometry"
@@ -355,17 +356,26 @@ export async function validateAm3352Sample(
       if (traceIds.has(trace.pcb_trace_id))
         issues.push("duplicate output trace ID")
       traceIds.add(trace.pcb_trace_id)
-      const vias = trace.route.flatMap((p, i) =>
-        p.route_type === "via" ? [i] : [],
-      )
-      if (vias.length !== 2) {
+      const span = am3352Carrier(trace)
+      if (!span) {
         issues.push(
-          `${trace.connection_name}: expected two terminal dogbones and no carrier vias`,
+          `${trace.connection_name}: invalid surface route or owned layer transitions`,
         )
         continue
       }
-      const carrier = trace.route.slice(vias[0] + 1, vias[1])
-      const layer = (carrier[0] as Wire | undefined)?.layer
+      if (
+        span.viaCount > 2 &&
+        (input.buses?.some((bus) =>
+          bus.connectionNames.includes(trace.connection_name ?? ""),
+        ) ||
+          input.differentialPairs?.some((pair) =>
+            pair.connectionNames.includes(trace.connection_name ?? ""),
+          ))
+      )
+        issues.push(
+          `${trace.connection_name}: constrained signals need a single carrier and two terminal approaches`,
+        )
+      const { route: carrier, layer } = span
       if (
         carrier.length < 2 ||
         (input.allowedLayers && !input.allowedLayers.includes(layer ?? "")) ||

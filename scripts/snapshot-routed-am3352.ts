@@ -6,6 +6,7 @@ import {
   type GraphicsObject,
 } from "graphics-debug"
 import { BusLanesPipelineSolver, type Trace } from "../lib"
+import { am3352Carrier } from "./am3352-carrier"
 import {
   am3352Hash,
   am3352SamplePlacements,
@@ -82,9 +83,8 @@ const layerColors: Record<string, string> = {
   bottom: "#8cd391",
 }
 const carrierLayer = (trace: Trace) => {
-  const firstVia = trace.route.findIndex((p) => p.route_type === "via")
-  const carrier = trace.route[firstVia + 1]
-  if (firstVia < 0 || carrier?.route_type !== "wire")
+  const carrier = am3352Carrier(trace)
+  if (!carrier)
     throw Error("Snapshot signal is missing its validated carrier layer")
   return carrier.layer
 }
@@ -274,7 +274,7 @@ export async function exportAm3352RoutedSnapshots(
       backgroundColor: "#10151b",
       svgWidth: pngWidth,
       svgHeight: pngHeight,
-    })
+    }).replace(/[ \t]+$/gm, "")
     artifacts.push({ name: candidate.metadata.name, png, svg, validation })
   }
   await mkdir(directory, { recursive: true })
@@ -295,7 +295,7 @@ export async function exportAm3352RoutedSnapshots(
 if (import.meta.main) {
   const args = process.argv.slice(2)
   const directory = args[0] ?? "docs/routed-am3352-placements"
-  const timeoutSeconds = Number(args[1] ?? 60)
+  const timeoutSeconds = Number(args[1] ?? 1800)
   if (
     args.length > 2 ||
     !Number.isFinite(timeoutSeconds) ||

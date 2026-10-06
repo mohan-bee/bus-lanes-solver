@@ -1,3 +1,8 @@
+import {
+  expandedSignalSiteChoices,
+  generatedEscapeHolesConflict,
+} from "./expanded-signal-sites"
+import { retargetGeneratedEscape } from "./retarget-generated-escape"
 import { maximumCarrierLength } from "./route-lengths"
 import { CopperConflictIndex } from "./copper-conflict-index"
 import { routeAlternateSignalDogbones } from "./alternate-signal-dogbones"
@@ -135,6 +140,7 @@ export function* expandSignalSitePocket(
  * blockers together with carrier crossings; carrier-only closure misses them. */
 export function* findViaAwareSignalPocket(
   state: FlexibleSignalState,
+  probeNames?: ReadonlySet<string>,
 ): Generator<void, Set<string>> {
   const { native } = state,
     carriers = [...state.retained, ...state.traces]
@@ -147,28 +153,59 @@ export function* findViaAwareSignalPocket(
   const existing = [...state.escapes, ...carriers].map((trace) => ({
     name: trace.connection_name!,
     copper: fixedCopper({ ...native, obstacles: [], traces: [trace] }),
+    traces: [trace],
   }))
   const conflicts = new CopperConflictIndex()
-  const hits = (copper: Copper[]) =>
+  const hits = (copper: Copper[], escapes: Trace[] = [], ownName?: string) =>
     new Set(
       existing
-        .filter((other) =>
-          conflicts.firstConflict(copper, other.copper, clearance - 1e-8),
+        .filter(
+          (other) =>
+            other.name !== ownName &&
+            (conflicts.firstConflict(copper, other.copper, clearance - 1e-8) ||
+              generatedEscapeHolesConflict(native, escapes, other.traces)),
         )
         .map((other) => other.name),
     )
   for (const connection of native.connections.filter(
-    (c) => !carriers.some((t) => t.connection_name === c.name),
+    (c) =>
+      !carriers.some((t) => t.connection_name === c.name) ||
+      probeNames?.has(c.name),
   )) {
     const layers = signalLayers(native, connection)
     if (!layers.length) return new Set()
     const single = { ...native, connections: [connection] }
     const ends: Array<Array<{ point: Terminal; escape: Trace }>> = [[], []]
+    for (let end = 0; end < 2; end++) {
+      const point = connection.pointsToConnect[end]
+      if (layers.includes(point.layer))
+        ends[end].push({
+          point,
+          escape: {
+            type: "pcb_trace",
+            pcb_trace_id: `local_surface_${connection.name}_${end}`,
+            connection_name: connection.name,
+            source_trace_id: connection.source_trace_id ?? connection.name,
+            route: [
+              {
+                ...point,
+                route_type: "wire",
+                layer: point.layer,
+                width: signalWidth(native, connection),
+              },
+            ],
+          },
+        })
+    }
+    const siteLayer =
+      layers.find((layer) =>
+        connection.pointsToConnect.every((point) => point.layer !== layer),
+      ) ?? layers[0]
     for (let variant = 0; variant < 4; variant++) {
       try {
         const generated = routeAlternateSignalDogbones(
           single,
-          signalDogboneOptions(single, new Map([[connection.name, layers[0]]])),
+          signalDogboneOptions(single, new Map([[connection.name, siteLayer]])),
           variant,
         )
         for (let end = 0; end < 2; end++) {
@@ -200,24 +237,39 @@ export function* findViaAwareSignalPocket(
     let best: { cost: number; names: Set<string> } | undefined
     for (const a of ends[0])
       for (const b of ends[1]) {
-        const escapeCopper = fixedCopper({
-            ...native,
-            obstacles: [],
-            traces: [a.escape, b.escape],
-          }),
-          viaHits = hits(escapeCopper)
-        if ([...viaHits].some((name) => pairs.has(name))) continue
-        const input = {
-          ...native,
-          connections: [connection],
-          traces: [
-            ...(native.traces ?? []),
-            ...state.escapes.filter((t) => !viaHits.has(t.connection_name!)),
-            ...carriers.filter((t) => pairs.has(t.connection_name!)),
-          ],
-        }
-        const hard = fixedCopper(input)
         for (const layer of layers) {
+          const supports = (site: { point: Terminal; escape: Trace }) =>
+            site.escape.route.some((point) =>
+              point.route_type === "via"
+                ? point.layers?.includes(layer)
+                : point.layer === layer,
+            )
+          if (!supports(a) || !supports(b)) continue
+          const normalizedEscapes = [a.escape, b.escape].map((escape) =>
+            retargetGeneratedEscape(escape, layer),
+          )
+          const escapeCopper = fixedCopper({
+              ...native,
+              obstacles: [],
+              traces: normalizedEscapes,
+            }),
+            viaHits = hits(escapeCopper, normalizedEscapes, connection.name)
+          if ([...viaHits].some((name) => pairs.has(name))) continue
+          const input = {
+            ...native,
+            connections: [connection],
+            traces: [
+              ...(native.traces ?? []),
+              ...state.escapes.filter(
+                (t) =>
+                  pairs.has(t.connection_name!) ||
+                  (!viaHits.has(t.connection_name!) &&
+                    !probeNames?.has(t.connection_name!)),
+              ),
+              ...carriers.filter((t) => pairs.has(t.connection_name!)),
+            ],
+          }
+          const hard = fixedCopper(input)
           const local = {
             ...connection,
             pointsToConnect: [a.point, b.point].map((point) => ({
@@ -235,7 +287,12 @@ export function* findViaAwareSignalPocket(
             local.pointsToConnect[0],
             local.pointsToConnect[1],
             carriers
-              .filter((t) => !pairs.has(t.connection_name!))
+              .filter(
+                (t) =>
+                  !pairs.has(t.connection_name!) &&
+                  !probeNames?.has(t.connection_name!) &&
+                  t.connection_name !== connection.name,
+              )
               .flatMap(routeCopper),
             100,
             undefined,
@@ -260,7 +317,15 @@ export function* findViaAwareSignalPocket(
                   search.result,
                   layer,
                 ),
-                names = hits([...escapeCopper, ...routeCopper(trace)]),
+                names = new Set(
+                  [
+                    ...hits(
+                      [...escapeCopper, ...routeCopper(trace)],
+                      normalizedEscapes,
+                      connection.name,
+                    ),
+                  ].filter((name) => !probeNames?.has(name)),
+                ),
                 cost = names.size * 1000 + length(trace.route)
               if (
                 ![...names].some((name) => pairs.has(name)) &&
@@ -273,6 +338,63 @@ export function* findViaAwareSignalPocket(
           }
         }
       }
+    if (probeNames?.has(connection.name)) {
+      // A presently routed surface signal can still have a much shorter
+      // nonnative escape whose barrel is occupied by another ordinary net.
+      // Probe those alternatives against immutable paired/power copper and
+      // include their least-conflicting closure for each carrier plane.
+      const wideInput = {
+        ...single,
+        traces: [
+          ...(native.traces ?? []),
+          ...state.escapes.filter((escape) =>
+            pairs.has(escape.connection_name!),
+          ),
+          ...carriers.filter((trace) => pairs.has(trace.connection_name!)),
+        ],
+      }
+      for (const layer of layers) {
+        if (connection.pointsToConnect.every((point) => point.layer === layer))
+          continue
+        const options = yield* expandedSignalSiteChoices(
+          wideInput,
+          connection,
+          layer,
+        )
+        let wideBest: { score: number; names: Set<string> } | undefined
+        for (const option of options) {
+          const candidateCopper = fixedCopper({
+            ...native,
+            obstacles: [],
+            traces: [
+              ...option.escapes,
+              signalTrace(native, connection, option.route, layer),
+            ],
+          })
+          const maxLength = maximumCarrierLength(
+            {
+              ...native,
+              traces: [...(native.traces ?? []), ...option.escapes],
+            },
+            connection.name,
+          )
+          if (length(option.route) > maxLength + 1e-8) continue
+          const allNames = hits(
+            candidateCopper,
+            option.escapes,
+            connection.name,
+          )
+          if ([...allNames].some((name) => pairs.has(name))) continue
+          const names = new Set(
+            [...allNames].filter((name) => !probeNames.has(name)),
+          )
+          const score = names.size * 1000 + option.length
+          if (!wideBest || score < wideBest.score) wideBest = { score, names }
+        }
+        if (wideBest && wideBest.names.size <= 3)
+          for (const name of wideBest.names) remove.add(name)
+      }
+    }
     remove.add(connection.name)
     for (const name of best?.names ?? []) remove.add(name)
   }
