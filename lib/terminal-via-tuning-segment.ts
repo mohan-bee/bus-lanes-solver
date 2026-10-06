@@ -7,6 +7,7 @@ export function terminalViaTuningSegment(
   input: SimpleRouteJson,
   trace: Trace,
   index: number,
+  bank?: { start: Point; end: Point },
 ): {
   a: Point
   b: Point
@@ -14,8 +15,10 @@ export function terminalViaTuningSegment(
   firstLead: number
   lastLead: number
 } | null {
-  const a = trace.route[index],
-    b = trace.route[index + 1],
+  const originalA = trace.route[index],
+    originalB = trace.route[index + 1],
+    a = bank?.start ?? originalA,
+    b = bank?.end ?? originalB,
     span = distance(a, b),
     width = (trace.route[0] as Wire).width
   if (span < 0.01) return null
@@ -72,11 +75,17 @@ export function terminalViaTuningSegment(
   const cornerLead = width / 4,
     firstLead = Math.max(
       firstViaLead,
-      index > 0 && turns(trace.route[index - 1], a, b) ? cornerLead : 0,
+      distance(a, originalA) < 1e-8 &&
+        index > 0 &&
+        turns(trace.route[index - 1], a, b)
+        ? cornerLead
+        : 0,
     ),
     lastLead = Math.max(
       lastViaLead,
-      index + 2 < trace.route.length && turns(a, b, trace.route[index + 2])
+      distance(b, originalB) < 1e-8 &&
+        index + 2 < trace.route.length &&
+        turns(a, b, trace.route[index + 2])
         ? cornerLead
         : 0,
     )

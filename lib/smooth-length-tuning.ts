@@ -110,11 +110,10 @@ export function tuneSmoothLengths(
           i < t.coupledSection[1]
         )
           continue
-        const originalA = t.route[i],
-          originalB = t.route[i + 1],
-          usable = terminalViaTuningSegment(input, t, i)
-        if (!usable) continue
-        const { a, b, span } = usable
+        const a = t.route[i],
+          b = t.route[i + 1],
+          span = distance(a, b)
+        if (span < 0.01) continue
         const ux = (b.x - a.x) / span,
           uy = (b.y - a.y) / span
         // Spread substantial deficits over several lobes without turning small
@@ -179,6 +178,11 @@ export function tuneSmoothLengths(
                 x: start.x + ux * span * fraction,
                 y: start.y + uy * span * fraction,
               }
+              const usable = terminalViaTuningSegment(input, t, i, {
+                start,
+                end,
+              })
+              if (!usable) continue
               if (folded) {
                 if (
                   ++attemptedFolded >
@@ -194,8 +198,8 @@ export function tuneSmoothLengths(
                 throw Error("Smooth tuning candidate budget exhausted")
               }
               const lobes = createLobes(
-                start,
-                end,
+                usable.a,
+                usable.b,
                 delta,
                 teeth,
                 side,
@@ -210,11 +214,11 @@ export function tuneSmoothLengths(
               )
                 continue
               const bump: Point[] = [
-                ...(usable.firstLead ? [originalA] : []),
                 a,
+                ...(usable.firstLead ? [start, usable.a] : []),
                 ...lobes,
+                ...(usable.lastLead ? [usable.b, end] : []),
                 b,
-                ...(usable.lastLead ? [originalB] : []),
               ]
               if (!scene.pathVisible(bump)) continue
               const next = (
