@@ -1,4 +1,5 @@
 import { createTerminalViaClearanceChecker } from "./terminal-via-clearance"
+import { terminalViaTuningSegment } from "./terminal-via-tuning-segment"
 import { routeAnglesAreConventional } from "./route-angle-validation"
 import { foldedTuningLobes } from "./folded-tuning"
 import { packageApproachRegions, pointInBox } from "./package-approach-regions"
@@ -109,15 +110,16 @@ export function tuneSmoothLengths(
           i < t.coupledSection[1]
         )
           continue
-        const a = t.route[i],
-          b = t.route[i + 1],
-          span = distance(a, b)
-        if (span < 0.01) continue
+        const originalA = t.route[i],
+          originalB = t.route[i + 1],
+          usable = terminalViaTuningSegment(input, t, i)
+        if (!usable) continue
+        const { a, b, span } = usable
         const ux = (b.x - a.x) / span,
           uy = (b.y - a.y) / span
         // Spread substantial deficits over several lobes without turning small
         // corrections into dozens of microscopic teeth.
-        const maximumTeeth = Math.floor((span * 0.9) / pitch)
+        const maximumTeeth = Math.max(1, Math.floor((span * 0.9) / pitch))
         // Compact banks spend the available run on more rounded cells, so
         // added length fills the allocated bank without a tall sparse lobe.
         const preferredTeeth = Math.min(
@@ -163,11 +165,14 @@ export function tuneSmoothLengths(
         }
         for (const { teeth, fraction, position } of placements()) {
           const w = (span * fraction) / teeth
-          if (!folded && w < pitch) continue
           for (const side of [1, -1])
             for (const createLobes of folded
               ? [foldedTuningLobes]
               : [roundedTuningLobes, smoothTuningLobes]) {
+              // The cosine constructor independently bounds curvature radius.
+              // A shallow correction need not fit a whole serpentine cell.
+              if (!folded && w < pitch && createLobes !== smoothTuningLobes)
+                continue
               const offset = span * (1 - fraction) * position
               const start = { x: a.x + ux * offset, y: a.y + uy * offset }
               const end = {
@@ -204,7 +209,13 @@ export function tuneSmoothLengths(
                   ))
               )
                 continue
-              const bump: Point[] = [a, ...lobes, b]
+              const bump: Point[] = [
+                ...(usable.firstLead ? [originalA] : []),
+                a,
+                ...lobes,
+                b,
+                ...(usable.lastLead ? [originalB] : []),
+              ]
               if (!scene.pathVisible(bump)) continue
               const next = (
                 t.coupledSection ? (points: Point[]) => points : simplify
