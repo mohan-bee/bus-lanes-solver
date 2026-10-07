@@ -336,7 +336,14 @@ export class BusLanesPipelineSolver extends BaseSolver {
     // Surface routing negotiates carrier layers and owned approaches before
     // matching and control repair. Its aggregate work reserve includes those
     // stages; an explicitly supplied search budget remains authoritative.
-    const searchBudget = canRouteOnPadLayers(input) ? 2000000 : 200000
+    // Backward exits on two signal planes also need room for alternative pair
+    // corridors when a via-safe matching pocket rejects an earlier topology.
+    const searchBudget = canRouteOnPadLayers(input)
+      ? 2000000
+      : input.allowedLayers?.length === 2 &&
+          backwardFacingPackageTerminals(input)
+        ? 500000
+        : 200000
     this.MAX_ITERATIONS =
       (options.maxSearchIterations ?? searchBudget) *
       Math.max(1, input.layerCount)
