@@ -140,13 +140,29 @@ export function tuneSmoothLengths(
             Math.abs(a - preferredTeeth) - Math.abs(b - preferredTeeth) ||
             b - a,
         )
-        function* placements() {
+        function* placements(): Generator<{
+          teeth: number
+          fraction: number
+          position: number
+          roundedOnly?: boolean
+        }> {
           if (folded) {
             for (const teeth of [1, 2, 3])
               for (const fraction of [0.9, 0.65, 0.4])
                 for (const position of [0.5, 0, 1])
                   yield { teeth, fraction, position }
             return
+          }
+          // Prefer a compact rounded bank for ordinary lanes. Packed,
+          // phase-aligned and differential routing retain their search order.
+          if (
+            !options.packMeanders &&
+            !options.alignPeriods &&
+            !input.differentialPairs?.length
+          ) {
+            for (const teeth of counts)
+              for (const fraction of [0.1, 0.15, 0.25])
+                yield { teeth, fraction, position: 0.5, roundedOnly: true }
           }
           if (options.alignPeriods) {
             const projection = a.x * ux + a.y * uy
@@ -185,13 +201,14 @@ export function tuneSmoothLengths(
             }
           }
         }
-        for (const { teeth, fraction, position } of placements()) {
+        for (const { teeth, fraction, position, roundedOnly } of placements()) {
           const w = (span * fraction) / teeth
           if (!folded && w < pitch) continue
+          let generators = [roundedTuningLobes, smoothTuningLobes]
+          if (folded) generators = [foldedTuningLobes]
+          else if (roundedOnly) generators = [roundedTuningLobes]
           for (const side of [1, -1])
-            for (const createLobes of folded
-              ? [foldedTuningLobes]
-              : [roundedTuningLobes, smoothTuningLobes]) {
+            for (const createLobes of generators) {
               const offset = span * (1 - fraction) * position
               const start = { x: a.x + ux * offset, y: a.y + uy * offset }
               const end = {
