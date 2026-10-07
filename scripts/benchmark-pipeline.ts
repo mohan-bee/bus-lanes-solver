@@ -1,3 +1,4 @@
+import { checkSignalSelfShorts } from "./check-signal-self-shorts"
 import { createHash } from "node:crypto"
 import { resolve } from "node:path"
 import type { BusLanesPipelineSolver, SimpleRouteJson } from "../lib"
@@ -45,6 +46,9 @@ if (
   )
 )
   throw Error("Pipeline did not complete every connection exactly once")
+const selfShorts = checkSignalSelfShorts(input, solver.traces)
+if (selfShorts.length)
+  throw Error(selfShorts.map((error) => error.message).join("; "))
 const output = JSON.stringify(solver.getOutput())
 const outputPath = option("--output")
 if (outputPath) await Bun.write(outputPath, output)

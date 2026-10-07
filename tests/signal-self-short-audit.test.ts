@@ -67,3 +67,45 @@ test("untimed control audit materializes through-via lands that bypass earlier c
   expect(checkSignalSelfShorts(input, [withoutLands])).toHaveLength(0)
   expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(1)
 })
+
+for (const layer of ["top", "bottom"]) {
+  test(`${layer} native audit rejects tangency and retracing but permits ordinary joints`, () => {
+    const w = (x: number, y: number) => wire(x, y, layer)
+    expect(
+      checkSignalSelfShorts(input, [trace([w(0, 0), w(1, 0), w(1, 1)])]),
+    ).toHaveLength(0)
+    expect(
+      checkSignalSelfShorts(input, [trace([w(0, 0), w(1, 0), w(0.5, 0)])]),
+    ).toHaveLength(1)
+    expect(
+      checkSignalSelfShorts(input, [
+        trace([w(0, 0), w(1, 0), w(1, 1), w(0.5, 1), w(0.5, 0.1), w(-1, 0.1)]),
+      ]),
+    ).toHaveLength(1)
+  })
+}
+
+test("native audit permits projected crossings between separate wire layers", () => {
+  expect(
+    checkSignalSelfShorts(input, [
+      trace([
+        wire(-1, 0),
+        wire(1, 0),
+        {
+          route_type: "via",
+          x: 1,
+          y: 0,
+          from_layer: "top",
+          to_layer: "bottom",
+          layers: ["top", "inner1", "inner2", "bottom"],
+          via_diameter: 0.3,
+          via_hole_diameter: 0.15,
+        },
+        wire(1, 0, "bottom"),
+        wire(1, 1, "bottom"),
+        wire(0, 1, "bottom"),
+        wire(0, -1, "bottom"),
+      ]),
+    ]),
+  ).toHaveLength(0)
+})

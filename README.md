@@ -44,6 +44,12 @@ reversals, smooth length-tuning curves, coupled pair shapes, and the declared bu
 and pair skew limits. The separate AM62L DDR benchmarks alone do not establish
 this AM3352 result.
 
+The standard placement benchmark and pipeline benchmark also independently
+reject self-touching complete signal copper with the native trace self-short
+check, including terminal approaches and manufactured via lands. This applies
+to untimed controls as well as length-matched buses; a solver success alone
+cannot pass the benchmark or snapshot export.
+
 The separate core AM3352 regression measures these limits independently of the solver:
 
 | Measurement | Reviewed reference | Generated result | Regression limit |

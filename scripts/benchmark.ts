@@ -145,7 +145,7 @@ if (!workerName) {
     }
     const report = reports.at(-1)!
     console.log(
-      `${report.solved ? "PASS" : "FAIL"} ${report.sample} RAM=(${report.ram.x},${report.ram.y}) ${report.routedSignals}/${report.requestedSignals} signals ${(report.solveMilliseconds / 1000).toFixed(3)}s ${report.solved ? "DRC + matching passed" : (report.error ?? report.status)}`,
+      `${report.solved ? "PASS" : "FAIL"} ${report.sample} RAM=(${report.ram.x},${report.ram.y}) ${report.routedSignals}/${report.requestedSignals} signals ${(report.solveMilliseconds / 1000).toFixed(3)}s ${report.solved ? "DRC + matching + self-short audit passed" : (report.error ?? report.status)}`,
     )
     if (report.envelopeOptimization) {
       const { beforeAreaMm2, afterAreaMm2, milliseconds } =
