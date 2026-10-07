@@ -92,6 +92,8 @@ export interface SimpleRouteJson {
   }>
 }
 export interface SolverOptions {
+  /** Candidate budget for tuning the original paired corridor. */
+  originalCorridorTuningCandidates?: number
   smoothTuning?: boolean
   denseSearch?: boolean
   maxLaneIterations?: number

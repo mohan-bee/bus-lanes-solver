@@ -103,6 +103,29 @@ interface CopperEntry extends PreparedCopper {
 
 type Attachment = { id: number; path: Point[] }
 
+export interface GridRoutingAccess {
+  readonly nx: number
+  readonly ny: number
+  readonly cellCount: number
+  readonly starts: readonly Attachment[]
+  readonly ends: readonly Attachment[]
+  readonly neighbors: readonly {
+    dx: number
+    dy: number
+    offset: number
+    cost: number
+    bit: number
+    reverse: number
+  }[]
+  point(id: number): Point
+  isBlocked(id: number): boolean
+  hardEdgeIsClear(
+    id: number,
+    neighbor: GridRoutingAccess["neighbors"][number],
+  ): boolean
+  softEdgeIsClear(a: Point, b: Point): boolean
+}
+
 interface HardGrid {
   components?: GridComponents
   attachments: Map<string, Attachment[]>
@@ -261,6 +284,7 @@ export class GridHistoryProjector {
     d: Point,
     radius: number,
     wholeSegments = false,
+    increment = wholeSegments ? 0.3 : 1,
   ) {
     // Reference negotiated-route.ts accumulates history along both colliding
     // segments. Charging only the crossing point lets it slide along the same
@@ -311,7 +335,7 @@ export class GridHistoryProjector {
           }
       }
     }
-    for (const id of touched) history[id] += wholeSegments ? 0.3 : 1
+    for (const id of touched) history[id] += increment
   }
   protected point(id: number): Point {
     return {
@@ -329,6 +353,36 @@ export class GridHistoryProjector {
  * Conservative occupied cells accelerate dense pad fields. Every accepted edge
  * and endpoint connector is checked against continuous copper geometry. */
 export class GridVisibilitySearch extends GridHistoryProjector {
+  /** Shared continuous occupancy predicates for a search that changes layers.
+   * The caller owns its frontier; no A* scratch arrays are exposed. */
+  getRoutingAccess(): GridRoutingAccess {
+    return {
+      nx: this.nx,
+      ny: this.ny,
+      cellCount: this.cellCount,
+      starts: this.startAttachments,
+      ends: this.endAttachments,
+      neighbors: this.neighbors,
+      point: (id) => this.point(id),
+      isBlocked: (id) => !!this.blocked[id],
+      hardEdgeIsClear: (id, neighbor) => {
+        const next = id + neighbor.offset
+        if (!(this.hardEdgeKnown[id] & neighbor.bit)) {
+          this.hardEdgeKnown[id] |= neighbor.bit
+          this.hardEdgeKnown[next] |= neighbor.reverse
+          const a = this.point(id),
+            b = this.point(next)
+          if (!this.edgeClear(a.x, a.y, b.x, b.y, this.copperBuckets)) {
+            this.hardEdgeBlocked[id] |= neighbor.bit
+            this.hardEdgeBlocked[next] |= neighbor.reverse
+          }
+        }
+        return !(this.hardEdgeBlocked[id] & neighbor.bit)
+      },
+      softEdgeIsClear: (a, b) =>
+        this.edgeClear(a.x, a.y, b.x, b.y, this.softBuckets),
+    }
+  }
   expanded = 0
   failed = false
   solved = false

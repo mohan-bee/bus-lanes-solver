@@ -249,11 +249,20 @@ export function* routeFreshSurfaceSeeds(
         continue
       }
       if (firstNativeControl) {
-        state = yield* insertNativeSurfaceSignal(
-          native,
-          state,
-          firstNativeControl.name,
-        )
+        state =
+          native.allowedLayers?.length === 1
+            ? yield* insertOrdinarySignal(
+                native,
+                allocation,
+                state,
+                firstNativeControl.name,
+                false,
+              )
+            : yield* insertNativeSurfaceSignal(
+                native,
+                state,
+                firstNativeControl.name,
+              )
         if (!state) {
           plan = plans.next()
           continue

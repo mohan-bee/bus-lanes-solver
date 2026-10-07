@@ -1,3 +1,4 @@
+import { CopperConflictIndex } from "./copper-conflict-index"
 import { getCopperLayerNames } from "@tscircuit/fanout-solver"
 import { checkPcbTraceSelfShorts } from "@tscircuit/checks"
 import { chamferOrdinaryCorners } from "./chamfer-ordinary-corners"
@@ -23,6 +24,12 @@ import { fixedCopper, VectorScene } from "./vector-scene"
 import { connectors } from "./vector-visibility"
 
 export interface SurfaceBridgeOptions {
+  /** Accumulated congestion cost on the native pad and carrier planes. */
+  history?: {
+    bounds: SimpleRouteJson["bounds"]
+    step: number
+    values: readonly Float32Array[]
+  }
   gridStep?: number
   maxExpansions?: number
   maxLength?: number
@@ -54,6 +61,15 @@ interface Label {
   via?: boolean
 }
 
+/** A single inner carrier uses the native pad layer only for local escapes. */
+function innerCarrier(input: SimpleRouteJson) {
+  return input.allowedLayers?.length === 1 &&
+    /^inner\d+$/.test(input.allowedLayers[0]) &&
+    getCopperLayerNames(input.layerCount).includes(input.allowedLayers[0])
+    ? input.allowedLayers[0]
+    : undefined
+}
+
 export function surfaceBridgeEligible(
   input: SimpleRouteJson,
   connection: Connection,
@@ -65,16 +81,17 @@ export function surfaceBridgeEligible(
     pads.length === 2 &&
     pads[0].layer === pads[1].layer &&
     [physical[0], physical.at(-1)!].includes(pads[0].layer) &&
-    input.allowedLayers?.length === 2 &&
-    input.allowedLayers.includes(physical[0]) &&
-    input.allowedLayers.includes(physical.at(-1)!)
+    (!!innerCarrier(input) ||
+      (input.allowedLayers?.length === 2 &&
+        input.allowedLayers.includes(physical[0]) &&
+        input.allowedLayers.includes(physical.at(-1)!)))
   )
 }
 
-/** Search only the two explicitly permitted outer planes. A surface path may
- * hand off anywhere through manufactured barrels. Its carrier stays on one
- * plane between the first two vias; the owned approaches retain any later
- * transitions and may span the board instead of a nearby dogbone cell.
+/** Search the native pad plane and the permitted carrier plane. An inner
+ * carrier keeps pad-layer approaches local to their native packages. A surface
+ * path may hand off anywhere through manufactured barrels; its owned
+ * approaches retain any later transitions and may span the board.
  * Input copper stays immutable and hard. Optional soft copper adds search cost;
  * callers must resolve any remaining negotiated conflicts before acceptance. */
 export function* routeSurfaceBridge(
@@ -87,13 +104,15 @@ export function* routeSurfaceBridge(
     return null
   const pads = connection.pointsToConnect,
     surface = pads[0].layer,
-    bridge = surface === physical[0] ? physical.at(-1)! : physical[0]
+    inner = innerCarrier(input),
+    bridge = inner ?? (surface === physical[0] ? physical.at(-1)! : physical[0])
   if (
     pads[1].layer !== surface ||
     ![physical[0], physical.at(-1)!].includes(surface) ||
-    input.allowedLayers?.length !== 2 ||
-    !input.allowedLayers.includes(surface) ||
-    !input.allowedLayers.includes(bridge)
+    (!inner &&
+      (input.allowedLayers?.length !== 2 ||
+        !input.allowedLayers.includes(surface) ||
+        !input.allowedLayers.includes(bridge)))
   )
     return null
   const diameter = input.minViaPadDiameter ?? 0.3,
@@ -109,7 +128,7 @@ export function* routeSurfaceBridge(
   const softPenalty = options.softPenalty ?? 20,
     viaPenalty = options.viaPenalty ?? 4,
     requestedCells = options.maxGridCells ?? 1_000_000,
-    maxVias = options.maxVias ?? 2
+    maxVias = inner ? 2 : (options.maxVias ?? 2)
   if (
     !Number.isFinite(softPenalty) ||
     softPenalty < 0 ||
@@ -172,7 +191,13 @@ export function* routeSurfaceBridge(
     envelope = surfaceSearchBounds(
       input,
       connection,
-      options.searchPadding ?? 4,
+      options.searchPadding ??
+        (inner
+          ? Math.max(
+              input.bounds.maxX - input.bounds.minX,
+              input.bounds.maxY - input.bounds.minY,
+            )
+          : 4),
     ),
     minX = envelope.minX,
     minY = envelope.minY,
@@ -273,6 +298,45 @@ export function* routeSurfaceBridge(
     cache[next * 8 + ((direction + 4) % 8)] = cache[index]
     return clear
   }
+  const localEscapes = inner
+    ? pads.map((pad) => {
+        const owner = input.obstacles
+          .filter((obstacle) => obstacle.componentId)
+          .sort((a, b) => distance(a.center, pad) - distance(b.center, pad))[0]
+        const field = input.obstacles.filter(
+          (obstacle) => obstacle.componentId === owner?.componentId,
+        )
+        const margin = diameter * 10
+        return field.length
+          ? {
+              minX:
+                Math.min(...field.map((p) => p.center.x - p.width / 2)) -
+                margin,
+              maxX:
+                Math.max(...field.map((p) => p.center.x + p.width / 2)) +
+                margin,
+              minY:
+                Math.min(...field.map((p) => p.center.y - p.height / 2)) -
+                margin,
+              maxY:
+                Math.max(...field.map((p) => p.center.y + p.height / 2)) +
+                margin,
+            }
+          : undefined
+      })
+    : undefined
+  const withinEscape = (cell: number, count: number) => {
+    if (!localEscapes || count % 2) return true
+    const box = localEscapes[count === 0 ? 0 : 1],
+      at = point(cell)
+    return (
+      !!box &&
+      at.x >= box.minX &&
+      at.x <= box.maxX &&
+      at.y >= box.minY &&
+      at.y <= box.maxY
+    )
+  }
   const softTraces = options.softTraces ?? [],
     hasSoft = softTraces.length > 0,
     softInput = { ...input, obstacles: [], traces: softTraces },
@@ -318,14 +382,38 @@ export function* routeSurfaceBridge(
     direction: number,
     next: number,
   ) => {
-    if (!hasSoft || !softPenalty) return 1
+    const history = options.history
+    const at = point(next)
+    const historyX = history
+      ? Math.round((at.x - history.bounds.minX) / history.step)
+      : -1
+    const historyY = history
+      ? Math.round((at.y - history.bounds.minY) / history.step)
+      : -1
+    const historyColumns = history
+      ? Math.floor((history.bounds.maxX - history.bounds.minX) / history.step) +
+        1
+      : 0
+    const historyRows = history
+      ? Math.floor((history.bounds.maxY - history.bounds.minY) / history.step) +
+        1
+      : 0
+    const historic =
+      history &&
+      historyX >= 0 &&
+      historyX < historyColumns &&
+      historyY >= 0 &&
+      historyY < historyRows
+        ? (history.values[layer]?.[historyX + historyY * historyColumns] ?? 0)
+        : 0
+    if (!hasSoft || !softPenalty) return 1 + historic
     const index = cell * 8 + direction,
       cache = softEdges[layer]
     if (!cache[index]) {
       cache[index] = softScenes[layer].visible(point(cell), point(next)) ? 1 : 2
       cache[next * 8 + ((direction + 4) % 8)] = cache[index]
     }
-    return cache[index] === 1 ? 1 : 1 + softPenalty
+    return (cache[index] === 1 ? 1 : 1 + softPenalty) + historic
   }
   const landingPenalty = (cell: number) => {
     if (!softLands || !softPenalty) return 0
@@ -442,6 +530,7 @@ export function* routeSurfaceBridge(
           span * edgeCostFactor(layer, current.cell, direction, cell)
       if (
         routeLength > maxLength + 1e-8 ||
+        !withinEscape(cell, current.count) ||
         g >= costs[id] - 1e-9 ||
         !edgeVisible(layer, current.cell, direction, cell)
       )
@@ -462,6 +551,7 @@ export function* routeSurfaceBridge(
     if (
       carrierLayers.includes(bridge) &&
       current.count < maxVias &&
+      withinEscape(current.cell, current.count + 1) &&
       landing(current.cell) &&
       (current.viaCells ?? []).every(
         (cell) =>
@@ -615,6 +705,35 @@ function materialize(
       width,
     })),
   )
+  // Keep every avoided ordinary route hard during simplification. Only
+  // already crossed provisional routes may still participate in negotiation.
+  let refinementCopper = fixed
+  const negotiatedInner = !!innerCarrier(input) && softTraces.length > 0
+  if (negotiatedInner) {
+    const provisional: Trace = {
+      type: "pcb_trace",
+      pcb_trace_id: "provisional_bridge",
+      connection_name: connection.name,
+      route,
+    }
+    const copper = fixedCopper({
+      ...input,
+      obstacles: [],
+      traces: [provisional],
+    })
+    const conflicts = new CopperConflictIndex()
+    const clearance =
+      input.minTraceToPadEdgeClearance ?? input.defaultObstacleMargin ?? 0.075
+    refinementCopper = [
+      ...fixed,
+      ...softTraces.flatMap((trace) => {
+        const other = fixedCopper({ ...input, obstacles: [], traces: [trace] })
+        return conflicts.firstConflict(copper, other, clearance - 1e-8)
+          ? []
+          : other
+      }),
+    ]
+  }
   const normalized: Trace["route"] = []
   let current: Wire[] = []
   const finish = () => {
@@ -623,13 +742,13 @@ function materialize(
         ...connection,
         pointsToConnect: [current[0], current.at(-1)!],
       },
-      scene = new VectorScene(input, local, width, fixed),
+      scene = new VectorScene(input, local, width, refinementCopper),
       trace: Trace = {
         type: "pcb_trace",
         pcb_trace_id: "surface_piece",
         connection_name: connection.name,
         // Ordinary shortcuts can erase the path selected to avoid soft copper.
-        route: (softTraces.length
+        route: (softTraces.length && !negotiatedInner
           ? simplify(current)
           : reduceOrdinaryTurns(simplify(current), scene)
         ).map((at) => ({
@@ -642,7 +761,7 @@ function materialize(
       bevel = chamferOrdinaryCorners(
         { ...input, connections: [local] },
         [trace],
-        fixed,
+        refinementCopper,
       )[0].route as Wire[]
     if (
       !scene.pathVisible(bevel) ||

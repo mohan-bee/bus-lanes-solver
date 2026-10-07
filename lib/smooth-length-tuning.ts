@@ -31,6 +31,10 @@ export function tuneSmoothLengths(
     maxCandidates?: number
     packMeanders?: boolean
     packageOnlyPairTuning?: boolean
+    /** Rank hard-clear banks during negotiated routing. Soft conflicts must
+     * still be resolved before accepting the complete circuit. */
+    candidateScore?: (trace: Trace) => number
+    alignPeriods?: boolean
   } = {},
 ) {
   let attempted = 0
@@ -143,6 +147,24 @@ export function tuneSmoothLengths(
                 for (const position of [0.5, 0, 1])
                   yield { teeth, fraction, position }
             return
+          }
+          if (options.alignPeriods) {
+            const projection = a.x * ux + a.y * uy
+            for (const period of [0.5, 0.6, 0.8, 1, 1.2, 1.6, 2])
+              for (const phaseFraction of [0, 0.25, 0.5, 0.75]) {
+                if (period < pitch) continue
+                const phase = period * phaseFraction
+                const offset =
+                  Math.ceil((projection - phase + 1e-9) / period) * period +
+                  phase -
+                  projection
+                const teeth = Math.floor((span - offset - 0.01) / period)
+                if (teeth < 1) continue
+                const fraction = (teeth * period) / span
+                const position = offset / (span * (1 - fraction))
+                if (position >= 0 && position <= 1)
+                  yield { teeth, fraction, position }
+              }
           }
           for (const teeth of counts) {
             if (!compact) {
@@ -283,7 +305,21 @@ export function tuneSmoothLengths(
         (result[index].route[0] as Wire).width,
         [...fixed, ...result.flatMap(routeCopper)],
       )
-      let next = candidates(result[index], scene).next().value
+      let next: Trace | undefined
+      if (!options.candidateScore)
+        next = candidates(result[index], scene).next().value
+      else {
+        let best = Infinity,
+          evaluated = 0
+        for (const candidate of candidates(result[index], scene)) {
+          const score = options.candidateScore(candidate)
+          if (score < best) {
+            best = score
+            next = candidate
+          }
+          if (!score || ++evaluated >= 128) break
+        }
+      }
       // A narrow approach may have enough aggregate space in several runs,
       // even though no individual run can fit the whole deficit. Preserve the
       // original single-bank choice when possible; only split after every
