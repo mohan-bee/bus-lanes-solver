@@ -1,0 +1,488 @@
+[
+  {
+    "sample": "control",
+    "signals": "47/47",
+    "solveSeconds": 69.53238572599999,
+    "iterations": 50026,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6350000000675919,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6350000100064577,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.0778683245814662,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12688373178988854,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.07282965286481868,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "right",
+    "signals": "47/47",
+    "solveSeconds": 66.50790046099999,
+    "iterations": 49405,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.635000000000467,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6349999999999696,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.09604665360949838,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12180230740349174,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.10264381675825973,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "left",
+    "signals": "47/47",
+    "solveSeconds": 97.88444246099999,
+    "iterations": 82820,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.635000009997654,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.5111468252001927,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.010514368851048062,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12699999999991718,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.10542851386562901,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "above",
+    "signals": "47/47",
+    "solveSeconds": 91.35329441700001,
+    "iterations": 101424,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6350000000108622,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.635000000003032,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.12699999999999534,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.1269999999999527,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.12699999999998823,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "inner-layers",
+    "signals": "47/47",
+    "solveSeconds": 104.272518155,
+    "iterations": 123305,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6349999999628082,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6350000109864098,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.0778683245814662,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12688373178988854,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.12699999999976797,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "inner-layers-right",
+    "signals": "47/47",
+    "solveSeconds": 147.076032927,
+    "iterations": 159783,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6350000110508631,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6349999999999696,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.12700001096276736,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12699999999996692,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.1270000000000593,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "inner-layers-left",
+    "signals": "47/47",
+    "solveSeconds": 277.499263361,
+    "iterations": 247272,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6350000111048502,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6350000113805265,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.12700001104744274,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.10181456851277204,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.10542851386563612,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "inner-layers-above",
+    "signals": "47/47",
+    "solveSeconds": 219.689315459,
+    "iterations": 322974,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6349898794592121,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6349932040712076,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.010503997577373525,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12699040000171635,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.09994381863369739,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "inner-layers-complete-ca",
+    "signals": "47/47",
+    "solveSeconds": 411.94094422600006,
+    "iterations": 72633,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6349902427763041,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6349916843630794,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_ADDR_CTRL_CK",
+        "skewMm": 0.6349944579905653,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.07535887199949798,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 8.526512829121202e-14,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.06638387191047457,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  },
+  {
+    "sample": "outer-layers",
+    "signals": "47/47",
+    "solveSeconds": 935.703919669,
+    "iterations": 3754500,
+    "inputUnchanged": true,
+    "fixedPowerPreserved": true,
+    "fixedPowerTraces": 161,
+    "fixedPowerVias": 161,
+    "fixedPowerPadJoins": 161,
+    "fixedDrc": true,
+    "combinedDrc": true,
+    "selfShortCount": 0,
+    "buses": [
+      {
+        "busId": "DDR_BYTE0",
+        "skewMm": 0.6350000110165794,
+        "toleranceMm": 0.635,
+        "matched": true
+      },
+      {
+        "busId": "DDR_BYTE1",
+        "skewMm": 0.6349999999999838,
+        "toleranceMm": 0.635,
+        "matched": true
+      }
+    ],
+    "pairs": [
+      {
+        "busId": "pair_0",
+        "skewMm": 0.019219371674388697,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_1",
+        "skewMm": 0.12700000000001666,
+        "toleranceMm": 0.127,
+        "matched": true
+      },
+      {
+        "busId": "pair_2",
+        "skewMm": 0.12699999999989586,
+        "toleranceMm": 0.127,
+        "matched": true
+      }
+    ]
+  }
+]
