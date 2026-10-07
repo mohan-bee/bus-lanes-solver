@@ -31,6 +31,7 @@
     "@types/react-dom": "^19",
     "circuit-json": "0.0.514",
     "circuit-json-to-connectivity-map": "^0.0.30",
+    "circuit-to-svg": "0.0.445",
     "dts-bundle-generator": "^9.5.1",
     "format-si-unit": "^0.0.14",
     "graphics-debug": "^0.0.95",
