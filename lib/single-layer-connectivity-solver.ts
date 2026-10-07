@@ -1,3 +1,5 @@
+import { ordinaryRunCandidates } from "./simplify-matched-traces"
+import { checkSignalSelfShorts } from "./check-signal-self-shorts"
 import type { GraphicsObject } from "graphics-debug"
 import { layerColor } from "./layer-colors"
 import { BaseSolver } from "@tscircuit/solver-utils"
@@ -602,6 +604,95 @@ export class SingleLayerConnectivitySolver extends BaseSolver {
       if (!repaired) throw Error(`No legal terminal via for ${c.name}`)
       routed.set(c.name, repaired)
       yield
+    }
+    // Grid endpoint attachments and via transitions can return through their
+    // own copper even when different-net DRC passes. Repair only those lanes
+    // against the completed neighbors, steering away from the audited contact.
+    for (const c of input.connections) {
+      for (let retry = 0; ; retry++) {
+        const selfShorts = checkSignalSelfShorts(input, [routed.get(c.name)!])
+        if (!selfShorts.length) break
+
+        const original = routed.get(c.name)!
+        const scene = new VectorScene(input, c, input.minTraceWidth, [
+          ...fixed,
+          ...fixedCopper({
+            ...input,
+            obstacles: [],
+            traces: [...routed.values()].filter((trace) => trace !== original),
+          }),
+        ])
+        let shortened: Trace | undefined
+        shortcut: for (let i = 0; i < original.route.length - 2; i++) {
+          const a = original.route[i]
+          if (a.route_type !== "wire") continue
+          for (
+            let j = Math.min(original.route.length - 1, i + 8);
+            j >= i + 2;
+            j--
+          ) {
+            const run = original.route.slice(i, j + 1)
+            if (
+              run.some(
+                (point) =>
+                  point.route_type !== "wire" || point.layer !== a.layer,
+              )
+            )
+              continue
+            for (const points of ordinaryRunCandidates(
+              a,
+              original.route[j],
+              run,
+            )) {
+              if (points.length >= run.length || !scene.pathVisible(points))
+                continue
+              const candidate = {
+                ...original,
+                route: [
+                  ...original.route.slice(0, i),
+                  ...points.map((point) => ({
+                    ...point,
+                    route_type: "wire" as const,
+                    layer: a.layer,
+                    width: a.width,
+                  })),
+                  ...original.route.slice(j + 1),
+                ],
+              }
+              if (checkSignalSelfShorts(input, [candidate]).length) continue
+              shortened = candidate
+              break shortcut
+            }
+          }
+        }
+        if (shortened) {
+          routed.set(c.name, shortened)
+          yield
+          continue
+        }
+        if (retry >= 8)
+          throw Error(`No self-clear connectivity route for ${c.name}`)
+        for (const error of selfShorts) {
+          if (!error.center) throw Error(error.message)
+          for (const plane of [0, 1])
+            projector.penalizeIntersection(
+              history[plane],
+              error.center,
+              error.center,
+              error.center,
+              error.center,
+              viaDiameter / 2 + input.minTraceWidth,
+              true,
+              50,
+            )
+        }
+        routed.delete(c.name)
+        const repaired = yield* solve(c, 5 + retry, true, true)
+        if (!repaired)
+          throw Error(`No self-clear connectivity route for ${c.name}`)
+        routed.set(c.name, repaired)
+        yield
+      }
     }
     const result = input.connections.map((c) => routed.get(c.name)!)
     const drc = validateRoutedCopperDrc({

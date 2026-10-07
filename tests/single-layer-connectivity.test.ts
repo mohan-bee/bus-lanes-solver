@@ -1,3 +1,4 @@
+import { checkSignalSelfShorts } from "../lib/check-signal-self-shorts"
 import { expect, test } from "bun:test"
 import { validateRoutedCopperDrc } from "@tscircuit/fanout-solver"
 import {
@@ -22,6 +23,7 @@ test("control connects all 47 native signals on inner1 without changing fixed po
   expect(solver.error).toBeNull()
   expect(solver.solved).toBe(true)
   expect(solver.failed).toBe(false)
+  expect(checkSignalSelfShorts(input, solver.traces)).toEqual([])
   expect(input).toEqual(before)
   const output = solver.getOutput()
   validateAm3352OutputShape(input, metadata, solver.traces, output)
