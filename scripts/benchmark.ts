@@ -1,3 +1,5 @@
+import { mkdir } from "node:fs/promises"
+import { join, resolve } from "node:path"
 import { BusLanesPipelineSolver } from "../lib"
 import { am3352Carrier } from "./am3352-carrier"
 import { am3352SamplePlacements, loadAm3352Sample } from "./am3352-samples"
@@ -16,11 +18,21 @@ const option = (name: string) => {
 }
 const workerName = option("--worker")
 const outputPath = option("--output") ?? "benchmark-results.json"
-const timeoutSeconds = Number(option("--timeout-seconds") ?? 1800)
+const routeOption = option("--routes-directory")
+const routesDirectory = routeOption ? resolve(routeOption) : undefined
+const timeoutSeconds = Number(option("--timeout-seconds") ?? 3600)
 if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0)
   throw Error("--timeout-seconds must be a positive finite number")
 for (let i = 0; i < args.length; i++) {
-  if (["--worker", "--timeout-seconds", "--output"].includes(args[i])) i++
+  if (
+    [
+      "--worker",
+      "--timeout-seconds",
+      "--output",
+      "--routes-directory",
+    ].includes(args[i])
+  )
+    i++
   else if (args[i] !== "--require-all-solved")
     throw Error(`Unknown option: ${args[i]}`)
 }
@@ -76,6 +88,7 @@ if (!workerName) {
         placement.name,
         "--timeout-seconds",
         String(timeoutSeconds),
+        ...(routesDirectory ? ["--routes-directory", routesDirectory] : []),
       ],
       { stdout: "pipe", stderr: "pipe" },
     )
@@ -214,7 +227,9 @@ try {
     throw Error("Pre-dogboned power copper failed DRC")
   const before = JSON.stringify(input)
   const fixedBefore = JSON.stringify(input.traces ?? [])
-  const solver = new BusLanesPipelineSolver(input)
+  const solver = new BusLanesPipelineSolver(input, {
+    singleCarrier: { fixedConnections: metadata.powerConnections },
+  })
   const solveStart = performance.now()
   while (!solver.solved && !solver.failed) {
     if (performance.now() - solveStart >= timeoutSeconds * 1000) break
@@ -262,6 +277,24 @@ try {
       : report.validation.issues.length
         ? report.validation.issues.join("; ")
         : "Completed routing failed connectivity, DRC, matching, or coupling validation"
+    // Retain only audited, successfully completed native routes for snapshot
+    // export. Diagnostic partial states never enter this directory.
+    if (routesDirectory && report.solved) {
+      await mkdir(routesDirectory, { recursive: true })
+      await Bun.write(
+        join(routesDirectory, `${placement!.name}.json`),
+        JSON.stringify({
+          sample: placement!.name,
+          solved: solver.solved,
+          failed: solver.failed,
+          error: solver.error,
+          input: solver.input,
+          traces: solver.traces,
+          output,
+          validation: report.validation,
+        }),
+      )
+    }
   }
 } catch (error) {
   report.status = "validation_failed"

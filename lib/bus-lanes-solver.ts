@@ -663,13 +663,14 @@ export class BusLanesSolver extends BaseSolver {
                       corridor === original
                         ? Math.max(
                             this.minimumOriginalTuningCandidates,
-                            input.buses?.some(
-                              (bus) => bus.maxLength !== undefined,
-                            )
-                              ? 65536
-                              : input.allowedLayers?.length === 2
-                                ? 512
-                                : 4096,
+                            this.options.originalCorridorTuningCandidates ??
+                              (input.buses?.some(
+                                (bus) => bus.maxLength !== undefined,
+                              )
+                                ? 65536
+                                : input.allowedLayers?.length === 2
+                                  ? 512
+                                  : 4096),
                           )
                         : demandPackedCorridors.has(corridor)
                           ? 65536
@@ -677,11 +678,9 @@ export class BusLanesSolver extends BaseSolver {
                     packMeanders:
                       quickOriginal || compactCorridors.has(corridor),
                   })
-                : (this.options.smoothTuning ? tuneSmoothLengths : tuneLengths)(
-                    input,
-                    candidate,
-                    targets,
-                  )
+                : this.options.smoothTuning
+                  ? tuneSmoothLengths(input, candidate, targets)
+                  : tuneLengths(input, candidate, targets)
             if (this.options.smoothTuning)
               this.traces = simplifyMatchedTraces(input, this.traces)
             if (

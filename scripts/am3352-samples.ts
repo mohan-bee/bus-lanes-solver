@@ -9,6 +9,7 @@ import type { Connection, SimpleRouteJson, Trace } from "../lib"
 
 export type Am3352SampleName =
   | "control"
+  | "control-inner1"
   | "right"
   | "left"
   | "above"
@@ -21,6 +22,7 @@ export type Am3352SampleName =
 export type Am3352Component = "soc" | "ram"
 export const am3352SamplePlacements = [
   { name: "control", ram: { x: 0, y: -27 } },
+  { name: "control-inner1", ram: { x: 0, y: -27 }, allowedLayers: ["inner1"] },
   { name: "right", ram: { x: 27, y: 0 } },
   { name: "left", ram: { x: -27, y: 0 } },
   { name: "above", ram: { x: 0, y: 27 } },

@@ -1,3 +1,4 @@
+import { getCopperLayerNames } from "@tscircuit/fanout-solver"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 import {
@@ -90,7 +91,7 @@ const carrierLayer = (trace: Trace) => {
 }
 
 /** Draw native wire and via primitives, never ratsnest or search geometry.
- * The signal-layer panels share one physical scale and viewport per board. */
+ * All physical-layer panels share one physical scale and viewport per board. */
 export function routedGraphics(
   { solver, metadata }: Am3352SnapshotCandidate,
   labels?: { title: string; status: string; skew: string },
@@ -111,14 +112,7 @@ export function routedGraphics(
   }
   const width = bounds.maxX - bounds.minX,
     height = bounds.maxY - bounds.minY
-  const signalLayers = solver.input.allowedLayers
-    ? [...solver.input.allowedLayers]
-    : ["inner1", "inner2", "bottom"]
-  if (
-    !signalLayers.includes("top") &&
-    solver.traces.some((trace) => carrierLayer(trace) === "top")
-  )
-    signalLayers.push("top")
+  const signalLayers = getCopperLayerNames(solver.input.layerCount)
   const graphics: GraphicsObject = {
     coordinateSystem: "cartesian",
     title: `AM3352 / RAM ${metadata.name} · 47/47 signals · DRC and matching passed`,
@@ -204,7 +198,7 @@ export function routedGraphics(
     graphics.texts!.push({
       x: bounds.minX + dx,
       y: bounds.maxY + 1.5,
-      text: `${layer} · ${signalCount} signals`,
+      text: `${layer} · ${signalCount} carriers`,
       fontSize: 1.2,
       color: layerColors[layer],
       anchorSide: "bottom_left",
@@ -295,7 +289,7 @@ export async function exportAm3352RoutedSnapshots(
 if (import.meta.main) {
   const args = process.argv.slice(2)
   const directory = args[0] ?? "docs/routed-am3352-placements"
-  const timeoutSeconds = Number(args[1] ?? 1800)
+  const timeoutSeconds = Number(args[1] ?? 3600)
   if (
     args.length > 2 ||
     !Number.isFinite(timeoutSeconds) ||
@@ -308,7 +302,9 @@ if (import.meta.main) {
   for (const placement of am3352SamplePlacements) {
     const { input, metadata } = await loadAm3352Sample(placement.name)
     const before = am3352Hash(input)
-    const solver = new BusLanesPipelineSolver(input)
+    const solver = new BusLanesPipelineSolver(input, {
+      singleCarrier: { fixedConnections: metadata.powerConnections },
+    })
     const start = performance.now()
     while (!solver.solved && !solver.failed) {
       if (performance.now() - start >= timeoutSeconds * 1000)

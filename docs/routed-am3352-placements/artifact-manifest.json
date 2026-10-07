@@ -1,8 +1,9 @@
 {
-  "sourceBenchmarkSha256": "843b1dd27b9b252eb984d7c8726e9ef9969de14a7a034538e07fd56bec21541e",
-  "exportedAtUtc": "2026-10-05T23:39:57.753Z",
+  "sourceBenchmarkSha256": "44332d70b072bd00224645ff94a47ebc2e5b0325e831234b58ccba2118b45f44",
+  "exportedAtUtc": "2026-10-07T00:00:09.579Z",
   "declaredSamples": [
     "control",
+    "control-inner1",
     "right",
     "left",
     "above",
@@ -17,72 +18,57 @@
     {
       "sample": "control",
       "pngFile": "control-solved.png",
-      "svgFile": "control-solved.svg",
-      "pngSha256": "23b7f8725e5f7349a5ba3f52d2ce668e4e461a81d1da9ea1ed7cfb43e060d03d",
-      "svgSha256": "1c1aeca95aaa9483d22e5f32197049cdc692a53cf4000bce48bbd37e1380f338"
+      "pngSha256": "811ee038058ce10218683cf4f714e6857b2923f186222ab5263266e59e614014"
+    },
+    {
+      "sample": "control-inner1",
+      "pngFile": "control-inner1-solved.png",
+      "pngSha256": "ff8e1114a078b38b6c73e9e1aa6817c6511b88c9addbab315211e8ecd314d1ea"
     },
     {
       "sample": "right",
       "pngFile": "right-solved.png",
-      "svgFile": "right-solved.svg",
-      "pngSha256": "f27ba55e2e90e391b86b93257130cdbdd49ba77192fec4833636ae1491eceb45",
-      "svgSha256": "784686a73c7559d00f87329450836240271c032b49e0e786a10a40e14bc61a13"
+      "pngSha256": "f3722abc3b2f9f1b68650d5185f938436147ab304656a932156579afdef658a2"
     },
     {
       "sample": "left",
       "pngFile": "left-solved.png",
-      "svgFile": "left-solved.svg",
-      "pngSha256": "5e314a03b9e34cda92e8083dd85def0260c677bf969beaa596eb52cd9f3032da",
-      "svgSha256": "61daeda2eaa44916fc9f6d8ceaa6375840f7ce2093abc7b1f11966ba313863bb"
+      "pngSha256": "42cebd55f4a15fb4db1c5b3c0e95b803a728fe7b39b89751e9f9c570e3c21777"
     },
     {
       "sample": "above",
       "pngFile": "above-solved.png",
-      "svgFile": "above-solved.svg",
-      "pngSha256": "4de7d1f76d5e8a3f3cdf18a9b73c5bdbe5c5cda0f15a446ad49d713320f21093",
-      "svgSha256": "3ecf734b8b1ae922e0852f0309de7c27dc30859c8557b04c1a544cad778d2815"
+      "pngSha256": "b5f785f1b1ecb3115dc6cac59c94f1cc55c8aa60a6a62dd463c49097b1e712c5"
     },
     {
       "sample": "inner-layers",
       "pngFile": "inner-layers-solved.png",
-      "svgFile": "inner-layers-solved.svg",
-      "pngSha256": "25f39c66f46705438d49841cda62f7ba77587645a2530094e008c306ea51635e",
-      "svgSha256": "6be6427de7acc9f8a5a262e3cb6dd9c49ce4da9d51c0d9a51f4123782c013274"
+      "pngSha256": "69377065f2c849a08976dad9588dd6ed682b6af65eba4ec3505f5d367d2437a3"
     },
     {
       "sample": "inner-layers-right",
       "pngFile": "inner-layers-right-solved.png",
-      "svgFile": "inner-layers-right-solved.svg",
-      "pngSha256": "436b79ee773e15b73041c88e90f041b278a8758845fcb11dffe2f249e56e29e7",
-      "svgSha256": "b9ad0c9600553fbf26d220731b4ef35cb177619f2477ab56fb88e636af8fe98e"
+      "pngSha256": "9f14118c44621cded9aa6bb8730d33fe918be854eadb7c4c8662f0a46aeefdda"
     },
     {
       "sample": "inner-layers-left",
       "pngFile": "inner-layers-left-solved.png",
-      "svgFile": "inner-layers-left-solved.svg",
-      "pngSha256": "77797289c1121852d014504f959a9995a834877c728e4d2782fad753d076344d",
-      "svgSha256": "21d9f055b61de2152b275f42b4603b3d781ad00e8858a148074808424caffc4b"
+      "pngSha256": "d004f64b7620372b8881eb69480b0240df43f8cd95d4c3a83d06d32a43bc5319"
     },
     {
       "sample": "inner-layers-above",
       "pngFile": "inner-layers-above-solved.png",
-      "svgFile": "inner-layers-above-solved.svg",
-      "pngSha256": "f5ff22eb068ab0ea53fc313a23c2e4b1f211b87d4a33cac4e7e3340425221906",
-      "svgSha256": "25c6a13eeeabf26e3850bd84d52c64fa5f129627c810d22285c67559b50a5b73"
+      "pngSha256": "dbdab10b144c64bc60be42584d232db7e23c7306d62d92402960c57e41ffed8a"
     },
     {
       "sample": "inner-layers-complete-ca",
       "pngFile": "inner-layers-complete-ca-solved.png",
-      "svgFile": "inner-layers-complete-ca-solved.svg",
-      "pngSha256": "e6281651af3788270b0d7730bb428317900aa5837dc9496627dfc0ce40d2a20c",
-      "svgSha256": "9c4e23685afc49fcc9131701f3f548ea81f9c55fbb92703bcd58434f55b3f487"
+      "pngSha256": "8d42fb6dd4142834d1971ff1b756f88e91288fc428783599647ad808a3640185"
     },
     {
       "sample": "outer-layers",
       "pngFile": "outer-layers-solved.png",
-      "svgFile": "outer-layers-solved.svg",
-      "pngSha256": "ce912612ec7e111d398abbe0d88ba5e4a2c83b47e7a302b162bfd2c7b32ca158",
-      "svgSha256": "50f4d372f8eb27ceb9353e1fe5431ba6ad2aab32cbe6e54c0d793ea31e8d24be"
+      "pngSha256": "716ab2b56349756cbe6b1d49bcc53cdbc762d3044bb7a412cd87214d208f7722"
     }
   ]
 }
