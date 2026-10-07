@@ -330,3 +330,48 @@ test("an approach can join its local fanout via outside the native pad field", (
   }
   expect({ input, traces }).toEqual(before)
 })
+
+test("the other reference rail can rebuild a matched package approach without self-contact", async () => {
+  const { BusLanesSolver } = await import("../lib/bus-lanes-solver")
+  const { checkSignalSelfShorts } = await import(
+    "../lib/check-signal-self-shorts"
+  )
+  const { input, traces } = fixture()
+  input.obstacles.push(
+    ...[0, -0.22].map((y, i) => ({
+      componentId: "cpu",
+      center: { x: 0, y },
+      width: 0.3,
+      height: 0.15,
+      layers: ["top"],
+      connectedTo: [i ? "N" : "P"],
+    })),
+  )
+  input.differentialPairs![0].lengthTolerance = 0.001
+  const before = structuredClone({ input, traces })
+  const generator = extendPackageCoupling(input, traces, {
+    preserveMatching: false,
+    reverseSides: true,
+  })
+  let step = generator.next()
+  while (!step.done) step = generator.next()
+  const matcher = BusLanesSolver.forRefinement(input, step.value, {
+    smoothTuning: true,
+    denseSearch: true,
+  })
+  matcher.solve()
+  expect(matcher.error).toBeNull()
+  expect(matcher.solved).toBe(true)
+  expect(
+    exteriorPairSpacingReports(input, matcher.traces).every((p) => p.matched),
+  ).toBe(true)
+  expect(pairLengthReports(input, matcher.traces).every((p) => p.matched)).toBe(
+    true,
+  )
+  expect(checkSignalSelfShorts(input, matcher.traces)).toEqual([])
+  for (let i = 0; i < traces.length; i++) {
+    expect(matcher.traces[i].route[0]).toEqual(traces[i].route[0])
+    expect(matcher.traces[i].route.at(-1)).toEqual(traces[i].route.at(-1))
+  }
+  expect({ input, traces }).toEqual(before)
+})

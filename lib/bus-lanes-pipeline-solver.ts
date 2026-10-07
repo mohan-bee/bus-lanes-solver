@@ -391,15 +391,33 @@ export class BusLanesPipelineSolver extends BaseSolver {
     let refined = yield* extendPackageCoupling(input, lanes)
     if (exteriorPairSpacingReports(input, refined).every((r) => r.matched))
       return refined
-    refined = yield* extendPackageCoupling(
-      input,
-      shortenPairApproaches(input, refined),
-      { preserveMatching: false },
-    )
-    if (exteriorPairSpacingReports(input, refined).some((r) => !r.matched))
-      throw Error(
-        "Pair approaches still separate outside native package fanouts",
-      )
+    const preserved = refined
+    let error: unknown
+    // Either rail may define the new package approach. A geometrically legal
+    // first choice can leave no safe room for its residual skew correction.
+    for (const reverseSides of [false, true]) {
+      try {
+        refined = yield* extendPackageCoupling(
+          input,
+          shortenPairApproaches(input, preserved),
+          { preserveMatching: false, reverseSides },
+        )
+        if (exteriorPairSpacingReports(input, refined).some((r) => !r.matched))
+          throw Error(
+            "Pair approaches still separate outside native package fanouts",
+          )
+        return yield* this.matchPackageApproaches(input, refined, lanes)
+      } catch (candidateError) {
+        error = candidateError
+      }
+    }
+    throw error
+  }
+  private *matchPackageApproaches(
+    input: SimpleRouteJson,
+    refined: Trace[],
+    lanes: Trace[],
+  ): Generator<void, Trace[]> {
     const tunedEscapes = yield* tuneGeneratedPairEscapes(
       input,
       refined,
