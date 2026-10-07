@@ -654,13 +654,15 @@ export class BusLanesSolver extends BaseSolver {
                 ? tuneCoupledLengths(input, candidate, {
                     // Narrow banks need more curve period/offset combinations.
                     // Keep that extra bounded work local to packed candidates.
+                    // Via-safe clipped leads also need room in the original
+                    // search before a wider, longer corridor is considered.
                     maxCandidates:
                       corridor === original
                         ? input.buses?.some(
                             (bus) => bus.maxLength !== undefined,
                           )
                           ? 65536
-                          : 512
+                          : 4096
                         : demandPackedCorridors.has(corridor)
                           ? 65536
                           : 16384,

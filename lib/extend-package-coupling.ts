@@ -1,3 +1,4 @@
+import { createTerminalViaClearanceChecker } from "./terminal-via-clearance"
 import { bevelCoupledCorners } from "./bevel-coupled-corners"
 import { offsetPath } from "./coupled-pair-routing"
 import { distance, pointSegmentDistanceToPoints, simplify } from "./geometry"
@@ -41,7 +42,7 @@ const preservePoint = (path: Wire[], point: Wire) => {
 export function* extendPackageCoupling(
   input: SimpleRouteJson,
   original: Trace[],
-  options: { preserveMatching?: boolean } = {},
+  options: { preserveMatching?: boolean; reverseSides?: boolean } = {},
 ): Generator<void, Trace[]> {
   let result = original
   const fixed = fixedCopper(input)
@@ -50,7 +51,7 @@ export function* extendPackageCoupling(
   let budget = 2000
   for (const pair of input.differentialPairs ?? []) {
     for (const reversed of [false, true]) {
-      for (const side of [0, 1]) {
+      for (const side of options.reverseSides ? [1, 0] : [0, 1]) {
         if (budget <= 0) return result
         const nativeRails = pair.connectionNames.map((name) =>
           result.find((t) => t.connection_name === name),
@@ -227,7 +228,9 @@ export function* extendPackageCoupling(
           )
           if (
             !scene.pathVisible(next) ||
-            !tuningPathIsSelfClear(next, width + clearance)
+            !tuningPathIsSelfClear(next, width + clearance) ||
+            !createTerminalViaClearanceChecker(input, other)(next) ||
+            !createTerminalViaClearanceChecker(input, ref)(refRoute)
           )
             continue
           const replacement = [
@@ -298,6 +301,12 @@ export function* extendPackageCoupling(
                 const w = (t.route[0] as Wire).width
                 return (
                   !tuningPathIsSelfClear(t.route, w + clearance) ||
+                  !createTerminalViaClearanceChecker(
+                    input,
+                    nativeRails.find(
+                      (rail) => rail?.connection_name === t.connection_name,
+                    )!,
+                  )(t.route) ||
                   !new VectorScene(
                     input,
                     input.connections.find(
