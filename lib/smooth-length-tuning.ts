@@ -32,6 +32,9 @@ export function tuneSmoothLengths(
     maxCandidates?: number
     packMeanders?: boolean
     packageOnlyPairTuning?: boolean
+    /** Negotiation-only, never a completed route. The caller must reconstruct
+     * these approaches and run the complete-copper self-short audit. */
+    allowProvisionalLandConflicts?: boolean
   } = {},
 ) {
   const attempted = [0, 0]
@@ -243,7 +246,8 @@ export function tuneSmoothLengths(
                 )
                   continue
                 if (
-                  !terminalViaCopperIsClear(next) ||
+                  (!options.allowProvisionalLandConflicts &&
+                    !terminalViaCopperIsClear(next)) ||
                   !tuningPathIsSelfClear(next, returnSpacing)
                 )
                   continue

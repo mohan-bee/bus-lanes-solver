@@ -28,7 +28,10 @@ export function* planSharedPairCorridors(
   input: SimpleRouteJson,
   terminalLayers: ReadonlyMap<string, string[]>,
   freshDogbones = false,
-  options: { preferPackageOnlyTuning?: boolean } = {},
+  options: {
+    preferPackageOnlyTuning?: boolean
+    allowProvisionalLandConflicts?: boolean
+  } = {},
 ): Generator<Trace[] | undefined> {
   const pairs = input.differentialPairs ?? []
   const bounded = input.buses?.some((bus) => bus.maxLength !== undefined)
@@ -112,6 +115,8 @@ export function* planSharedPairCorridors(
               penalty: 0,
               preferPackageOnlyTuning: options.preferPackageOnlyTuning,
               allowProvisionalPairTuning,
+              allowProvisionalLandConflicts:
+                options.allowProvisionalLandConflicts,
               ...(typeof variant === "number"
                 ? { variant: reserved ? variant - 100 : variant }
                 : { handoffOffsets: variant }),
@@ -147,7 +152,9 @@ export function* planSharedPairCorridors(
         domains[index].push({
           id: serial++,
           layer,
-          provisional: allowProvisionalPairTuning,
+          provisional:
+            allowProvisionalPairTuning ||
+            !!options.allowProvisionalLandConflicts,
           traces: state.value,
           length: state.value.reduce((sum, t) => sum + length(t.route), 0),
         })

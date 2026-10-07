@@ -1,3 +1,8 @@
+import { checkSignalSelfShorts } from "./check-signal-self-shorts"
+import { joinSignalEscapes } from "./join-signal-escapes"
+import { reservePackageTuningApproaches } from "./reserve-package-tuning-approaches"
+import { straightenPairApproaches } from "./straighten-pair-approaches"
+import { extendPackageCoupling } from "./extend-package-coupling"
 import { repairSharedLayerConflicts } from "./repair-shared-layer-conflicts"
 import { normalizeSurfaceCarriers } from "./normalize-surface-carriers"
 import { BusLanesSolver } from "./bus-lanes-solver"
@@ -74,12 +79,21 @@ export function* routeFreshSharedBuses(
   // Along rows, closest grid attachments preserve narrow package channels.
   // Across rows, consider all nearby attachments to avoid isolated cells.
   const nearestAttachments = Math.abs(direction.x) > Math.abs(direction.y)
+  // Across pad rows, a standalone pair competes with ordinary handoffs for
+  // local approach space. Reserve its topology first, rebuild banks only after
+  // those sites are fixed. Fully timed cohorts retain joint matching up front.
+  const deferPackageMatching =
+    !nearestAttachments &&
+    (native.differentialPairs ?? []).some((pair) =>
+      pair.connectionNames.every((name) => !busNames.has(name)),
+    )
   for (const paired of planSharedPairCorridors(
     allocation,
     native.buses?.some((bus) => bus.maxLength !== undefined)
       ? layers
       : terminalLayers,
     true,
+    { allowProvisionalLandConflicts: deferPackageMatching },
   )) {
     if (!paired) {
       yield
@@ -283,13 +297,41 @@ export function* routeFreshSharedBuses(
       traces = chamferOrdinaryCorners(input, traces)
       yield
     }
-    const matcher = BusLanesSolver.forRefinement(input, traces, options)
+    // Temporary matching banks reserve a corridor, not manufactured copper.
+    // Rebuild individual approaches against the completed neighboring routes,
+    // then rematch with actual lands as hard constraints.
+    if (deferPackageMatching) {
+      traces = straightenPairApproaches(input, traces)
+      traces = yield* extendPackageCoupling(input, traces, {
+        preserveMatching: false,
+      })
+      traces = reservePackageTuningApproaches(input, traces)
+    }
+    const matcher = BusLanesSolver.forRefinement(
+      input,
+      traces,
+      options,
+      deferPackageMatching ? 4096 : 0,
+    )
     try {
       while (!matcher.solved && !matcher.failed) {
         matcher.step()
         yield
       }
-      if (matcher.solved)
+      if (
+        matcher.solved &&
+        checkSignalSelfShorts(
+          native,
+          matcher.traces.map((trace) =>
+            joinSignalEscapes(
+              trace,
+              normalized.escapes.filter(
+                (escape) => escape.connection_name === trace.connection_name,
+              ),
+            ),
+          ),
+        ).length === 0
+      )
         return { input, traces: matcher.traces, escapes: normalized.escapes }
     } finally {
       if (!matcher.solved && !matcher.failed) matcher.tryFinalAcceptance()
