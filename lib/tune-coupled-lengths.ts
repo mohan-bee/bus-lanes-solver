@@ -1,3 +1,4 @@
+import { createTerminalViaClearanceChecker } from "./terminal-via-clearance"
 import { bipolarPairedLobes } from "./bipolar-tuning"
 import { foldedPairedLobes } from "./folded-tuning"
 import { smoothPairedLobes, roundedPairedLobes } from "./smooth-tuning"
@@ -38,6 +39,9 @@ export function tuneCoupledLengths(
     )
     const rails = indices.map((i) => result[i])
     if (rails.some((t) => !t.coupledSection)) continue
+    const viaClearance = rails.map((rail) =>
+      createTerminalViaClearanceChecker(input, rail),
+    )
     const targets = minimumLengthTargets(input, result)
     const deficit = Math.max(
       ...rails.map((t) => targets.get(t.connection_name!)! - total(t)),
@@ -200,6 +204,7 @@ export function tuneCoupledLengths(
                     copper,
                   ).pathVisible(t.route) ||
                   !tuningPathIsSelfClear(t.route, width + clearance) ||
+                  !viaClearance[k](t.route) ||
                   total(t) < targets.get(t.connection_name!)! - 1e-6,
               )
             )

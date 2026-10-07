@@ -1,3 +1,4 @@
+import { checkSignalSelfShorts } from "./check-signal-self-shorts"
 import { withAm3352CaBus } from "./am3352-ca-bus"
 import { am3352Carrier } from "./am3352-carrier"
 import { validateRoutedCopperDrc } from "@tscircuit/fanout-solver"
@@ -404,6 +405,11 @@ export async function validateAm3352Sample(
   const combinedDrc = signalTraces
     ? audit([...metadata.fixedFanoutTraces, ...signalTraces])
     : null
+  const selfShorts = signalTraces
+    ? checkSignalSelfShorts(input, signalTraces)
+    : null
+  if (selfShorts?.length)
+    issues.push(...selfShorts.map((error) => error.message))
   const quality = signalTraces?.length
     ? measureAm3352RoutingQuality(input, signalTraces)
     : null
@@ -423,6 +429,7 @@ export async function validateAm3352Sample(
     fixedPowerPadJoins: pads.size,
     fixedDrc,
     combinedDrc,
+    selfShorts,
     busLengths,
     pairLengths,
     quality,

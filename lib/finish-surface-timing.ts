@@ -1,3 +1,4 @@
+import { checkSignalSelfShorts } from "./check-signal-self-shorts"
 import { BusLanesSolver } from "./bus-lanes-solver"
 import { chamferOrdinaryCorners } from "./chamfer-ordinary-corners"
 import { extendPackageCoupling } from "./extend-package-coupling"
@@ -61,7 +62,11 @@ export function* finishSurfaceTiming(
         (escape) => escape.connection_name === trace.connection_name,
       ),
     )
-    if (!routeAnglesAreConventional([joined])) return false
+    if (
+      !routeAnglesAreConventional([joined]) ||
+      checkSignalSelfShorts(native, [joined]).length
+    )
+      return false
     const clearance =
       native.minTraceToPadEdgeClearance ?? native.defaultObstacleMargin ?? 0.075
     const runs: Wire[][] = []

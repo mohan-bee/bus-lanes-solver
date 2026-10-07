@@ -37,3 +37,48 @@ test("local smooth bends do not exempt tight returning arms or crossings", () =>
     ),
   ).toBe(true)
 })
+
+for (const layer of ["top", "bottom"]) {
+  test(`${layer} carrier rejects a collinear backtrack even with repeated handoff points`, async () => {
+    const { BusLanesSolver } = await import("../lib/bus-lanes-solver")
+    for (const duplicated of [false, true]) {
+      const path = [
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        ...(duplicated ? [{ x: 1, y: 0 }] : []),
+        { x: 0.5, y: 0 },
+      ]
+      expect(tuningPathIsSelfClear(path, 0.2)).toBe(false)
+      const route = path.map((point) => ({
+        ...point,
+        route_type: "wire" as const,
+        layer,
+        width: 0.1,
+      }))
+      const solver = BusLanesSolver.forValidation(
+        {
+          layerCount: 2,
+          allowedLayers: [layer],
+          minTraceWidth: 0.1,
+          bounds: { minX: -2, maxX: 2, minY: -2, maxY: 2 },
+          obstacles: [],
+          connections: [
+            { name: "signal", pointsToConnect: [route[0], route.at(-1)!] },
+          ],
+        },
+        [
+          {
+            type: "pcb_trace",
+            pcb_trace_id: "signal",
+            connection_name: "signal",
+            route,
+          },
+        ],
+        { smoothTuning: false },
+      )
+      solver.solve()
+      expect(solver.solved).toBe(false)
+      expect(solver.error).toContain("self-clearance")
+    }
+  })
+}

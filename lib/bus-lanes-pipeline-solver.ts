@@ -1,3 +1,4 @@
+import { checkSignalSelfShorts } from "./check-signal-self-shorts"
 import { retargetGeneratedEscape } from "./retarget-generated-escape"
 import { joinSignalEscapes } from "./join-signal-escapes"
 import { tuneGeneratedPairEscapes } from "./tune-generated-pair-escapes"
@@ -173,6 +174,7 @@ export class BusLanesPipelineSolver extends BaseSolver {
               }
               if (
                 !validator.solved ||
+                checkSignalSelfShorts(this.input, complete).length > 0 ||
                 exteriorPairSpacingReports(view.input, carriers).some(
                   (r) => !r.matched,
                 )
@@ -259,7 +261,11 @@ export class BusLanesPipelineSolver extends BaseSolver {
                     validator.step()
                     yield
                   }
-                  if (!validator.solved) continue
+                  if (
+                    !validator.solved ||
+                    checkSignalSelfShorts(this.input, complete).length > 0
+                  )
+                    continue
                 } finally {
                   if (!validator.solved && !validator.failed)
                     validator.tryFinalAcceptance()
@@ -1077,6 +1083,9 @@ export class BusLanesPipelineSolver extends BaseSolver {
           )
         )
           throw Error("Final absolute bus length violation")
+        const selfShorts = checkSignalSelfShorts(this.input, this.traces)
+        if (selfShorts.length)
+          throw Error(selfShorts.map((error) => error.message).join("; "))
         this.acceptedTraces = structuredClone(this.traces)
         this.phase = "optimize_envelope"
         this.envelopeOptimization = this.optimizeEnvelope()

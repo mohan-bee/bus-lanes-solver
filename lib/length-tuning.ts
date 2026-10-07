@@ -16,11 +16,8 @@ export function tuneLengths(
     const connection = input.connections.find(
       (c) => c.name === t.connection_name,
     )!
-    // Keep the existing coupled-pair correction path unchanged. Independent
-    // lane tuning must not spend additional copper length in its via land.
-    const terminalViaCopperIsClear = t.coupledSection
-      ? (_path: Point[]) => true
-      : createTerminalViaClearanceChecker(input, t)
+    // Paired skew corrections also need to clear their manufactured via lands.
+    const terminalViaCopperIsClear = createTerminalViaClearanceChecker(input, t)
     const width = (t.route[0] as Wire).width
     const fixedLength = fixedRouteLength(input, connection.name)
     const delta = targets.get(connection.name)! - length(t.route) - fixedLength
@@ -154,12 +151,24 @@ export function tuneLengths(
 /** Returning arms must retain clearance; adjacent monotone corner geometry
  * belongs to the same uninterrupted copper body. */
 export function tuningPathIsSelfClear(path: Point[], required: number) {
+  // Repeated handoff vertices must not hide a reversal between the actual
+  // copper segments. Adjacent forward segments share a legitimate joint;
+  // adjacent collinear returning segments overlap and bypass measured length.
+  path = path.filter(
+    (point, index) => !index || distance(point, path[index - 1]) > 1e-12,
+  )
   const cumulative = [0]
   const turning = [0]
   const unsafeBends = [0]
   for (let i = 1; i < path.length - 1; i++) {
     const a = { x: path[i].x - path[i - 1].x, y: path[i].y - path[i - 1].y }
     const b = { x: path[i + 1].x - path[i].x, y: path[i + 1].y - path[i].y }
+    const scale = Math.hypot(a.x, a.y) * Math.hypot(b.x, b.y)
+    if (
+      a.x * b.x + a.y * b.y < 0 &&
+      Math.abs(a.x * b.y - a.y * b.x) <= 1e-9 * scale
+    )
+      return false
     const angle = Math.abs(
       Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y),
     )
