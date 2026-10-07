@@ -662,7 +662,9 @@ export class BusLanesSolver extends BaseSolver {
                             (bus) => bus.maxLength !== undefined,
                           )
                           ? 65536
-                          : 4096
+                          : input.allowedLayers?.length === 2
+                            ? 512
+                            : 4096
                         : demandPackedCorridors.has(corridor)
                           ? 65536
                           : 16384,
