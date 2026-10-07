@@ -2,6 +2,11 @@ import {
   SingleLayerConnectivitySolver,
   type SingleLayerConnectivityOptions,
 } from "./single-layer-connectivity-solver"
+import {
+  nativeSingleCarrierEligible,
+  routeMatchedNativeSingleCarrier,
+  type NativeSingleCarrierOptions,
+} from "./route-matched-native-single-carrier"
 import { retargetGeneratedEscape } from "./retarget-generated-escape"
 import { joinSignalEscapes } from "./join-signal-escapes"
 import { tuneGeneratedPairEscapes } from "./tune-generated-pair-escapes"
@@ -48,13 +53,22 @@ export interface BusLanesPipelineOptions extends SolverOptions {
    * explicitly requests only pad-to-pad routing and copper DRC on one carrier. */
   goal?: "matched" | "connectivity"
   connectivity?: SingleLayerConnectivityOptions
+  /** Native paired backbones, whole-copper matching and movable controllers
+   * on a single inner carrier. All numerical settings are board-space mm. */
+  singleCarrier?: NativeSingleCarrierOptions
 }
 
 function canRouteOnPadLayers(input: SimpleRouteJson) {
+  const physical = getCopperLayerNames(input.layerCount)
+  const singleInner =
+    input.allowedLayers?.length === 1 &&
+    /^inner\d+$/.test(input.allowedLayers[0]) &&
+    physical.includes(input.allowedLayers[0])
   return (
-    input.allowedLayers?.length === 2 &&
-    input.allowedLayers.includes("top") &&
-    input.allowedLayers.includes("bottom") &&
+    (singleInner ||
+      (input.allowedLayers?.length === 2 &&
+        input.allowedLayers.includes("top") &&
+        input.allowedLayers.includes("bottom"))) &&
     input.connections.length > 0 &&
     input.connections.every(
       (connection) =>
@@ -63,7 +77,9 @@ function canRouteOnPadLayers(input: SimpleRouteJson) {
           connection.pointsToConnect[1].layer &&
         connection.pointsToConnect.every(
           (point) =>
-            input.allowedLayers!.includes(point.layer) &&
+            (singleInner
+              ? [physical[0], physical.at(-1)!].includes(point.layer)
+              : input.allowedLayers!.includes(point.layer)) &&
             isUnroutedComponentPad(input, connection, point),
         ),
     )
@@ -79,6 +95,7 @@ export class BusLanesPipelineSolver extends BaseSolver {
   traces: Trace[] = []
   failureCode: string | null = null
   private connectivitySolver?: SingleLayerConnectivitySolver
+  private nativeSingleCarrier?: Generator<void, Trace[] | null>
   private acceptedTraces?: Trace[]
   private envelopeOptimization?: Generator<void, void>
   /** Runs only after a complete accepted route exists. A budget interrupt or
@@ -339,7 +356,10 @@ export class BusLanesPipelineSolver extends BaseSolver {
     // Surface routing negotiates carrier layers and owned approaches before
     // matching and control repair. Its aggregate work reserve includes those
     // stages; an explicitly supplied search budget remains authoritative.
-    const searchBudget = canRouteOnPadLayers(input) ? 2000000 : 200000
+    const searchBudget =
+      canRouteOnPadLayers(input) || nativeSingleCarrierEligible(input)
+        ? 2000000
+        : 200000
     this.MAX_ITERATIONS =
       (options.maxSearchIterations ?? searchBudget) *
       Math.max(1, input.layerCount)
@@ -351,6 +371,28 @@ export class BusLanesPipelineSolver extends BaseSolver {
         options.connectivity,
       )
       this.phase = "connectivity_route"
+    } else if (
+      options.fanout !== "none" &&
+      nativeSingleCarrierEligible(this.input)
+    ) {
+      this.nativeSingleCarrier = routeMatchedNativeSingleCarrier(
+        this.input,
+        options.singleCarrier,
+        (state) => {
+          this.phase = state.stage
+          this.traces = state.traces
+          this.stats = {
+            ...this.stats,
+            nativeSingleCarrier: {
+              stage: state.stage,
+              pass: state.pass,
+              collisions: state.collisions,
+              unfinished: state.unfinished,
+            },
+          }
+        },
+      )
+      this.phase = "native_pair_approaches"
     }
   }
   getConstructorParams() {
@@ -370,6 +412,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
       this.finishAccepted(true)
       return
     }
+    this.nativeSingleCarrier?.return(null)
+    this.nativeSingleCarrier = undefined
     this.sharedPackages?.return(null)
     this.sharedPackages = undefined
     this.backwardPackages?.return(null)
@@ -923,6 +967,28 @@ export class BusLanesPipelineSolver extends BaseSolver {
       )
   }
   _step() {
+    if (this.nativeSingleCarrier) {
+      try {
+        const result = this.nativeSingleCarrier.next()
+        if (result.done) {
+          this.nativeSingleCarrier = undefined
+          if (!result.value)
+            throw Error(
+              "Native single-carrier matching exhausted its routing plans",
+            )
+          this.acceptedTraces = structuredClone(result.value)
+          this.finishAccepted(false)
+        }
+      } catch (error) {
+        this.nativeSingleCarrier?.return(null)
+        this.nativeSingleCarrier = undefined
+        this.failed = true
+        this.error = String(error)
+        this.failureCode = "native_single_carrier_matching_failed"
+        this.phase = "failed"
+      }
+      return
+    }
     if (this.connectivitySolver) {
       const solver = this.connectivitySolver
       solver.step()

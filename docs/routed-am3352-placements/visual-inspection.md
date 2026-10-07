@@ -1,24 +1,27 @@
 # Completed snapshot inspection
 
-All ten PNGs were opened at original detail after the actual ten-sample benchmark
-passed native validation. Every image shows completed copper, the declared RAM
-placement and carrier layers, visible native pad arrays and via rings, smooth
-tuning geometry, readable completion labels, and unclipped panels. No ratsnest
-or intermediate search view appears.
+All eleven PNGs were opened at original detail after the standard benchmark
+workers passed and successful captures passed the independent snapshot audit.
+Every image shows all four physical copper planes at the same board scale: the
+completed signal carriers, owned TOP escapes, immutable power dogbones, native
+pad arrays, and plated via rings. Placement and carrier counts agree with the
+benchmark report. Tuning banks and paired backbones are visible; titles,
+completion labels and copper remain unclipped. No search or intermediate view
+is included.
 
-Every PNG and SVG was also regenerated from the same accepted graphics scene
-and compared byte-for-byte with its exported hash. SVG line-end spaces and tabs
-were trimmed consistently with the snapshot exporter; geometry stayed unchanged.
-All twenty files matched.
+All eleven published PNGs were regenerated from their accepted computed
+graphics scenes and compared with exported hashes. All eleven files matched.
+Full-plane vector exports were also verified locally; this gallery publishes PNGs.
 The [scene verification](scene-verification.json) and
-[artifact manifest](artifact-manifest.json) bind the images to the exact
+[artifact manifest](artifact-manifest.json) bind them to the exact
 [benchmark report](benchmark-results.json).
 
-Benchmark SHA-256: `843b1dd27b9b252eb984d7c8726e9ef9969de14a7a034538e07fd56bec21541e`.
+Benchmark SHA-256: `63893a4597d9095fe9db7f8c237bd275449f1ac994f16a5eb5655bf10cdb18f6`.
 
 | Inspected PNG | RAM center (mm) | Carrier layer counts | Visual review |
 | --- | --- | --- | --- |
 | [control](control-solved.png) | (0, -27) | inner2: 16, inner1: 19, bottom: 12 | Pass |
+| [control-inner1](control-inner1-solved.png) | (0, -27) | inner1: 47 | Pass |
 | [right](right-solved.png) | (27, 0) | inner2: 18, inner1: 21, bottom: 8 | Pass |
 | [left](left-solved.png) | (-27, 0) | inner2: 20, inner1: 18, bottom: 9 | Pass |
 | [above](above-solved.png) | (0, 27) | bottom: 14, inner2: 15, inner1: 18 | Pass |
@@ -29,7 +32,8 @@ Benchmark SHA-256: `843b1dd27b9b252eb984d7c8726e9ef9969de14a7a034538e07fd56bec21
 | [inner-layers-complete-ca](inner-layers-complete-ca-solved.png) | (0, -27) | inner2: 28, inner1: 19 | Pass |
 | [outer-layers](outer-layers-solved.png) | (0, -27) | bottom: 39, top: 8 | Pass |
 
-The native audits passed connectivity, combined-copper DRC, full pad-to-pad
-bus/pair skew, exterior coupling, and immutable provenance for all 161 supplied
-power fanouts. The visual review confirms the completed renderings and their
-placement, geometry, labels, and framing.
+All eleven native audits passed connectivity, combined-copper DRC, whole
+pad-to-pad bus/pair matching, physical coupling, ordinary geometry and immutable
+provenance for all 161 power fanouts. The dedicated control image in
+[the inner1 report](../control-inner1/README.md) was also inspected; it is
+explicitly a view of the inner1 plane, with all physical planes in this gallery.

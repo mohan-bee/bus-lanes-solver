@@ -13,6 +13,7 @@ import { dirname, join, resolve } from "node:path"
 const repository = resolve(import.meta.dir, "..")
 const placements = [
   { sample: "control", ram: { x: 0, y: -27 } },
+  { sample: "control-inner1", ram: { x: 0, y: -27 } },
   { sample: "right", ram: { x: 27, y: 0 } },
   { sample: "left", ram: { x: -27, y: 0 } },
   { sample: "above", ram: { x: 0, y: 27 } },
@@ -81,6 +82,8 @@ async function invokeBenchmark(options: {
         "0.000001",
         "--output",
         output,
+        "--routes-directory",
+        join(directory, "routes"),
         ...(options.strict ? ["--require-all-solved"] : []),
       ],
       {
@@ -123,6 +126,7 @@ async function invokeBenchmark(options: {
     // --output must isolate the real benchmark results even when called from
     // another working directory (benchmark.sh itself changes directories).
     expect(existsSync(join(directory, "benchmark-results.json"))).toBe(false)
+    expect(existsSync(join(directory, "routes"))).toBe(false)
     if (runner !== repository)
       expect(existsSync(join(runner, "benchmark-results.json"))).toBe(false)
     return result
@@ -132,17 +136,19 @@ async function invokeBenchmark(options: {
 }
 
 function expectManifest(reports: Report[]) {
-  expect(reports).toHaveLength(10)
+  expect(reports).toHaveLength(11)
   expect(reports.map(({ sample, ram }) => ({ sample, ram }))).toEqual(
     placements,
   )
   for (const report of reports) {
     expect(report.allowedLayers).toEqual(
-      report.sample.startsWith("inner-layers")
-        ? ["inner1", "inner2"]
-        : report.sample === "outer-layers"
-          ? ["top", "bottom"]
-          : null,
+      report.sample === "control-inner1"
+        ? ["inner1"]
+        : report.sample.startsWith("inner-layers")
+          ? ["inner1", "inner2"]
+          : report.sample === "outer-layers"
+            ? ["top", "bottom"]
+            : null,
     )
     expect(report.carrierLayerCounts).toEqual({})
     expect(report.cpu).toEqual({ x: 0, y: 0 })
@@ -153,11 +159,11 @@ function expectManifest(reports: Report[]) {
 }
 
 for (const strict of [false, true])
-  test(`${strict ? "strict" : "measurement"} benchmark retains all ten timed-out AM3352 placements`, async () => {
+  test(`${strict ? "strict" : "measurement"} benchmark retains all eleven timed-out AM3352 placements`, async () => {
     const result = await invokeBenchmark({ strict })
     expect(result.exitCode).toBe(strict ? 1 : 0)
     expectManifest(result.reports)
-    expect(result.stdout).toContain("AM3352 placements completed: 0/10")
+    expect(result.stdout).toContain("AM3352 placements completed: 0/11")
     const powerCount = result.reports[0].fixedPowerDogbones
     expect(powerCount).toBeGreaterThan(0)
     for (const report of result.reports) {

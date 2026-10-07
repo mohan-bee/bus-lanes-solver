@@ -11,6 +11,7 @@ import { validateAm3352Sample } from "../scripts/validate-am3352-sample"
 test("the AM3352 samples translate only RAM and retain every real power dogbone", async () => {
   expect(am3352SamplePlacements.map((p) => p.name)).toEqual([
     "control",
+    "control-inner1",
     "right",
     "left",
     "above",
@@ -300,6 +301,23 @@ for (const [unrestricted, restrictedName] of [
       validateAm3352Sample(restricted.input, restricted.metadata),
     ).rejects.toThrow("native board rules or signal constraints changed")
   })
+
+test("control-inner1 changes only carrier availability and rejects opening another plane", async () => {
+  const control = await loadAm3352Sample("control")
+  const restricted = await loadAm3352Sample("control-inner1")
+  expect(restricted.input.allowedLayers).toEqual(["inner1"])
+  expect({ ...restricted.input, allowedLayers: undefined }).toEqual({
+    ...control.input,
+    allowedLayers: undefined,
+  })
+  expect(restricted.metadata.fixedFanoutTraces).toEqual(
+    control.metadata.fixedFanoutTraces,
+  )
+  restricted.input.allowedLayers!.push("inner2")
+  await expect(
+    validateAm3352Sample(restricted.input, restricted.metadata),
+  ).rejects.toThrow("native board rules or signal constraints changed")
+})
 
 // The outer-layer control reserves inner copper for planes without altering
 // physical layer count, native terminals, or immutable power fanouts.

@@ -1,6 +1,8 @@
 import { CopperConflictIndex } from "./copper-conflict-index"
 import { generatedEscapeHolesConflict } from "./expanded-signal-sites"
 import type { FlexibleSignalState } from "./flexible-signal-state"
+import { GridHistoryProjector } from "./grid-visibility"
+import { VectorScene } from "./vector-scene"
 import { distance, segmentDistance } from "./geometry"
 import { joinSignalEscapes } from "./join-signal-escapes"
 import {
@@ -172,6 +174,27 @@ export function* negotiateSurfaceRoutes(
     if (domains[index].length > (options.maxDomainCandidates ?? 24))
       domains[index].splice(1, 1)
   }
+  const useHistory =
+    targets.length > 0 &&
+    native.allowedLayers?.length === 1 &&
+    /^inner\d+$/.test(native.allowedLayers[0])
+  const historyProjector = useHistory
+    ? new GridHistoryProjector(
+        new VectorScene(native, targets[0], native.minTraceWidth, hardCopper),
+        { bounds: native.bounds, step: 0.1 },
+      )
+    : undefined
+  const history = historyProjector
+    ? {
+        bounds: native.bounds,
+        step: 0.1,
+        values: [
+          new Float32Array(historyProjector.cellCount),
+          new Float32Array(historyProjector.cellCount),
+        ],
+      }
+    : undefined
+  let historyEpoch = 0
   const select = () =>
     solveSignalCandidatePool(
       domains,
@@ -224,6 +247,7 @@ export function* negotiateSurfaceRoutes(
       soft.map(traceId),
       settings,
       reverse,
+      historyEpoch,
     ])
     if (searches.has(key)) return searches.get(key)!
     const connection = targets[index],
@@ -234,7 +258,9 @@ export function* negotiateSurfaceRoutes(
           }
         : connection
     const result = yield* routeSurfaceBridge(input, reversed, {
+      gridStep: useHistory ? 0.1 : undefined,
       ...settings,
+      history,
       softTraces: soft,
     })
     if (!result) {
@@ -332,11 +358,37 @@ export function* negotiateSurfaceRoutes(
       bestCount = active.length
       lastImprovement = round
     }
-    if (round - lastImprovement > 35) break
+    if (round - lastImprovement > (useHistory ? 1000 : 35)) break
     for (const [first, second] of active) {
+      if (history && historyProjector) {
+        const hit = conflicts.firstConflict(
+          current[first]!.copper,
+          current[second]!.copper,
+          clearance - 1e-8,
+        )
+        if (hit) {
+          const plane =
+            hit[0].layer === targets[0].pointsToConnect[0].layer ? 0 : 1
+          if (
+            hit[0].layer === targets[0].pointsToConnect[0].layer ||
+            hit[0].layer === native.allowedLayers![0]
+          )
+            historyProjector.penalizeIntersection(
+              history.values[plane],
+              hit[0].a,
+              hit[0].b,
+              hit[1].a,
+              hit[1].b,
+              hit[0].radius + hit[1].radius + clearance,
+              true,
+              2,
+            )
+        }
+      }
       counts[first]++
       counts[second]++
     }
+    if (history) historyEpoch++
     let choices = [...targets.keys()]
       .filter((index) => counts[index] && round - lastFailure[index] >= 15)
       .sort((first, second) => {

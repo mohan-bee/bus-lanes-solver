@@ -656,22 +656,16 @@ export class BusLanesSolver extends BaseSolver {
                     // Keep that extra bounded work local to packed candidates.
                     maxCandidates:
                       corridor === original
-                        ? input.buses?.some(
-                            (bus) => bus.maxLength !== undefined,
-                          )
-                          ? 65536
-                          : 512
+                        ? (this.options.originalCorridorTuningCandidates ?? 512)
                         : demandPackedCorridors.has(corridor)
                           ? 65536
                           : 16384,
                     packMeanders:
                       quickOriginal || compactCorridors.has(corridor),
                   })
-                : (this.options.smoothTuning ? tuneSmoothLengths : tuneLengths)(
-                    input,
-                    candidate,
-                    targets,
-                  )
+                : this.options.smoothTuning
+                  ? tuneSmoothLengths(input, candidate, targets)
+                  : tuneLengths(input, candidate, targets)
             if (this.options.smoothTuning)
               this.traces = simplifyMatchedTraces(input, this.traces)
             if (
