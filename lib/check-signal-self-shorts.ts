@@ -1,10 +1,14 @@
+import type { PcbTraceError } from "circuit-json"
 import { getCopperLayerNames } from "@tscircuit/fanout-solver"
 import { checkPcbTraceSelfShorts } from "@tscircuit/checks"
 import type { SimpleRouteJson, Trace } from "./types"
 
 /** Run the native matched-copper check on joined routes, including materialized
  * via lands. A carrier-only clearance audit cannot see a land bypassing a bend. */
-export function checkSignalSelfShorts(input: SimpleRouteJson, traces: Trace[]) {
+export function checkSignalSelfShorts(
+  input: SimpleRouteJson,
+  traces: Trace[],
+): PcbTraceError[] {
   const circuit: any[] = [
     { type: "pcb_board", pcb_board_id: "board", num_layers: input.layerCount },
     // The native check selects traces through a matching bus. Audit untimed
