@@ -278,10 +278,7 @@
     ],
     "coupling": [
       {
-        "connectionNames": [
-          "source_trace_15",
-          "source_trace_16"
-        ],
+        "connectionNames": ["source_trace_15", "source_trace_16"],
         "applicable": true,
         "matched": true,
         "maxExteriorEdgeGapMm": 0.13775206974731397,
@@ -289,10 +286,7 @@
         "separatedExteriorLengthMm": 0
       },
       {
-        "connectionNames": [
-          "source_trace_27",
-          "source_trace_26"
-        ],
+        "connectionNames": ["source_trace_27", "source_trace_26"],
         "applicable": true,
         "matched": true,
         "maxExteriorEdgeGapMm": 0.13774631975933582,
@@ -300,10 +294,7 @@
         "separatedExteriorLengthMm": 0
       },
       {
-        "connectionNames": [
-          "source_trace_32",
-          "source_trace_33"
-        ],
+        "connectionNames": ["source_trace_32", "source_trace_33"],
         "applicable": true,
         "matched": true,
         "maxExteriorEdgeGapMm": 0.13776345174284543,

@@ -1,5 +1,5 @@
 {
-  "sourceBenchmarkSha256": "fdd5d5e6162199c241df621c6756cb88fa66fdf915d290353c41a8137d1d686d",
+  "sourceBenchmarkSha256": "1d26186aacfcda7ac2b1ded5c94a5c2bdc8686e056027d2b0f9ed002702d6d27",
   "renderer": "resvg-js 2.6.2; fresh validated graphics; existing SVG scenes verified byte-for-byte identical",
   "allImagesOpenedAndInspected": true,
   "declaredSamples": [
@@ -130,14 +130,14 @@
     "pngFile": "sbc-completed.png",
     "pngSha256": "f6840cf188c1e84e76de1eb1e151edd6e738f882b1b4096086fe3ecdae886e18",
     "validationFile": "sbc-validation.json",
-    "validationSha256": "17614feae6f59340f8b87bdc38b8527911d5bffa31eab084cfb9791d3df9a5db",
+    "validationSha256": "7115757f40f7437f2d18feca05228098b761e4ff01995d6a878b74f8da4bc851",
     "signals": 47,
     "actualBoardObstacles": 1111,
     "suppliedGroundEscapes": 67,
     "openedAndInspected": true,
     "addressControlTimingMatched": false,
     "packageFirstReportFile": "package-first-report.json",
-    "packageFirstReportSha256": "611f1b03951790ac66a3fe057873b48a0d61fa27dc881b96c4a372a8e71d2d56",
+    "packageFirstReportSha256": "de6e0f977b09e2d5c7a773b3bb8dadf690f84410ab9ee06dc38530968b3b4bb5",
     "freshEndToEndSeconds": 923.914725506
   }
 }
