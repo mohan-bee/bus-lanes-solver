@@ -79,6 +79,15 @@ for (const layer of ["top", "bottom"]) {
       solver.solve()
       expect(solver.solved).toBe(false)
       expect(solver.error).toContain("self-clearance")
+      const refinement = BusLanesSolver.forRefinement(
+        solver.input,
+        solver.traces,
+        { smoothTuning: false },
+        4096,
+      )
+      refinement.solve()
+      expect(refinement.solved).toBe(false)
+      expect(refinement.error).toContain("self-clearance")
     }
   })
 }
