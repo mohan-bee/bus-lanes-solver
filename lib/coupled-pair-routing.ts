@@ -51,6 +51,9 @@ export function* routeCoupledPair(
     preferPackageOnlyTuning?: boolean
     /** Provisional topology; final exterior coupling is still mandatory. */
     allowProvisionalPairTuning?: boolean
+    /** Temporary land overlap may be negotiated; callers must rebuild approaches
+     * and independently audit joined copper before accepting these corridors. */
+    allowProvisionalLandConflicts?: boolean
     /** Optional whole-copper finalization. Rejected candidates leave the
      * remaining package handoffs available to the caller's prefix search. */
     strictCandidate?: (traces: Trace[]) => Generator<void, Trace[] | null>
@@ -667,7 +670,11 @@ export function* routeCoupledPair(
                   pairInput,
                   shaped,
                   minimumLengthTargets(pairInput, shaped),
-                  { maxCandidates: 512 },
+                  {
+                    maxCandidates: 512,
+                    allowProvisionalLandConflicts:
+                      negotiation?.allowProvisionalLandConflicts,
+                  },
                 )
                 const regions = packageApproachRegions(
                   pairInput,
@@ -742,7 +749,12 @@ export function* routeCoupledPair(
                     pairInput,
                     shaped,
                     minimumLengthTargets(pairInput, shaped),
-                    { maxCandidates: 512, packageOnlyPairTuning: true },
+                    {
+                      maxCandidates: 512,
+                      packageOnlyPairTuning: true,
+                      allowProvisionalLandConflicts:
+                        negotiation?.allowProvisionalLandConflicts,
+                    },
                   )
                 }
                 if (
