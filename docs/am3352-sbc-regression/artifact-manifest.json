@@ -1,0 +1,143 @@
+{
+  "sourceBenchmarkSha256": "1d26186aacfcda7ac2b1ded5c94a5c2bdc8686e056027d2b0f9ed002702d6d27",
+  "renderer": "resvg-js 2.6.2; fresh validated graphics; existing SVG scenes verified byte-for-byte identical",
+  "allImagesOpenedAndInspected": true,
+  "declaredSamples": [
+    "control",
+    "right",
+    "left",
+    "above",
+    "inner-layers",
+    "inner-layers-right",
+    "inner-layers-left",
+    "inner-layers-above",
+    "inner-layers-complete-ca",
+    "outer-layers"
+  ],
+  "images": [
+    {
+      "sample": "control",
+      "pngFile": "control-solved.png",
+      "pngSha256": "2fa6f0ad76eb0e873b4d3db0fb9372be8425952656ee9a81d1e1993a71b5bb73",
+      "svgFile": "../routed-am3352-placements/control-solved.svg",
+      "svgSha256": "1c1aeca95aaa9483d22e5f32197049cdc692a53cf4000bce48bbd37e1380f338",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "right",
+      "pngFile": "right-solved.png",
+      "pngSha256": "82edadac6f803008c8a24983cca0e07867b1a3e85438d9e88caab75bb6122f71",
+      "svgFile": "../routed-am3352-placements/right-solved.svg",
+      "svgSha256": "784686a73c7559d00f87329450836240271c032b49e0e786a10a40e14bc61a13",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "left",
+      "pngFile": "left-solved.png",
+      "pngSha256": "88110a5bfe89c365e0ff20ac6d32e81bd28cc570992b437886f4e19b6b128b81",
+      "svgFile": "../routed-am3352-placements/left-solved.svg",
+      "svgSha256": "61daeda2eaa44916fc9f6d8ceaa6375840f7ce2093abc7b1f11966ba313863bb",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "above",
+      "pngFile": "above-solved.png",
+      "pngSha256": "6eefe23c041404e0cd03fcb4a3faa4abe4d3539472bbf5ea07d5aefc0fd34fda",
+      "svgFile": "../routed-am3352-placements/above-solved.svg",
+      "svgSha256": "3ecf734b8b1ae922e0852f0309de7c27dc30859c8557b04c1a544cad778d2815",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "inner-layers",
+      "pngFile": "inner-layers-solved.png",
+      "pngSha256": "e2a76b90cf6ae7d45f5f0198ebb74cdb569df6bfa7ad877e863c2df55755d6a5",
+      "svgFile": "../routed-am3352-placements/inner-layers-solved.svg",
+      "svgSha256": "6be6427de7acc9f8a5a262e3cb6dd9c49ce4da9d51c0d9a51f4123782c013274",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "inner-layers-right",
+      "pngFile": "inner-layers-right-solved.png",
+      "pngSha256": "d07d2ce59e0655e6a74da9b1d45e96b25e8a982d76468cc43e1dda7d237e8353",
+      "svgFile": "../routed-am3352-placements/inner-layers-right-solved.svg",
+      "svgSha256": "b9ad0c9600553fbf26d220731b4ef35cb177619f2477ab56fb88e636af8fe98e",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "inner-layers-left",
+      "pngFile": "inner-layers-left-solved.png",
+      "pngSha256": "5722b65005a41cf5d17bfa6bca40bd4e0662a5592d19d7f989a2ddc087aafbd5",
+      "svgFile": "../routed-am3352-placements/inner-layers-left-solved.svg",
+      "svgSha256": "21d9f055b61de2152b275f42b4603b3d781ad00e8858a148074808424caffc4b",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "inner-layers-above",
+      "pngFile": "inner-layers-above-solved.png",
+      "pngSha256": "1984574e8dcf4122252f1cc1d8d91d309723ce32d6b4cb23b6217fb08f95a804",
+      "svgFile": "../routed-am3352-placements/inner-layers-above-solved.svg",
+      "svgSha256": "25c6a13eeeabf26e3850bd84d52c64fa5f129627c810d22285c67559b50a5b73",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "pngFile": "inner-layers-complete-ca-solved.png",
+      "pngSha256": "44bf645b8c4107584bc4499ba5264ec8b9594af808cfea91a5a8f8312ae86cd3",
+      "svgFile": "../routed-am3352-placements/inner-layers-complete-ca-solved.svg",
+      "svgSha256": "9c4e23685afc49fcc9131701f3f548ea81f9c55fbb92703bcd58434f55b3f487",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    },
+    {
+      "sample": "outer-layers",
+      "pngFile": "outer-layers-solved.png",
+      "pngSha256": "496dd0e1ba78a7c397fbad286f56e453d922c74c26cf0c54fd82f294f9325bd9",
+      "svgFile": "../routed-am3352-placements/outer-layers-solved.svg",
+      "svgSha256": "50f4d372f8eb27ceb9353e1fe5431ba6ad2aab32cbe6e54c0d793ea31e8d24be",
+      "completeSignals": 47,
+      "combinedDrc": true,
+      "matched": true,
+      "fixedPowerTraces": 161
+    }
+  ],
+  "fullBoard": {
+    "pngFile": "sbc-completed.png",
+    "pngSha256": "f6840cf188c1e84e76de1eb1e151edd6e738f882b1b4096086fe3ecdae886e18",
+    "validationFile": "sbc-validation.json",
+    "validationSha256": "7115757f40f7437f2d18feca05228098b761e4ff01995d6a878b74f8da4bc851",
+    "signals": 47,
+    "actualBoardObstacles": 1111,
+    "suppliedGroundEscapes": 67,
+    "openedAndInspected": true,
+    "addressControlTimingMatched": false,
+    "packageFirstReportFile": "package-first-report.json",
+    "packageFirstReportSha256": "de6e0f977b09e2d5c7a773b3bb8dadf690f84410ab9ee06dc38530968b3b4bb5",
+    "freshEndToEndSeconds": 923.914725506
+  }
+}

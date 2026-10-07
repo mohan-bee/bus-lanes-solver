@@ -16,7 +16,7 @@ The [scene verification](scene-verification.json) and
 [artifact manifest](artifact-manifest.json) bind them to the exact
 [benchmark report](benchmark-results.json).
 
-Benchmark SHA-256: `63893a4597d9095fe9db7f8c237bd275449f1ac994f16a5eb5655bf10cdb18f6`.
+Benchmark SHA-256: `44332d70b072bd00224645ff94a47ebc2e5b0325e831234b58ccba2118b45f44`.
 
 | Inspected PNG | RAM center (mm) | Carrier layer counts | Visual review |
 | --- | --- | --- | --- |
