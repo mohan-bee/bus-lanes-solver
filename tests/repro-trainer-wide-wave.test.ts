@@ -72,7 +72,13 @@ test("repro: the eight-bit trainer accepts wide waves before compact rounded tun
       type: "pcb_trace",
       pcb_trace_id: trace.pcb_trace_id,
       source_trace_id: trace.connection_name,
-      route: trace.route,
+      // Round only the rendered coordinates to 1 nm for portable SVG snapshots.
+      // The checks above use the unrounded copper geometry.
+      route: trace.route.map((point) => ({
+        ...point,
+        x: Number(point.x.toFixed(6)),
+        y: Number(point.y.toFixed(6)),
+      })),
     }),
   )
   const svg = convertCircuitJsonToPcbSvg([...pcb, ...traces], {
