@@ -45,3 +45,9 @@ search uses the benchmark's 161 immutable power fanouts, retaining their
 provenance. Acceptance uses the actual board's supplied 67 GND escapes and
 every board obstacle. This staged workflow does not establish convergence of
 the direct full-board search or address/control timing closure.
+
+The new package-first CLI was also run end to end after implementation: 923.915
+seconds and 3,752,530 iterations, with all 47 signals passing complete-board
+acceptance. Its result is exactly identical to the earlier fresh benchmark
+result. The [end-to-end report](package-first-report.json) includes input and
+output hashes, fanout provenance and independent validation.

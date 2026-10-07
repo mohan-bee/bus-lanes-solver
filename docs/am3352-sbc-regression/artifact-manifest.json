@@ -135,6 +135,9 @@
     "actualBoardObstacles": 1111,
     "suppliedGroundEscapes": 67,
     "openedAndInspected": true,
-    "addressControlTimingMatched": false
+    "addressControlTimingMatched": false,
+    "packageFirstReportFile": "package-first-report.json",
+    "packageFirstReportSha256": "611f1b03951790ac66a3fe057873b48a0d61fa27dc881b96c4a372a8e71d2d56",
+    "freshEndToEndSeconds": 923.914725506
   }
 }
