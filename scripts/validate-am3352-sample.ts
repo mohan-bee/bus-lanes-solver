@@ -1,4 +1,4 @@
-import { checkSignalSelfShorts } from "./check-signal-self-shorts"
+import { checkSignalSelfShorts } from "../lib/check-signal-self-shorts"
 import { withAm3352CaBus } from "./am3352-ca-bus"
 import { am3352Carrier } from "./am3352-carrier"
 import { validateRoutedCopperDrc } from "@tscircuit/fanout-solver"
