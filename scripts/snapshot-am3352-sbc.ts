@@ -36,7 +36,7 @@ export async function exportSbcSnapshot(
         error: null,
         input,
         traces,
-        getOutput: () => output,
+        getOutput: () => ({ ...output, traces: output.traces! }),
       },
     },
     {
