@@ -9,7 +9,7 @@ import {
 import { tuningPathIsSelfClear } from "../lib/length-tuning"
 import { fixedCopper, routeCopper, VectorScene } from "../lib/vector-scene"
 
-test("repro: the eight-bit trainer accepts wide waves before compact rounded tuning", async () => {
+test("the eight-bit trainer uses compact rounded tuning before wide waves", async () => {
   // Captured from the core trainer: SOIC16 U1 at (-25,-3), 1x8 J1 at
   // (23,0), top-layer DATA bus, 50 +/-0.5 mm target and 0.1 mm skew.
   const { input, pcb }: { input: SimpleRouteJson; pcb: AnyCircuitElement[] } =
@@ -64,8 +64,16 @@ test("repro: the eight-bit trainer accepts wide waves before compact rounded tun
   const tuningSpan =
     Math.max(...curvedPoints.map((p) => p.x)) -
     Math.min(...curvedPoints.map((p) => p.x))
-  // Pin the current wide-wave behavior. The fix should fit this tuning in 5 mm.
-  expect(tuningSpan).toBeGreaterThan(30)
+  // The rounded tuning fits a small interior bank while retaining the target.
+  expect(tuningSpan).toBeLessThanOrEqual(5)
+  expect(
+    first.route.some(
+      (point, i) =>
+        i > 0 &&
+        Math.abs(point.x - first.route[i - 1].x) < 1e-9 &&
+        Math.abs(point.y - first.route[i - 1].y) > 1e-6,
+    ),
+  ).toBe(true)
 
   const traces: AnyCircuitElement[] = solver.traces.map((trace) =>
     pcb_trace.parse({

@@ -140,13 +140,18 @@ export function tuneSmoothLengths(
             Math.abs(a - preferredTeeth) - Math.abs(b - preferredTeeth) ||
             b - a,
         )
-        function* placements() {
+        function* placements(preferCompactAccordion: boolean) {
           if (folded) {
             for (const teeth of [1, 2, 3])
               for (const fraction of [0.9, 0.65, 0.4])
                 for (const position of [0.5, 0, 1])
                   yield { teeth, fraction, position }
             return
+          }
+          if (preferCompactAccordion && !options.alignPeriods) {
+            for (const teeth of counts)
+              for (const fraction of [0.1, 0.15, 0.25])
+                yield { teeth, fraction, position: 0.5 }
           }
           if (options.alignPeriods) {
             const projection = a.x * ux + a.y * uy
@@ -185,13 +190,17 @@ export function tuneSmoothLengths(
             }
           }
         }
-        for (const { teeth, fraction, position } of placements()) {
-          const w = (span * fraction) / teeth
-          if (!folded && w < pitch) continue
-          for (const side of [1, -1])
-            for (const createLobes of folded
-              ? [foldedTuningLobes]
-              : [roundedTuningLobes, smoothTuningLobes]) {
+        // Exhaust rounded accordion placements before accepting a wave. A
+        // small deficit may fit one rounded lobe but not the preferred count.
+        for (const createLobes of folded
+          ? [foldedTuningLobes]
+          : [roundedTuningLobes, smoothTuningLobes])
+          for (const { teeth, fraction, position } of placements(
+            createLobes === roundedTuningLobes,
+          )) {
+            const w = (span * fraction) / teeth
+            if (!folded && w < pitch) continue
+            for (const side of [1, -1]) {
               const offset = span * (1 - fraction) * position
               const start = { x: a.x + ux * offset, y: a.y + uy * offset }
               const end = {
@@ -266,7 +275,7 @@ export function tuneSmoothLengths(
               }
               if (routeAnglesAreConventional([candidate])) yield candidate
             }
-        }
+          }
       }
   }
   const result = [...traces]
