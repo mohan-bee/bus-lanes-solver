@@ -1,3 +1,4 @@
+import { initialSignalDogbones } from "./initial-signal-dogbones"
 import { retargetGeneratedEscape } from "./retarget-generated-escape"
 import { joinSignalEscapes } from "./join-signal-escapes"
 import { tuneGeneratedPairEscapes } from "./tune-generated-pair-escapes"
@@ -640,7 +641,7 @@ export class BusLanesPipelineSolver extends BaseSolver {
         this.input.minTraceWidth,
     )
     // The shared site matcher uses a conservative width while reserving sites.
-    const result = routeAlternateSignalDogbones(
+    const result = initialSignalDogbones(
       this.input,
       {
         targetLayers: targets,
