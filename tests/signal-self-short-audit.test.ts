@@ -66,6 +66,9 @@ test("untimed control audit materializes through-via lands that bypass earlier c
     if (point.route_type === "via") point.via_diameter = 0.01
   expect(checkSignalSelfShorts(input, [withoutLands])).toHaveLength(0)
   expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(1)
+  for (const point of withoutLands.route)
+    if (point.route_type === "via") point.via_diameter = 0.3
+  expect(checkSignalSelfShorts(input, [withoutLands])).toHaveLength(1)
 })
 
 for (const layer of ["top", "bottom"]) {
@@ -108,4 +111,31 @@ test("native audit permits projected crossings between separate wire layers", ()
       ]),
     ]),
   ).toHaveLength(0)
+})
+
+test("an earlier audit pass cannot hide later coordinate or copper-width changes", () => {
+  const candidate = trace([
+    wire(0, 0),
+    wire(1, 0),
+    wire(1, 1),
+    wire(0.5, 1),
+    wire(0.5, 0.11),
+    wire(-1, 0.11),
+  ])
+  expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(0)
+  for (const point of candidate.route)
+    if (point.route_type === "wire") point.width = 0.12
+  expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(1)
+  for (const point of candidate.route)
+    if (point.route_type === "wire") point.width = 0.1
+  expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(0)
+  candidate.route[4].y = 0
+  expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(1)
+})
+
+test("the audit also rejects self-contact when a signal is identified only by its PCB trace ID", () => {
+  const candidate = trace([wire(0, 0), wire(1, 0), wire(0.5, 0)])
+  delete candidate.connection_name
+  delete candidate.source_trace_id
+  expect(checkSignalSelfShorts(input, [candidate])).toHaveLength(1)
 })

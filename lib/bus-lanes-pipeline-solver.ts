@@ -440,7 +440,14 @@ export class BusLanesPipelineSolver extends BaseSolver {
         return repaired.traces
       }
     }
-    const matcher = BusLanesSolver.forRefinement(input, refined, this.options)
+    // Rematching a finished approach needs its clipped-pocket search without
+    // changing the initial bounded search for crowded two-layer corridors.
+    const matcher = BusLanesSolver.forRefinement(
+      input,
+      refined,
+      this.options,
+      4096,
+    )
     try {
       while (!matcher.solved && !matcher.failed) {
         matcher.step()
