@@ -148,7 +148,11 @@ export function tuneSmoothLengths(
                   yield { teeth, fraction, position }
             return
           }
-          if (preferCompactAccordion && !options.alignPeriods) {
+          if (
+            preferCompactAccordion &&
+            !options.alignPeriods &&
+            !options.packMeanders
+          ) {
             for (const teeth of counts)
               for (const fraction of [0.1, 0.15, 0.25])
                 yield { teeth, fraction, position: 0.5 }
