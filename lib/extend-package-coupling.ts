@@ -1,9 +1,6 @@
 import { findCoupledPackageEntry } from "./coupled-package-entry"
 import { bevelCoupledCorners } from "./bevel-coupled-corners"
-import {
-  offsetPath,
-  pairHasUnroutedNativePads,
-} from "./coupled-pair-routing"
+import { offsetPath, pairHasUnroutedNativePads } from "./coupled-pair-routing"
 import { distance, pointSegmentDistanceToPoints, simplify } from "./geometry"
 import { GridVisibilitySearch } from "./grid-visibility"
 import { tuningPathIsSelfClear } from "./length-tuning"
