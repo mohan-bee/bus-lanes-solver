@@ -10,6 +10,7 @@ export function reduceOrdinaryTurns(
   path: Point[],
   scene: VectorScene,
   connectorAlternative = 0,
+  stableConnectorTies = false,
 ) {
   let result = simplify(path)
   for (let pass = 0; pass < 12; pass++) {
@@ -19,9 +20,11 @@ export function reduceOrdinaryTurns(
         const old = length(result.slice(i, j + 1))
         const candidates = connectors(result[i], result[j]).sort((a, b) => {
           const delta = length(a) - length(b)
-          // Analytically equal octilinear paths can differ by a final ulp.
-          // Keep fewer bends and stable connector order for those ties.
-          return Math.abs(delta) < 1e-8 ? a.length - b.length : delta
+          // Native paired planning opts into stable ordering for analytically
+          // equal paths. Preserve established strict ordering for fixed handoffs.
+          return stableConnectorTies && Math.abs(delta) < 1e-8
+            ? a.length - b.length
+            : delta || a.length - b.length
         })
         let accepted = false
         for (const replacement of candidates) {

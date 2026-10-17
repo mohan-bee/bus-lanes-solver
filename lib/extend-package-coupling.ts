@@ -1,6 +1,9 @@
 import { findCoupledPackageEntry } from "./coupled-package-entry"
 import { bevelCoupledCorners } from "./bevel-coupled-corners"
-import { offsetPath } from "./coupled-pair-routing"
+import {
+  offsetPath,
+  pairHasUnroutedNativePads,
+} from "./coupled-pair-routing"
 import { distance, pointSegmentDistanceToPoints, simplify } from "./geometry"
 import { GridVisibilitySearch } from "./grid-visibility"
 import { tuningPathIsSelfClear } from "./length-tuning"
@@ -50,6 +53,7 @@ export function* extendPackageCoupling(
     input.minTraceToPadEdgeClearance ?? input.defaultObstacleMargin ?? 0.075
   let budget = 2000
   for (const pair of input.differentialPairs ?? []) {
+    const nativePairPads = pairHasUnroutedNativePads(input, pair)
     for (const reversed of [false, true]) {
       for (const side of [0, 1]) {
         if (budget <= 0) return result
@@ -205,7 +209,12 @@ export function* extendPackageCoupling(
               simplify([
                 ...other.route.slice(0, oe),
                 ...path,
-                ...reduceOrdinaryTurns(search.result, scene).slice(1),
+                ...reduceOrdinaryTurns(
+                  search.result,
+                  scene,
+                  0,
+                  nativePairPads,
+                ).slice(1),
                 ...other.route.slice(join + 1),
               ]).map(wire),
               wire(other.route[os]),

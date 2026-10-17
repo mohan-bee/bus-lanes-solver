@@ -507,6 +507,7 @@ export function* routeCoupledPair(
           centerSearch.result,
           visibleScene,
           centerAlternative,
+          nativePairPads,
         )
         // Grid endpoint attachments can briefly backtrack at a blocked
         // handoff. Reject that candidate instead of aborting the whole phase
@@ -678,7 +679,12 @@ export function* routeCoupledPair(
                 }
                 escapes[i][end] = makeTrace(
                   c,
-                  reduceOrdinaryTurns(search.result, visibleEscapeScene),
+                  reduceOrdinaryTurns(
+                    search.result,
+                    visibleEscapeScene,
+                    0,
+                    nativePairPads,
+                  ),
                 )
               }
             if (failed) continue
