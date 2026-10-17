@@ -75,7 +75,9 @@ export function* extendPackageCoupling(
           continue
         const regions = packageApproachRegions(
           input,
-          width + (pair.traceGap ?? clearance) / 2 + clearance,
+          nativePairPads
+            ? width + (pair.traceGap ?? clearance) / 2 + clearance
+            : width / 2 + clearance,
         )
         const region = regions.find(
           (r) =>
@@ -87,28 +89,80 @@ export function* extendPackageCoupling(
           x: (ref.route[re - 1].x + ref.route[re].x) / 2,
           y: (ref.route[re - 1].y + ref.route[re].y) / 2,
         }
-        const signedOffset = [separation, -separation].find((offset) => {
-          const start = offsetPath([anchor, ref.route[re]], offset)[0]
-          return (
-            pointSegmentDistanceToPoints(
-              start,
-              other.route[oe - 1],
-              other.route[oe],
-            ) < 1e-7
+        let stop: number
+        let section: Point[]
+        let path: Point[]
+        if (nativePairPads) {
+          const signedOffset = [separation, -separation].find((offset) => {
+            const start = offsetPath([anchor, ref.route[re]], offset)[0]
+            return (
+              pointSegmentDistanceToPoints(
+                start,
+                other.route[oe - 1],
+                other.route[oe],
+              ) < 1e-7
+            )
+          })
+          if (signedOffset === undefined) continue
+          const entry = findCoupledPackageEntry(
+            [anchor, ...ref.route.slice(re)],
+            signedOffset,
+            region.copper,
+            offsetPath,
           )
-        })
-        if (signedOffset === undefined) continue
-        const entry = findCoupledPackageEntry(
-          [anchor, ...ref.route.slice(re)],
-          signedOffset,
-          region.copper,
-          offsetPath,
-        )
-        if (!entry) continue
-        const stop = re + entry.stop - 1
-        if (ref.curvedSegments?.some((i) => i >= re && i <= stop)) continue
-        let section = entry.section
-        let path = entry.counterpart
+          if (!entry) continue
+          stop = re + entry.stop - 1
+          if (ref.curvedSegments?.some((i) => i >= re && i <= stop)) continue
+          section = entry.section
+          path = entry.counterpart
+        } else {
+          // Supplied and generated handoffs retain their established clipping
+          // and local search geometry. Final physical validation still applies.
+          stop = re + 1
+          while (
+            stop < ref.route.length &&
+            !pointInBox(ref.route[stop], region.copper)
+          )
+            stop++
+          if (
+            stop === ref.route.length ||
+            ref.curvedSegments?.some((i) => i >= re && i <= stop)
+          )
+            continue
+          const a = ref.route[stop - 1],
+            b = ref.route[stop]
+          let lo = 0,
+            hi = 1
+          for (let i = 0; i < 40; i++) {
+            const t = (lo + hi) / 2
+            if (
+              pointInBox(
+                { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t },
+                region.copper,
+              )
+            )
+              hi = t
+            else lo = t
+          }
+          const cut = { x: a.x + (b.x - a.x) * hi, y: a.y + (b.y - a.y) * hi }
+          section = simplify([anchor, ...ref.route.slice(re, stop), cut])
+          let paths: Point[][]
+          try {
+            paths = [separation, -separation].map((d) => offsetPath(section, d))
+          } catch {
+            continue
+          }
+          const counterpart = paths.find(
+            (p) =>
+              pointSegmentDistanceToPoints(
+                p[0],
+                other.route[oe - 1],
+                other.route[oe],
+              ) < 1e-7,
+          )
+          if (!counterpart) continue
+          path = counterpart
+        }
         const localWire = (p: Point): Wire => ({
           ...p,
           route_type: "wire",
@@ -178,7 +232,7 @@ export function* extendPackageCoupling(
             undefined,
             undefined,
             undefined,
-            { bounds: region.copper },
+            nativePairPads ? { bounds: region.copper } : undefined,
           )
           try {
             let steps = 0
@@ -263,7 +317,7 @@ export function* extendPackageCoupling(
                 ),
               surrounding,
               trim,
-              region.copper,
+              nativePairPads ? region.copper : undefined,
             )
             const refined = result.map(
               (t) =>
