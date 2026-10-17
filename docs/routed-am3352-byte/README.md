@@ -36,3 +36,11 @@ bun scripts/repro-am3352-byte-stall.ts --case native --steps 16000 --seconds 120
 The legacy 47-signal placement inputs and their accepted reference artifacts
 remain unchanged in [routed-am3352-placements](../routed-am3352-placements).
 Their smaller drills and reduced obstacle scene are distinct from this capture.
+
+The final 180-second-per-case comparison preserves all six baseline passes;
+the same five cases time out. Every accepted result passes all 47 connections,
+combined-copper DRC and whole-copper bus/pair matching. All eleven input hashes
+and all 161 fixed power fanouts per sample remain unchanged. See the
+[comparison](legacy-placement-comparison.md),
+[unrounded metrics and provenance](legacy-placement-comparison.json), and
+[complete candidate report](legacy-placement-benchmark.json).

@@ -4,7 +4,7 @@
   "redundantGlobalLayers": false,
   "stepBudget": 16000,
   "secondsBudget": 120,
-  "runtimeMs": 15349.523592000001,
+  "runtimeMs": 16813.779584,
   "iterations": 5222,
   "phase": "solved",
   "progress": 1,
@@ -196,14 +196,14 @@
     "envelopeOptimization": {
       "beforeAreaMm2": 234.48749999999995,
       "afterAreaMm2": 233.162345,
-      "milliseconds": 1768.8463479999991
+      "milliseconds": 1842.6520569999993
     },
     "optimizationStoppedEarly": false
   },
   "status": "solver_completed",
   "inputUnchanged": true,
   "outputConnectivityDrcAndTimingVerified": true,
-  "validationRuntimeMs": 4138.42879,
+  "validationRuntimeMs": 4185.301614,
   "validation": {
     "valid": true,
     "inputPreserved": true,
