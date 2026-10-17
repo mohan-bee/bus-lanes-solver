@@ -1,3 +1,4 @@
+import { findCoupledPackageEntry } from "./coupled-package-entry"
 import { bevelCoupledCorners } from "./bevel-coupled-corners"
 import { offsetPath } from "./coupled-pair-routing"
 import { distance, pointSegmentDistanceToPoints, simplify } from "./geometry"
@@ -71,60 +72,42 @@ export function* extendPackageCoupling(
           distance(ref.route[re - 1], ref.route[re]) < 1e-7
         )
           continue
-        const regions = packageApproachRegions(input, width / 2 + clearance)
+        const regions = packageApproachRegions(
+          input,
+          width + (pair.traceGap ?? clearance) / 2 + clearance,
+        )
         const region = regions.find(
           (r) =>
             pointInBox(ref.route.at(-1)!, r.copper) &&
             pointInBox(other.route.at(-1)!, r.copper),
         )
         if (!region || pointInBox(ref.route[re], region.copper)) continue
-        let stop = re + 1
-        while (
-          stop < ref.route.length &&
-          !pointInBox(ref.route[stop], region.copper)
-        )
-          stop++
-        if (
-          stop === ref.route.length ||
-          ref.curvedSegments?.some((i) => i >= re && i <= stop)
-        )
-          continue
-        const a = ref.route[stop - 1],
-          b = ref.route[stop]
-        let lo = 0,
-          hi = 1
-        for (let i = 0; i < 40; i++) {
-          const t = (lo + hi) / 2
-          if (
-            pointInBox(
-              { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t },
-              region.copper,
-            )
-          )
-            hi = t
-          else lo = t
-        }
-        const cut = { x: a.x + (b.x - a.x) * hi, y: a.y + (b.y - a.y) * hi }
         const anchor = {
           x: (ref.route[re - 1].x + ref.route[re].x) / 2,
           y: (ref.route[re - 1].y + ref.route[re].y) / 2,
         }
-        let section = simplify([anchor, ...ref.route.slice(re, stop), cut])
-        let paths: Point[][]
-        try {
-          paths = [separation, -separation].map((d) => offsetPath(section, d))
-        } catch {
-          continue
-        }
-        let path = paths.find(
-          (p) =>
+        const signedOffset = [separation, -separation].find((offset) => {
+          const start = offsetPath([anchor, ref.route[re]], offset)[0]
+          return (
             pointSegmentDistanceToPoints(
-              p[0],
+              start,
               other.route[oe - 1],
               other.route[oe],
-            ) < 1e-7,
+            ) < 1e-7
+          )
+        })
+        if (signedOffset === undefined) continue
+        const entry = findCoupledPackageEntry(
+          [anchor, ...ref.route.slice(re)],
+          signedOffset,
+          region.copper,
+          offsetPath,
         )
-        if (!path) continue
+        if (!entry) continue
+        const stop = re + entry.stop - 1
+        if (ref.curvedSegments?.some((i) => i >= re && i <= stop)) continue
+        let section = entry.section
+        let path = entry.counterpart
         const localWire = (p: Point): Wire => ({
           ...p,
           route_type: "wire",
@@ -191,6 +174,10 @@ export function* extendPackageCoupling(
             scene,
             path.at(-1)!,
             other.route[join],
+            undefined,
+            undefined,
+            undefined,
+            { bounds: region.copper },
           )
           try {
             let steps = 0
@@ -270,6 +257,7 @@ export function* extendPackageCoupling(
                 ),
               surrounding,
               trim,
+              region.copper,
             )
             const refined = result.map(
               (t) =>
