@@ -23,7 +23,7 @@ export function initialSignalDogbones(
       throw error
     const targets = new Map(options.targetLayers)
     const available = (c: Connection, layer: string) =>
-      input.allowedLayers?.includes(layer) &&
+      (!input.allowedLayers || input.allowedLayers.includes(layer)) &&
       c.pointsToConnect.every(
         (p) => p.layer === layer && isUnroutedComponentPad(input, c, p),
       ) &&
