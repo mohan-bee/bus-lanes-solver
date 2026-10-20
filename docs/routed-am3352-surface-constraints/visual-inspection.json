@@ -1,0 +1,83 @@
+{
+  "inspector": "Codex",
+  "dateUtc": "2026-10-20",
+  "images": [
+    {
+      "file": "above-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "control-inner1-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "control-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "inner-layers-above-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "inner-layers-complete-ca-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "inner-layers-left-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "inner-layers-right-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "inner-layers-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "left-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "outer-layers-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    },
+    {
+      "file": "right-solved.png",
+      "inspected": true,
+      "completeLayerPanels": true,
+      "noIntermediateOrRatsnestOnlyImage": true,
+      "identicalToPriorProofImage": true
+    }
+  ]
+}

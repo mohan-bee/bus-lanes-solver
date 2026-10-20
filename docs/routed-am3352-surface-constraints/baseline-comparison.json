@@ -1,0 +1,83 @@
+{
+  "baselineProductionLibTree": "926cfe1574b9ed5f6d57394dcbee006222288eaf",
+  "comparisonPerformedAfterFreshRouting": true,
+  "cases": [
+    {
+      "sample": "control-inner1",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "5d94f0ad50b3b1932e9675a918eb91127c01e4b75e19597bc461fa94ecc1b928",
+      "baselineTraceSha256": "5d94f0ad50b3b1932e9675a918eb91127c01e4b75e19597bc461fa94ecc1b928"
+    },
+    {
+      "sample": "outer-layers",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "afaf92acada7444d6b0fe76a3f796bcec6d2595dca9e7bb98a325a8fd53719f2",
+      "baselineTraceSha256": "afaf92acada7444d6b0fe76a3f796bcec6d2595dca9e7bb98a325a8fd53719f2"
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "bc6796aacbc3200b96a918ffa3e3e366b7393d5f46d792c8698cabf8154c9534",
+      "baselineTraceSha256": "bc6796aacbc3200b96a918ffa3e3e366b7393d5f46d792c8698cabf8154c9534"
+    },
+    {
+      "sample": "inner-layers-above",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "ecd401fe5b46b82bdc2e166b15eefa353cb5bba68111f359aee1c496eddcc9c0",
+      "baselineTraceSha256": "ecd401fe5b46b82bdc2e166b15eefa353cb5bba68111f359aee1c496eddcc9c0"
+    },
+    {
+      "sample": "inner-layers-left",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "1dbbb0459fb7bde94a38c23c5fcfaadbede48e942bf8aa532caf80b3ac0e8baa",
+      "baselineTraceSha256": "1dbbb0459fb7bde94a38c23c5fcfaadbede48e942bf8aa532caf80b3ac0e8baa"
+    },
+    {
+      "sample": "inner-layers-right",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "f0fd2727a45914653c2402d8f76d283b1b299e97e1e4e3e0a9b6ba435c108662",
+      "baselineTraceSha256": "f0fd2727a45914653c2402d8f76d283b1b299e97e1e4e3e0a9b6ba435c108662"
+    },
+    {
+      "sample": "inner-layers",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "1c17b008153cc91bb44f38332aece500a774935b64624b5b4e554c8c49cd1a4b",
+      "baselineTraceSha256": "1c17b008153cc91bb44f38332aece500a774935b64624b5b4e554c8c49cd1a4b"
+    },
+    {
+      "sample": "control",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "c5ff2bd532f3c5d14a5aca5b588543315f191f38e3c574f653588580d5c18ff9",
+      "baselineTraceSha256": "c5ff2bd532f3c5d14a5aca5b588543315f191f38e3c574f653588580d5c18ff9"
+    },
+    {
+      "sample": "right",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "bcdd9386f96728f3bc1743b9edcc09e72cf207d3e534a331058213b8c48b7701",
+      "baselineTraceSha256": "bcdd9386f96728f3bc1743b9edcc09e72cf207d3e534a331058213b8c48b7701"
+    },
+    {
+      "sample": "left",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "40604a562d47f2810ae0efb5a7191e5cec5f646c9e0ee8f3cd50aa4b079591e9",
+      "baselineTraceSha256": "40604a562d47f2810ae0efb5a7191e5cec5f646c9e0ee8f3cd50aa4b079591e9"
+    },
+    {
+      "sample": "above",
+      "inputIdentical": true,
+      "traceArraysIdentical": true,
+      "traceSha256": "5400ac908d56d059c3802cbeeafc4e5f4e309108bb26de92f390cabc837dc167",
+      "baselineTraceSha256": "5400ac908d56d059c3802cbeeafc4e5f4e309108bb26de92f390cabc837dc167"
+    }
+  ]
+}
