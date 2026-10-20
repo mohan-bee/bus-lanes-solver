@@ -1,0 +1,151 @@
+{
+  "startedAtUtc": "2026-10-20T16:28:16+00:00",
+  "metadataRecordedAtUtc": "2026-10-20T16:28:58.820337+00:00",
+  "integrationCommit": "49605dc0f56c9532e047c88928f27c8e3b46f8e1",
+  "sourceTree": "926cfe1574b9ed5f6d57394dcbee006222288eaf",
+  "fixtureTree": "0e6564370d4dde2bbab46f717f79d8042625776e",
+  "mainCommit": "6f58178c3324c4f6b95c24f242c353e5927b75ce",
+  "fixCommit": "53814af4da9a0fed9a15d3d2b402ed316bdc2238",
+  "reviewedPrHead": "328ace12cef6df723bb25fe6070deb0e8eef6822",
+  "bunVersion": "1.4.0",
+  "command": [
+    "./benchmark.sh",
+    "--timeout-seconds",
+    "3600",
+    "--require-all-solved",
+    "--output",
+    "/workspace/work/am3352-repros/legacy-full-proof-20261020/benchmark-results.json",
+    "--routes-directory",
+    "/workspace/work/am3352-repros/legacy-full-proof-20261020/routes"
+  ],
+  "memoryOptions": {
+    "BUN_JSC_forceRAMSize": "2147483648",
+    "BUN_JSC_miniVMHeapGrowthFactor": "1.05"
+  },
+  "packageJsonSha256": "9bcc3b735a62f6b26ec6d0efd27198d173e62a504c87354242b568c688432bda",
+  "lockfiles": {},
+  "benchmarkScriptSha256": "0480f451c9473b970d54dfa86ed80b3c7802fed680acb0fc057b3a94c27bb78d",
+  "validatorSha256": "28d2a3ee5f3498298e88d9062b169655c3731156ffd2a305a6ea62db05b50753",
+  "installedDependencies": {
+    "@biomejs/biome": {
+      "requested": "^2.2.4",
+      "installedVersion": "2.5.15",
+      "packageJsonSha256": "72bb1900df96d9e24331c9f3d7cf5b4d44aac0aae3ff231e266df0c2cf9d5543"
+    },
+    "@flatten-js/core": {
+      "requested": "1.6.2",
+      "installedVersion": "1.6.2",
+      "packageJsonSha256": "63da846c7ce6c6110ce43512e45be5940c5bc5144c974d4b159f039f96327c3c"
+    },
+    "@tscircuit/checks": {
+      "requested": "0.0.237",
+      "installedVersion": "0.0.237",
+      "packageJsonSha256": "0b46caa7831361237b071d325042b272d1f2dbfd96150d0d6efa3f38630f2831"
+    },
+    "@tscircuit/circuit-json-util": {
+      "requested": "0.0.119",
+      "installedVersion": "0.0.119",
+      "packageJsonSha256": "05d5376b6c76b48b04671f137b3cf5aeb2685e6658112ba5fb9a42d0ff991ec2"
+    },
+    "@tscircuit/fanout-solver": {
+      "requested": "github:tscircuit/fanout-solver#15857f17beed0f228b2e29544f7ce393af297c86",
+      "installedVersion": "0.0.76",
+      "packageJsonSha256": "fd58fddbed687cb8967ab32c596520ccd21c26c9da28788aa0081a58bf12bf9d"
+    },
+    "@tscircuit/math-utils": {
+      "requested": "^0.0.38",
+      "installedVersion": "0.0.38",
+      "packageJsonSha256": "d5f7081373a428e53b0acfa26ef5e952edb0f8f565dff836ef14db08905f1d9c"
+    },
+    "@tscircuit/solver-utils": {
+      "requested": "^0.0.21",
+      "installedVersion": "0.0.21",
+      "packageJsonSha256": "7a345035db462a84c39801a60ac057bd004e1009627f92c5224c29aba5a608e9"
+    },
+    "@types/bun": {
+      "requested": "latest",
+      "installedVersion": "1.4.3",
+      "packageJsonSha256": "9c9594d7d9d10d060a9057bc6941d229b1410806a03285560ea2796ab8bd851c"
+    },
+    "@types/react": {
+      "requested": "^19",
+      "installedVersion": "19.3.0",
+      "packageJsonSha256": "505c0df4cd73d6a02c946bd9b81451584bd9c83ea72d75cff9b826efceaa19c2"
+    },
+    "@types/react-dom": {
+      "requested": "^19",
+      "installedVersion": "19.3.0",
+      "packageJsonSha256": "4a2052bb362c34f1d39cfe0818b6fe01a9f988b609e8b7e4832aff7dbf2f7180"
+    },
+    "circuit-json": {
+      "requested": "0.0.514",
+      "installedVersion": "0.0.514",
+      "packageJsonSha256": "0d0610ff490a2837485a255c086f3c448ad90d34582959f65e381c454c756816"
+    },
+    "circuit-json-to-connectivity-map": {
+      "requested": "^0.0.30",
+      "installedVersion": "0.0.30",
+      "packageJsonSha256": "0d4919fba65498626b37c34039fc04f62f1e5c06058c5fe72b015146d812eae7"
+    },
+    "dts-bundle-generator": {
+      "requested": "^9.5.1",
+      "installedVersion": "9.5.1",
+      "packageJsonSha256": "a2e5bd3d1414a1812d0f793de2cce646f72862df3bca76d49eb27d39313d0775"
+    },
+    "format-si-unit": {
+      "requested": "^0.0.14",
+      "installedVersion": "0.0.14",
+      "packageJsonSha256": "357115dddc1aa1bf448ecff2ba60c79f6e9f498999da8c08704b8f12e43de9df"
+    },
+    "graphics-debug": {
+      "requested": "^0.0.95",
+      "installedVersion": "0.0.95",
+      "packageJsonSha256": "6b329af03ec6c8b16c2b8757c40a324a40a0ed75a86e5d0a22c1646985a60ce7"
+    },
+    "react": {
+      "requested": "^19",
+      "installedVersion": "19.3.1",
+      "packageJsonSha256": "9cc9c3de5441a2eea7f41f52f3f2a15a4fc51f90c0b72741f0d7638643a85e67"
+    },
+    "react-cosmos": {
+      "requested": "^7.0.0",
+      "installedVersion": "7.4.1",
+      "packageJsonSha256": "c8c556672afd149f4483e1a0478d4468362848cff1b2e08f78e20a0f48fd07e2"
+    },
+    "react-cosmos-plugin-vite": {
+      "requested": "^7.0.0",
+      "installedVersion": "7.4.0",
+      "packageJsonSha256": "abc7764cfe4335e919120ab9754fd92c5c1b3691a4050d9832649f2b58b1c327"
+    },
+    "react-dom": {
+      "requested": "^19",
+      "installedVersion": "19.3.1",
+      "packageJsonSha256": "89d54f11575c9b0f7819962d9d72a31970dfb4d103f07e8b1d1b37e6d1fc3258"
+    },
+    "transformation-matrix": {
+      "requested": "^3.1.0",
+      "installedVersion": "3.1.0",
+      "packageJsonSha256": "7548565a728472f003a0ce2d0ba681e07eb038d7cbeb4da40e715c8c80ef263a"
+    },
+    "tsup": {
+      "requested": "^8.5.0",
+      "installedVersion": "8.5.1",
+      "packageJsonSha256": "420725303bff2abcaa95fa33d68b8f11cb974b640c8c0bae8c15863ed5125ec4"
+    },
+    "typescript": {
+      "requested": "5.9.3",
+      "installedVersion": "5.9.3",
+      "packageJsonSha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+    },
+    "vite": {
+      "requested": "^7.3.0",
+      "installedVersion": "7.3.7",
+      "packageJsonSha256": "aae1f593c0e6f320989b60af6e90f8ed4ea5137e5a0b9db663f9b0088333eb3c"
+    },
+    "yalps": {
+      "requested": "0.6.4",
+      "installedVersion": "0.6.4",
+      "packageJsonSha256": "908e43065c989cc5e1a18da5b1117465aab58772d2d2da65b6db4266e3fcb8f8"
+    }
+  }
+}

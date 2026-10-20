@@ -1,0 +1,328 @@
+#!/usr/bin/env bun
+/**
+ * Revalidate and render the successful native outputs of this one benchmark.
+ * This script never constructs a solver, calls step/solve, or changes copper.
+ * Run only after observing exit 0 from the original strict benchmark process.
+ */
+import { createHash, randomUUID } from "node:crypto"
+import { lstat, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises"
+import { join, relative } from "node:path"
+import { pathToFileURL } from "node:url"
+
+const proofRoot = import.meta.dir
+const repository = "/workspace/work/am3352-repros/byte-integration"
+const outputDirectory = join(proofRoot, "artifacts")
+const routeDirectory = join(proofRoot, "routes")
+const benchmarkFile = join(proofRoot, "benchmark-results.json")
+const provenanceFile = join(proofRoot, "run-provenance.json")
+const expected = {
+  integrationCommit: "49605dc0f56c9532e047c88928f27c8e3b46f8e1",
+  sourceTree: "926cfe1574b9ed5f6d57394dcbee006222288eaf",
+  fixtureTree: "0e6564370d4dde2bbab46f717f79d8042625776e",
+  mainCommit: "6f58178c3324c4f6b95c24f242c353e5927b75ce",
+  fixCommit: "53814af4da9a0fed9a15d3d2b402ed316bdc2238",
+  reviewedPrHead: "328ace12cef6df723bb25fe6070deb0e8eef6822",
+}
+const command = [
+  "./benchmark.sh", "--timeout-seconds", "3600", "--require-all-solved",
+  "--output", benchmarkFile, "--routes-directory", routeDirectory,
+]
+const sha256 = (bytes: string | Uint8Array) =>
+  createHash("sha256").update(bytes).digest("hex")
+const jsonHash = (value: unknown) => sha256(JSON.stringify(value))
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) throw Error(message)
+}
+function same(a: unknown, b: unknown, message: string) {
+  assert(jsonHash(a) === jsonHash(b), message)
+}
+function finiteNumbers(value: unknown, label: string): void {
+  if (typeof value === "number") assert(Number.isFinite(value), `${label}: non-finite number`)
+  else if (Array.isArray(value)) value.forEach((v, i) => finiteNumbers(v, `${label}[${i}]`))
+  else if (value && typeof value === "object")
+    for (const [key, v] of Object.entries(value)) finiteNumbers(v, `${label}.${key}`)
+}
+function git(...args: string[]) {
+  const result = Bun.spawnSync(["git", "--no-optional-locks", "-C", repository, ...args], {
+    stdout: "pipe", stderr: "pipe",
+  })
+  assert(result.exitCode === 0, `Read-only git ${args.join(" ")} failed: ${result.stderr.toString()}`)
+  return result.stdout.toString().trim()
+}
+async function mustNotExist(path: string) {
+  try {
+    await lstat(path)
+  } catch (error: any) {
+    if (error.code === "ENOENT") return
+    throw error
+  }
+  throw Error(`Refusing to reuse an existing output path: ${path}`)
+}
+async function readJson(path: string) {
+  const bytes = await readFile(path)
+  const value = JSON.parse(bytes.toString())
+  finiteNumbers(value, relative(proofRoot, path))
+  return { bytes, value, sha256: sha256(bytes) }
+}
+function acceptedValidation(validation: any, sample: string) {
+  assert(validation?.valid === true && validation.complete === true && validation.matched === true,
+    `${sample}: incomplete or unmatched validation`)
+  assert(validation.fixedDrc?.valid === true && validation.combinedDrc?.valid === true,
+    `${sample}: native copper DRC failed`)
+  assert(validation.fixedDrc.issues?.length === 0 && validation.combinedDrc.issues?.length === 0,
+    `${sample}: native copper DRC contains issues`)
+  assert(validation.fixedPowerTraces === 161 && validation.fixedPowerVias === 161 &&
+    validation.fixedPowerPadJoins === 161, `${sample}: fixed power counts changed`)
+  assert(Array.isArray(validation.issues) && validation.issues.length === 0 &&
+    validation.quality?.signalCount === 47 && validation.quality.issues?.length === 0,
+    `${sample}: routing quality or physical coupling failed`)
+  const expectedBuses: Record<string, number> = { DDR_BYTE0: 0.635, DDR_BYTE1: 0.635 }
+  if (sample === "inner-layers-complete-ca") expectedBuses.DDR_ADDR_CTRL_CK = 0.635
+  for (const [key, expectedBounds] of [
+    ["busLengths", expectedBuses],
+    ["pairLengths", { pair_0: 0.127, pair_1: 0.127, pair_2: 0.127 }],
+  ] as const) {
+    const rows = validation[key]
+    assert(Array.isArray(rows) && rows.length === Object.keys(expectedBounds).length,
+      `${sample}: wrong ${key} membership`)
+    same(rows.map((r: any) => r.busId).sort(), Object.keys(expectedBounds).sort(),
+      `${sample}: unexpected or duplicate ${key} names`)
+    for (const row of rows) {
+      const tolerance = expectedBounds[row.busId as keyof typeof expectedBounds]
+      assert(row.matched === true && row.toleranceMm === tolerance &&
+        typeof row.skewMm === "number" && row.skewMm >= 0 && row.skewMm <= tolerance + 1e-7,
+        `${sample}: invalid ${key} skew or tolerance`)
+    }
+  }
+  assert(validation.quality.pairGaps?.length === 3 &&
+    validation.quality.pairGaps.every((p: any) => p.matched === true) &&
+    validation.quality.exteriorPairGaps?.length === 3 &&
+    validation.quality.exteriorPairGaps.every((p: any) => p.matched === true),
+    `${sample}: physical pair coupling failed`)
+}
+
+assert(process.argv.length === 4 && process.argv[2] === "--benchmark-exit-code" &&
+  process.argv[3] === "0",
+  "Usage: bun revalidate-export.ts --benchmark-exit-code 0 (only after observing the original strict process exit 0)")
+await mustNotExist(outputDirectory)
+const provenance = await readJson(provenanceFile)
+for (const [key, value] of Object.entries(expected))
+  assert(provenance.value[key] === value, `Run provenance has wrong ${key}`)
+same(provenance.value.command, command, "Run provenance does not identify this exact strict benchmark")
+assert(Bun.version === provenance.value.bunVersion, "Bun version differs from the benchmark run")
+assert(git("rev-parse", "HEAD") === expected.integrationCommit, "Integration checkout HEAD changed")
+assert(git("rev-parse", "HEAD:lib") === expected.sourceTree, "Integrated production source tree changed")
+assert(git("rev-parse", "HEAD:tests/fixtures/am3352-ram") === expected.fixtureTree, "Legacy fixtures changed")
+assert(git("status", "--porcelain", "--untracked-files=no") === "", "Integration checkout has tracked changes")
+git("merge-base", "--is-ancestor", expected.mainCommit, "HEAD")
+git("merge-base", "--is-ancestor", expected.fixCommit, "HEAD")
+const sourceFiles: Record<string, string> = {}
+for (const file of [
+  "package.json", "scripts/benchmark.ts", "scripts/am3352-samples.ts",
+  "scripts/am3352-ca-bus.ts", "scripts/am3352-carrier.ts",
+  "scripts/validate-am3352-sample.ts", "scripts/measure-am3352-routing-quality.ts",
+  "scripts/snapshot-routed-am3352.ts",
+]) sourceFiles[file] = sha256(await readFile(join(repository, file)))
+assert(sourceFiles["package.json"] === provenance.value.packageJsonSha256, "Run package.json changed")
+assert(sourceFiles["scripts/benchmark.ts"] === provenance.value.benchmarkScriptSha256, "Benchmark harness changed")
+assert(sourceFiles["scripts/validate-am3352-sample.ts"] === provenance.value.validatorSha256, "Native validator changed")
+const packageJson = JSON.parse(await readFile(join(repository, "package.json"), "utf8"))
+const installedDependencies: Record<string, unknown> = {}
+assert(provenance.value.installedDependencies && typeof provenance.value.installedDependencies === "object",
+  "Run lacks dependency metadata")
+for (const [name, recorded] of Object.entries(provenance.value.installedDependencies) as [string, any][]) {
+  const bytes = await readFile(join(repository, "node_modules", name, "package.json"))
+  const installed = JSON.parse(bytes.toString())
+  assert(sha256(bytes) === recorded.packageJsonSha256 && installed.version === recorded.installedVersion &&
+    packageJson.devDependencies?.[name] === recorded.requested, `Installed dependency metadata changed: ${name}`)
+  installedDependencies[name] = recorded
+}
+const lockfiles: Record<string, string> = {}
+for (const filename of ["bun.lock", "bun.lockb", "package-lock.json", "pnpm-lock.yaml", "yarn.lock"]) {
+  try { lockfiles[filename] = sha256(await readFile(join(repository, filename))) }
+  catch (error: any) { if (error.code !== "ENOENT") throw error }
+}
+same(lockfiles, provenance.value.lockfiles, "Lockfile state differs from run provenance")
+const runStarted = Date.parse(provenance.value.startedAtUtc)
+assert(Number.isFinite(runStarted), "Run start timestamp is invalid")
+const benchmark = await readJson(benchmarkFile)
+assert((await stat(benchmarkFile)).mtimeMs >= runStarted, "Benchmark report predates this run")
+const benchmarkLog = await readFile(join(proofRoot, "benchmark.log"))
+assert(benchmarkLog.toString().split(/\r?\n/).includes(
+  `AM3352 placements completed: 11/11; results: ${benchmarkFile}`),
+  "Benchmark log lacks the successful all-eleven completion line")
+
+// Imports are deliberately deferred until source/dependency provenance passes.
+// Importing the snapshot module does not invoke its CLI (import.meta.main=false).
+const samples = await import(pathToFileURL(join(repository, "scripts/am3352-samples.ts")).href)
+const validationModule = await import(pathToFileURL(join(repository, "scripts/validate-am3352-sample.ts")).href)
+const snapshotModule = await import(pathToFileURL(join(repository, "scripts/snapshot-routed-am3352.ts")).href)
+const { am3352Carrier } = await import(pathToFileURL(join(repository, "scripts/am3352-carrier.ts")).href)
+const { am3352SamplePlacements, loadAm3352Sample, am3352Hash, getAm3352FanoutGeneratorIdentity } = samples
+const { validateAm3352OutputShape, validateAm3352Sample } = validationModule
+const { exportAm3352RoutedSnapshots, routedGraphics } = snapshotModule
+const names: string[] = am3352SamplePlacements.map((p: any) => p.name)
+assert(names.length === 11 && new Set(names).size === 11, "Trusted placement manifest is not eleven unique samples")
+assert(Array.isArray(benchmark.value) && benchmark.value.length === 11, "Benchmark must contain exactly eleven reports")
+same(benchmark.value.map((r: any) => r.sample), names, "Benchmark sample names/order differ from trusted manifest")
+const routeEntries = await readdir(routeDirectory, { withFileTypes: true })
+assert(routeEntries.every(e => e.isFile() && !e.isSymbolicLink()), "Routes directory contains non-regular entries")
+same(routeEntries.map(e => e.name).sort(), names.map(name => `${name}.json`).sort(),
+  "Routes directory must contain exactly the eleven current successful native outputs")
+
+const candidates: any[] = []
+const auditRows: any[] = []
+const sourceRouteFiles: { filename: string; sha256: string }[] = []
+for (const placement of am3352SamplePlacements) {
+  const name = placement.name
+  const report = benchmark.value.find((r: any) => r.sample === name)
+  assert(report.status === "solved" && report.solved === true && report.error === null &&
+    report.failureCode === null && report.timeoutSeconds === 3600 &&
+    typeof report.solveMilliseconds === "number" && report.solveMilliseconds >= 0 && report.solveMilliseconds < 3_600_000 &&
+    typeof report.milliseconds === "number" && report.milliseconds >= report.solveMilliseconds &&
+    Number.isSafeInteger(report.iterations) && report.iterations >= 0 &&
+    report.requestedSignals === 47 && report.routedSignals === 47 && report.fixedPowerDogbones === 161 &&
+    report.inputUnchanged === true && report.fixedPowerPreserved === true,
+    `${name}: strict benchmark did not accept this complete current output`)
+  same(report.cpu, { x: 0, y: 0 }, `${name}: wrong CPU placement`)
+  same(report.ram, placement.ram, `${name}: wrong RAM placement`)
+  same(report.allowedLayers, "allowedLayers" in placement ? [...placement.allowedLayers] : null,
+    `${name}: wrong carrier-layer restrictions`)
+  acceptedValidation(report.validation, name)
+  const filename = join(routeDirectory, `${name}.json`)
+  assert((await stat(filename)).mtimeMs >= runStarted, `${name}: route artifact predates this run`)
+  const saved = await readJson(filename)
+  assert(saved.value.sample === name && saved.value.solved === true && saved.value.failed === false &&
+    saved.value.error === null, `${name}: saved artifact does not retain successful solver completion`)
+  const { input, metadata } = await loadAm3352Sample(name)
+  const freshInputHash = am3352Hash(input)
+  assert(/^[a-f0-9]{64}$/.test(report.inputSha256) && report.inputSha256 === freshInputHash &&
+    am3352Hash(saved.value.input) === freshInputHash, `${name}: report, saved input, and fresh fixture hashes differ`)
+  same(saved.value.input.traces, metadata.fixedFanoutTraces, `${name}: fixed native power copper changed`)
+  validateAm3352OutputShape(saved.value.input, metadata, saved.value.traces, saved.value.output)
+  const carrierLayerCounts: Record<string, number> = {}
+  for (const trace of saved.value.traces) {
+    const carrier = am3352Carrier(trace)
+    assert(carrier, `${name}: saved signal lacks a validated carrier`)
+    carrierLayerCounts[carrier.layer] = (carrierLayerCounts[carrier.layer] ?? 0) + 1
+  }
+  same(Object.entries(report.carrierLayerCounts ?? {}).sort(), Object.entries(carrierLayerCounts).sort(),
+    `${name}: report carrier-layer counts differ from saved native traces`)
+  const immutableState = am3352Hash({ input: saved.value.input, traces: saved.value.traces, output: saved.value.output })
+  const validation = await validateAm3352Sample(saved.value.input, metadata, saved.value.traces)
+  acceptedValidation(validation, name)
+  same(validation, report.validation, `${name}: independent audit differs from benchmark validation`)
+  same(validation, saved.value.validation, `${name}: independent audit differs from saved validation`)
+  const candidate = {
+    solver: {
+      solved: saved.value.solved, failed: saved.value.failed, error: saved.value.error,
+      input: saved.value.input, traces: saved.value.traces, getOutput: () => saved.value.output,
+    }, metadata,
+  }
+  assert(am3352Hash({ input: candidate.solver.input, traces: candidate.solver.traces, output: candidate.solver.getOutput() }) === immutableState,
+    `${name}: independent validation changed native copper`)
+  candidates.push(candidate)
+  sourceRouteFiles.push({ filename, sha256: saved.sha256 })
+  auditRows.push({
+    sample: name, routeFile: relative(outputDirectory, filename), routeFileSha256: saved.sha256,
+    inputSha256: freshInputHash, tracesSha256: am3352Hash(saved.value.traces),
+    outputSha256: am3352Hash(saved.value.output), fixedFanoutTracesSha256: am3352Hash(metadata.fixedFanoutTraces),
+    immutableStateSha256: immutableState, fanoutProvenance: metadata.provenance,
+    solveMilliseconds: report.solveMilliseconds, workerMilliseconds: report.milliseconds,
+    iterations: report.iterations, carrierLayerCounts,
+    validation,
+  })
+  console.log(`AUDIT ${name}: 47/47, native DRC, full-copper matching, coupling, fixed power and provenance passed`)
+}
+
+const stagingDirectory = join(proofRoot, `.artifacts-staging-${randomUUID()}`)
+try {
+  // The trusted exporter repeats every sample's complete acceptance audit
+  // before rendering any PNG/SVG; no solver or replay path is used here.
+  const exported = await exportAm3352RoutedSnapshots(candidates, stagingDirectory)
+  same(exported.map((row: any) => row.name), names, "Exporter returned unexpected sample membership/order")
+  const images: any[] = []
+  for (let index = 0; index < candidates.length; index++) {
+    const candidate = candidates[index], row = auditRows[index], name = row.sample
+    same(exported[index].validation, row.validation, `${name}: exporter audit differs from independent audit`)
+    assert(am3352Hash({ input: candidate.solver.input, traces: candidate.solver.traces, output: candidate.solver.getOutput() }) === row.immutableStateSha256,
+      `${name}: export changed native copper`)
+    const pngFile = `${name}-solved.png`, svgFile = `${name}-solved.svg`
+    const png = await readFile(join(stagingDirectory, pngFile))
+    const svg = await readFile(join(stagingDirectory, svgFile))
+    assert(png.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")), `${name}: missing PNG signature`)
+    assert(png.readUInt32BE(16) === 2200 && png.readUInt32BE(20) > 0, `${name}: invalid image dimensions`)
+    assert(svg.toString().includes("<svg"), `${name}: missing SVG scene`)
+    const scene = routedGraphics(candidate)
+    images.push({ sample: name, pngFile, pngSha256: sha256(png), svgSha256: sha256(svg), svgRetained: false,
+      widthPixels: png.readUInt32BE(16), heightPixels: png.readUInt32BE(20),
+      graphicsSha256: jsonHash(scene.graphics), acceptedSignals: 47, fixedPowerTraces: 161,
+      sourceRouteFile: row.routeFile, sourceRouteSha256: row.routeFileSha256,
+      visualInspection: "pending; each fresh PNG must be opened before PR publication" })
+    // The public gallery retains PNGs. The trusted full-plane vector scene is
+    // hashed for provenance, then discarded to avoid duplicating large assets.
+    await rm(join(stagingDirectory, svgFile))
+  }
+  // Detect changed source evidence while auditing/rendering, before publication.
+  assert(sha256(await readFile(benchmarkFile)) === benchmark.sha256, "Benchmark report changed during export")
+  assert(sha256(await readFile(provenanceFile)) === provenance.sha256, "Run provenance changed during export")
+  for (const route of sourceRouteFiles)
+    assert(sha256(await readFile(route.filename)) === route.sha256, `Native source artifact changed: ${route.filename}`)
+  assert(git("rev-parse", "HEAD") === expected.integrationCommit &&
+    git("status", "--porcelain", "--untracked-files=no") === "", "Integration checkout changed during export")
+  const auditBytes = JSON.stringify({ schemaVersion: 1, declaredSamples: names, samples: auditRows }, null, 2) + "\n"
+  const runProvenanceBytes = provenance.bytes
+  const manifest = {
+    schemaVersion: 1, exportedAtUtc: new Date().toISOString(),
+    scope: "Fresh integrated-PR64-plus-merged-PR61 proof for all eleven legacy 47-signal AM3352 placements",
+    repository, ...expected, integrationCommitIsLocal: true, sourceFilesSha256: sourceFiles,
+    sourceReproduction: {
+      repositoryUrl: "https://github.com/tscircuit/bus-lanes-solver.git",
+      instruction: "Use a clean isolated checkout; these commands describe source reconstruction and are not run by this exporter.",
+      commands: [
+        ["git", "switch", "--detach", expected.mainCommit],
+        ["git", "merge", "--no-ff", "--no-commit", expected.fixCommit],
+        ["git", "write-tree"],
+        ["git", "ls-tree", "<tree returned by git write-tree>", "lib", "tests/fixtures/am3352-ram"],
+      ],
+      expectedProductionLibTree: expected.sourceTree,
+      expectedLegacyFixtureTree: expected.fixtureTree,
+      harnessVerification: "SHA-256 hash each listed sourceFilesSha256 file in the reconstructed tree; the local integration commit is not required to exist on GitHub.",
+    },
+    benchmarkCommand: command, benchmarkExitCode: 0,
+    benchmarkExitCodeEvidence: "Operator supplied --benchmark-exit-code 0 after observing the original strict process completion",
+    sourceBenchmarkFile: "benchmark-results.json", sourceBenchmarkSha256: benchmark.sha256,
+    sourceBenchmarkLogFile: "../benchmark.log", sourceBenchmarkLogSha256: sha256(benchmarkLog),
+    sourceBenchmarkLogAvailability: "Retained locally outside the public artifact directory",
+    sourceNativeRouteAvailability: "Original successful native route JSONs are retained locally outside the public artifact directory; each image and audit row records its exact source file hash",
+    runProvenanceFile: "run-provenance.json", runProvenanceSha256: provenance.sha256,
+    auditFile: "independent-validation.json", auditSha256: sha256(auditBytes),
+    exportScriptSha256: sha256(await readFile(import.meta.path)),
+    declaredSamples: names, allAccepted: true, reroutingPerformed: false, copperUnchanged: true,
+    runtime: { bunVersion: Bun.version, platform: process.platform, architecture: process.arch,
+      memoryOptions: provenance.value.memoryOptions, installedDependencies, lockfiles,
+      installedFanoutGeneratorIdentityAtExport: await getAm3352FanoutGeneratorIdentity() },
+    provenanceNotes: [
+      "Run metadata was recorded at its original metadataRecordedAtUtc, after the recorded benchmark start; the original recording is copied byte-for-byte.",
+      "Declared dependency versions and package.json hashes match the run recording. The installed fanout implementation source hash is additionally captured at export time.",
+      "The integrated source includes the merged PR61 default-layer fallback; standalone reviewed PR64 head is not claimed to have an identical complete production tree.",
+      "Measurements are full planar pad-to-pad copper, including native escapes and fixed signal copper; via depth and package delay are not inferred.",
+      "Complete 24-member CA/CK matching is requested only by inner-layers-complete-ca. Other cases retain their declared byte and pair constraints.",
+      "This is a local Bun 1.4.0 proof; timings are not a paired comparison against CI or another machine.",
+      "Every fresh PNG still requires actual visual inspection before PR publication; this script does not attest to visual inspection.",
+      "The trusted exporter generated both PNG and SVG from accepted native scenes; SVG bytes were hashed and discarded. Only the eleven fresh PNGs are retained as image artifacts.",
+    ],
+    images,
+  }
+  await writeFile(join(stagingDirectory, "independent-validation.json"), auditBytes)
+  await writeFile(join(stagingDirectory, "benchmark-results.json"), benchmark.bytes)
+  await writeFile(join(stagingDirectory, "run-provenance.json"), runProvenanceBytes)
+  await writeFile(join(stagingDirectory, "artifact-manifest.json"), JSON.stringify(manifest, null, 2) + "\n")
+  await mustNotExist(outputDirectory)
+  await rename(stagingDirectory, outputDirectory)
+  console.log(`EXPORTED 11/11 independently accepted fresh routes to ${outputDirectory}`)
+  console.log("Visual inspection remains required for all eleven PNGs before PR publication.")
+} catch (error) {
+  await rm(stagingDirectory, { recursive: true, force: true })
+  throw error
+}
