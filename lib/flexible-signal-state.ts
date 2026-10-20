@@ -1,4 +1,7 @@
-import { getCopperLayerNames } from "@tscircuit/fanout-solver"
+import {
+  effectiveCarrierLayers,
+  explicitlyAllowsCarrierLayer,
+} from "./effective-carrier-layers"
 import { signalWidth } from "./repair-bus-dogbones"
 import type { Connection, Point, SimpleRouteJson, Trace } from "./types"
 
@@ -12,16 +15,10 @@ export interface FlexibleSignalState {
   traces: Trace[]
 }
 export function signalLayers(input: SimpleRouteJson, connection: Connection) {
-  return (input.allowedLayers ?? getCopperLayerNames(input.layerCount)).filter(
+  return effectiveCarrierLayers(input, connection).filter(
     (layer) =>
-      (!connection.pointsToConnect.some((point) => point.layer === layer) ||
-        input.allowedLayers?.includes(layer)) &&
-      (input.buses ?? []).every(
-        (bus) =>
-          !bus.connectionNames.includes(connection.name) ||
-          !bus.allowedLayers ||
-          bus.allowedLayers.includes(layer),
-      ),
+      !connection.pointsToConnect.some((point) => point.layer === layer) ||
+      explicitlyAllowsCarrierLayer(input, connection, layer),
   )
 }
 export function signalTrace(

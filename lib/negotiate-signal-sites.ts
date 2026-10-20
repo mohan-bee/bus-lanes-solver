@@ -1,3 +1,4 @@
+import { explicitlyAllowsCarrierLayer } from "./effective-carrier-layers"
 import { getCopperLayerNames } from "@tscircuit/fanout-solver"
 import { routeAlternateSignalDogbones } from "./alternate-signal-dogbones"
 import { CopperConflictIndex } from "./copper-conflict-index"
@@ -463,7 +464,7 @@ export function* negotiateSignalSites(
       if (
         options.allowExpandedSites === false ||
         !connection.pointsToConnect.every((point) =>
-          native.allowedLayers?.includes(point.layer),
+          explicitlyAllowsCarrierLayer(native, connection, point.layer),
         ) ||
         connection.pointsToConnect.every((point) => point.layer === layer) ||
         (!expandNonNativeSites &&

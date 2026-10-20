@@ -74,3 +74,20 @@ work to pair-corridor planning, rather than ordinary lane routing or tuning.
 Verification: both assertion commands reproduced the discrepancy on unchanged
 production source; full TypeScript checking and formatting passed. No routing
 fix or new legacy benchmark claim is included in this reproduction.
+
+## Stacked correction
+
+The fix intersects physical/global/all owning-bus carrier restrictions in one
+helper, and honors explicit per-bus permission to use native pad layers. When
+all connections are constrained to a union of TOP and BOTTOM, the pipeline uses
+an internal view with that redundant global restriction. This makes allocation,
+strategy and budget match the explicit-global input. Public input, constructor
+parameters and output geometry retain the original declarations and fixed copper.
+Uncovered signals, empty/intersecting invalid domains, and inner-carrier inputs
+are not promoted to the surface strategy.
+
+On the fix branch, both reproduction commands above must exit 0. Regression tests
+cover intersections, explicit global exclusions, defaults, uncovered signals,
+complete small-board output equivalence and exact full-DDR escape/dispatch
+identity. The full-DDR check stops after allocation; it does not assert that all
+46 signals route. Shared-pair corridor convergence remains separate work.

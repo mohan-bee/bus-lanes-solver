@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import { signalLayers } from "../lib/flexible-signal-state"
 import type { SimpleRouteJson } from "../lib/types"
 
-test("records the per-bus native surface domain inconsistency", () => {
+test("per-bus permission retains the native surface carrier", () => {
   const input: SimpleRouteJson = {
     layerCount: 4,
     minTraceWidth: 0.1,
@@ -22,7 +22,7 @@ test("records the per-bus native surface domain inconsistency", () => {
     ],
   }
   const connection = input.connections[0]
-  expect(signalLayers(input, connection)).toEqual([])
+  expect(signalLayers(input, connection)).toEqual(["top"])
   expect(
     signalLayers({ ...input, allowedLayers: ["top", "bottom"] }, connection),
   ).toEqual(["top"])
