@@ -5,6 +5,7 @@ import {
   independentBusGroups,
   routeIndependentBuses,
 } from "./route-independent-buses"
+import { exteriorPairSpacingReports } from "./exterior-pair-spacing"
 import { sharedPairSpacingReports } from "./shared-pair-spacing"
 import { alignCoupledSectionBoundaries } from "./align-coupled-section-boundaries"
 import { backwardFacingPackageTerminals } from "./backward-facing-package-terminals"
@@ -18,7 +19,10 @@ import { tuneCoupledLengths } from "./tune-coupled-lengths"
 import { negotiateLanes } from "./negotiate-lanes"
 import { pairCouplingReports } from "./pair-coupling"
 import { tuningPathIsSelfClear } from "./length-tuning"
-import { routeCoupledPair } from "./coupled-pair-routing"
+import {
+  pairHasUnroutedNativePads,
+  routeCoupledPair,
+} from "./coupled-pair-routing"
 import { reduceOrdinaryTurns } from "./reduce-ordinary-turns"
 import { BaseSolver } from "@tscircuit/solver-utils"
 import type { GraphicsObject } from "graphics-debug"
@@ -269,13 +273,14 @@ export class BusLanesSolver extends BaseSolver {
     this.phase = "route"
     this.startLane()
   }
-  // Small remainders still need layer negotiation when their dogbone terminals
-  // can reach more than one signal layer. The fixed-layer visibility search
-  // cannot explore that choice, regardless of how few connections remain.
+  // Small independent buses still need paired topology negotiation, just as
+  // movable dogbone handoffs need layer negotiation. A fixed pair corridor
+  // cannot be repaired by retrying only the ordinary lanes' order.
   private get useNegotiation() {
     return (
       this.options.denseSearch &&
       (this.input.connections.length > 12 ||
+        independentBusGroups(this.input) !== null ||
         this.input.connections.some(
           (c) => (this.terminalLayers.get(c.name)?.length ?? 0) > 1,
         ))
@@ -405,13 +410,23 @@ export class BusLanesSolver extends BaseSolver {
             this.fixed,
             this.widths,
             (input, traces) => {
-              const child = new BusLanesSolver(input, this.options)
-              child.step()
-              child.traces = traces
-              child.phase = "match"
+              const child = BusLanesSolver.forRefinement(
+                input,
+                traces,
+                this.options,
+              )
               child.step()
               if (!child.failed) child.step()
-              return child.solved ? child.traces : null
+              const nativePair = (input.differentialPairs ?? []).some((pair) =>
+                pairHasUnroutedNativePads(input, pair),
+              )
+              return child.solved &&
+                (!nativePair ||
+                  exteriorPairSpacingReports(input, child.traces).every(
+                    (pair) => pair.matched,
+                  ))
+                ? child.traces
+                : null
             },
           )
       }
@@ -493,6 +508,14 @@ export class BusLanesSolver extends BaseSolver {
     const input = this.input
     const original = this.traces
     const fixed = this.fixed
+    // Native pad pairs have no fixed dogbone enclosing their local tuning
+    // pocket. Keep residual corrections inside packages during every rematch.
+    // Mixed inputs retain the established fixed-handoff tuning behavior.
+    const packageOnlyPairTuning =
+      this.coupledPairs().length > 0 &&
+      (input.differentialPairs ?? []).every((pair) =>
+        pairHasUnroutedNativePads(input, pair),
+      )
     const compactCorridors = new WeakSet<Trace[]>()
     const demandPackedCorridors = new WeakSet<Trace[]>()
     const narrowCorridors = new WeakSet<Trace[]>()
@@ -662,9 +685,12 @@ export class BusLanesSolver extends BaseSolver {
                           : 16384,
                     packMeanders:
                       quickOriginal || compactCorridors.has(corridor),
+                    packageOnlyPairTuning,
                   })
                 : this.options.smoothTuning
-                  ? tuneSmoothLengths(input, candidate, targets)
+                  ? tuneSmoothLengths(input, candidate, targets, {
+                      packageOnlyPairTuning,
+                    })
                   : tuneLengths(input, candidate, targets)
             if (this.options.smoothTuning)
               this.traces = simplifyMatchedTraces(input, this.traces)
@@ -679,6 +705,13 @@ export class BusLanesSolver extends BaseSolver {
               )
             )
               throw Error("Length tuning separated the shared pair rails")
+            if (
+              packageOnlyPairTuning &&
+              exteriorPairSpacingReports(input, this.traces).some(
+                (pair) => !pair.matched,
+              )
+            )
+              throw Error("Length tuning separated the exterior pair rails")
             this.phase = "validate_output"
             return
           } catch (e) {

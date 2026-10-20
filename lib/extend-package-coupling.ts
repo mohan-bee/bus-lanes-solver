@@ -1,5 +1,6 @@
+import { findCoupledPackageEntry } from "./coupled-package-entry"
 import { bevelCoupledCorners } from "./bevel-coupled-corners"
-import { offsetPath } from "./coupled-pair-routing"
+import { offsetPath, pairHasUnroutedNativePads } from "./coupled-pair-routing"
 import { distance, pointSegmentDistanceToPoints, simplify } from "./geometry"
 import { GridVisibilitySearch } from "./grid-visibility"
 import { tuningPathIsSelfClear } from "./length-tuning"
@@ -49,6 +50,7 @@ export function* extendPackageCoupling(
     input.minTraceToPadEdgeClearance ?? input.defaultObstacleMargin ?? 0.075
   let budget = 2000
   for (const pair of input.differentialPairs ?? []) {
+    const nativePairPads = pairHasUnroutedNativePads(input, pair)
     for (const reversed of [false, true]) {
       for (const side of [0, 1]) {
         if (budget <= 0) return result
@@ -71,60 +73,96 @@ export function* extendPackageCoupling(
           distance(ref.route[re - 1], ref.route[re]) < 1e-7
         )
           continue
-        const regions = packageApproachRegions(input, width / 2 + clearance)
+        const regions = packageApproachRegions(
+          input,
+          nativePairPads
+            ? width + (pair.traceGap ?? clearance) / 2 + clearance
+            : width / 2 + clearance,
+        )
         const region = regions.find(
           (r) =>
             pointInBox(ref.route.at(-1)!, r.copper) &&
             pointInBox(other.route.at(-1)!, r.copper),
         )
         if (!region || pointInBox(ref.route[re], region.copper)) continue
-        let stop = re + 1
-        while (
-          stop < ref.route.length &&
-          !pointInBox(ref.route[stop], region.copper)
-        )
-          stop++
-        if (
-          stop === ref.route.length ||
-          ref.curvedSegments?.some((i) => i >= re && i <= stop)
-        )
-          continue
-        const a = ref.route[stop - 1],
-          b = ref.route[stop]
-        let lo = 0,
-          hi = 1
-        for (let i = 0; i < 40; i++) {
-          const t = (lo + hi) / 2
-          if (
-            pointInBox(
-              { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t },
-              region.copper,
-            )
-          )
-            hi = t
-          else lo = t
-        }
-        const cut = { x: a.x + (b.x - a.x) * hi, y: a.y + (b.y - a.y) * hi }
         const anchor = {
           x: (ref.route[re - 1].x + ref.route[re].x) / 2,
           y: (ref.route[re - 1].y + ref.route[re].y) / 2,
         }
-        let section = simplify([anchor, ...ref.route.slice(re, stop), cut])
-        let paths: Point[][]
-        try {
-          paths = [separation, -separation].map((d) => offsetPath(section, d))
-        } catch {
-          continue
+        let stop: number
+        let section: Point[]
+        let path: Point[]
+        if (nativePairPads) {
+          const signedOffset = [separation, -separation].find((offset) => {
+            const start = offsetPath([anchor, ref.route[re]], offset)[0]
+            return (
+              pointSegmentDistanceToPoints(
+                start,
+                other.route[oe - 1],
+                other.route[oe],
+              ) < 1e-7
+            )
+          })
+          if (signedOffset === undefined) continue
+          const entry = findCoupledPackageEntry(
+            [anchor, ...ref.route.slice(re)],
+            signedOffset,
+            region.copper,
+            offsetPath,
+          )
+          if (!entry) continue
+          stop = re + entry.stop - 1
+          if (ref.curvedSegments?.some((i) => i >= re && i <= stop)) continue
+          section = entry.section
+          path = entry.counterpart
+        } else {
+          // Supplied and generated handoffs retain their established clipping
+          // and local search geometry. Final physical validation still applies.
+          stop = re + 1
+          while (
+            stop < ref.route.length &&
+            !pointInBox(ref.route[stop], region.copper)
+          )
+            stop++
+          if (
+            stop === ref.route.length ||
+            ref.curvedSegments?.some((i) => i >= re && i <= stop)
+          )
+            continue
+          const a = ref.route[stop - 1],
+            b = ref.route[stop]
+          let lo = 0,
+            hi = 1
+          for (let i = 0; i < 40; i++) {
+            const t = (lo + hi) / 2
+            if (
+              pointInBox(
+                { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t },
+                region.copper,
+              )
+            )
+              hi = t
+            else lo = t
+          }
+          const cut = { x: a.x + (b.x - a.x) * hi, y: a.y + (b.y - a.y) * hi }
+          section = simplify([anchor, ...ref.route.slice(re, stop), cut])
+          let paths: Point[][]
+          try {
+            paths = [separation, -separation].map((d) => offsetPath(section, d))
+          } catch {
+            continue
+          }
+          const counterpart = paths.find(
+            (p) =>
+              pointSegmentDistanceToPoints(
+                p[0],
+                other.route[oe - 1],
+                other.route[oe],
+              ) < 1e-7,
+          )
+          if (!counterpart) continue
+          path = counterpart
         }
-        let path = paths.find(
-          (p) =>
-            pointSegmentDistanceToPoints(
-              p[0],
-              other.route[oe - 1],
-              other.route[oe],
-            ) < 1e-7,
-        )
-        if (!path) continue
         const localWire = (p: Point): Wire => ({
           ...p,
           route_type: "wire",
@@ -191,6 +229,10 @@ export function* extendPackageCoupling(
             scene,
             path.at(-1)!,
             other.route[join],
+            undefined,
+            undefined,
+            undefined,
+            nativePairPads ? { bounds: region.copper } : undefined,
           )
           try {
             let steps = 0
@@ -218,7 +260,12 @@ export function* extendPackageCoupling(
               simplify([
                 ...other.route.slice(0, oe),
                 ...path,
-                ...reduceOrdinaryTurns(search.result, scene).slice(1),
+                ...reduceOrdinaryTurns(
+                  search.result,
+                  scene,
+                  0,
+                  nativePairPads,
+                ).slice(1),
                 ...other.route.slice(join + 1),
               ]).map(wire),
               wire(other.route[os]),
@@ -270,6 +317,7 @@ export function* extendPackageCoupling(
                 ),
               surrounding,
               trim,
+              nativePairPads ? region.copper : undefined,
             )
             const refined = result.map(
               (t) =>

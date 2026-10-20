@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto"
+import { join } from "node:path"
 import { BusLanesPipelineSolver } from "../lib"
 import {
   am3352ByteStallInputSha256,
   loadAm3352ByteStallInput,
 } from "./load-am3352-byte-stall-input"
+import { validateAm3352ByteStallOutput } from "./validate-am3352-byte-stall-output"
 
 type CaseName = "native" | "explicit-surfaces"
 
@@ -12,13 +14,16 @@ let selectedCase: CaseName | "both" = "both"
 let stepBudget = 12_000
 let seconds = 60
 let worker = false
+let artifactsDirectory: string | undefined
 for (let i = 0; i < args.length; i++) {
   const flag = args[i]
   if (flag === "--worker") {
     worker = true
     continue
   }
-  if (!["--case", "--steps", "--seconds"].includes(flag))
+  if (
+    !["--case", "--steps", "--seconds", "--artifacts-directory"].includes(flag)
+  )
     throw Error(`Unknown option: ${flag}`)
   const value = args[++i]
   if (!value || value.startsWith("--")) throw Error(`Missing ${flag}`)
@@ -30,14 +35,14 @@ for (let i = 0; i < args.length; i++) {
     stepBudget = Number(value)
     if (!Number.isSafeInteger(stepBudget) || stepBudget <= 0)
       throw Error("--steps must be a positive integer")
-  } else {
+  } else if (flag === "--seconds") {
     seconds = Number(value)
     if (!Number.isFinite(seconds) || seconds <= 0)
       throw Error("--seconds must be positive and finite")
-  }
+  } else artifactsDirectory = value
 }
 
-function runCase(name: CaseName) {
+async function runCase(name: CaseName) {
   const input = loadAm3352ByteStallInput()
   if (name === "explicit-surfaces") input.allowedLayers = ["top", "bottom"]
   const inputHash = () =>
@@ -77,18 +82,52 @@ function runCase(name: CaseName) {
         lastReport = performance.now()
       }
     }
-    return {
-      ...report(),
-      status: solver.solved
-        ? "solver_completed"
-        : solver.failed
-          ? "solver_failed"
-          : solver.iterations >= stepBudget
-            ? "step_budget_exhausted"
-            : "wall_budget_exhausted",
+    // Preserve routing runtime independently of validation and image export.
+    const routingReport = report()
+    const output =
+      name === "native" && solver.solved ? solver.getOutput() : undefined
+    const validationStarted = performance.now()
+    const validation = output
+      ? validateAm3352ByteStallOutput(input, output)
+      : undefined
+    const result = {
+      ...routingReport,
+      status:
+        validation && !validation.valid
+          ? "validation_failed"
+          : solver.solved
+            ? "solver_completed"
+            : solver.failed
+              ? "solver_failed"
+              : solver.iterations >= stepBudget
+                ? "step_budget_exhausted"
+                : "wall_budget_exhausted",
       inputUnchanged: inputHash() === before,
-      outputConnectivityDrcAndTimingVerified: false,
+      outputConnectivityDrcAndTimingVerified: validation?.valid ?? false,
+      ...(validation
+        ? {
+            validationRuntimeMs: performance.now() - validationStarted,
+            validation,
+          }
+        : {}),
     }
+    if (
+      artifactsDirectory &&
+      name === "native" &&
+      output &&
+      validation?.valid &&
+      result.inputUnchanged
+    ) {
+      const { exportAm3352ByteStallSnapshot } = await import(
+        "./snapshot-am3352-byte-stall"
+      )
+      await exportAm3352ByteStallSnapshot(output, artifactsDirectory)
+      await Bun.write(
+        join(artifactsDirectory, "benchmark-result.json"),
+        JSON.stringify(result, null, 2) + "\n",
+      )
+    }
+    return result
   } finally {
     if (!solver.solved && !solver.failed) solver.tryFinalAcceptance()
   }
@@ -96,7 +135,7 @@ function runCase(name: CaseName) {
 
 if (worker) {
   if (selectedCase === "both") throw Error("A worker runs exactly one case")
-  console.log("REPORT " + JSON.stringify(runCase(selectedCase)))
+  console.log("REPORT " + JSON.stringify(await runCase(selectedCase)))
 } else {
   const cases: CaseName[] =
     selectedCase === "both" ? ["native", "explicit-surfaces"] : [selectedCase]
@@ -112,6 +151,9 @@ if (worker) {
         String(stepBudget),
         "--seconds",
         String(seconds),
+        ...(artifactsDirectory && name === "native"
+          ? ["--artifacts-directory", artifactsDirectory]
+          : []),
       ],
       { stdout: "pipe", stderr: "pipe" },
     )
@@ -148,7 +190,11 @@ if (worker) {
             outputConnectivityDrcAndTimingVerified: false,
           }
     console.log(JSON.stringify(result, null, 2))
-    if (result.status !== "solver_completed" || !result.inputUnchanged)
+    if (
+      result.status !== "solver_completed" ||
+      !result.inputUnchanged ||
+      (name === "native" && !result.outputConnectivityDrcAndTimingVerified)
+    )
       process.exitCode = 1
   }
 }

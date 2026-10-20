@@ -1,0 +1,438 @@
+{
+  "schemaVersion": 1,
+  "exportedAtUtc": "2026-10-20T17:31:15.197Z",
+  "scope": "Fresh integrated-PR64-plus-merged-PR61 proof for all eleven legacy 47-signal AM3352 placements",
+  "repository": "/workspace/work/am3352-repros/byte-integration",
+  "integrationCommit": "49605dc0f56c9532e047c88928f27c8e3b46f8e1",
+  "sourceTree": "926cfe1574b9ed5f6d57394dcbee006222288eaf",
+  "fixtureTree": "0e6564370d4dde2bbab46f717f79d8042625776e",
+  "mainCommit": "6f58178c3324c4f6b95c24f242c353e5927b75ce",
+  "fixCommit": "53814af4da9a0fed9a15d3d2b402ed316bdc2238",
+  "reviewedPrHead": "328ace12cef6df723bb25fe6070deb0e8eef6822",
+  "integrationCommitIsLocal": true,
+  "sourceFilesSha256": {
+    "package.json": "9bcc3b735a62f6b26ec6d0efd27198d173e62a504c87354242b568c688432bda",
+    "scripts/benchmark.ts": "0480f451c9473b970d54dfa86ed80b3c7802fed680acb0fc057b3a94c27bb78d",
+    "scripts/am3352-samples.ts": "e572cb60516d7ade8f24c5dc949e2f171f02bef4e4f02eea9309afdea09f5a84",
+    "scripts/am3352-ca-bus.ts": "961716974fdfc7a0a33eaf532f8b5c2695343f0e597d9f1d37aa7ca2f3cc9f45",
+    "scripts/am3352-carrier.ts": "cfddad5aa998f13f56f1565a83f57e3aa02f1481a76751a0d8be9b9a241bd6c6",
+    "scripts/validate-am3352-sample.ts": "28d2a3ee5f3498298e88d9062b169655c3731156ffd2a305a6ea62db05b50753",
+    "scripts/measure-am3352-routing-quality.ts": "6149f7d6ad7b48703d17464e014be8034ae58ac4a12d2b2595102544dc203abf",
+    "scripts/snapshot-routed-am3352.ts": "2afa9fab0d58cfaa958037696a04f030fc13d4798f1a0432c36945b776179296"
+  },
+  "sourceReproduction": {
+    "repositoryUrl": "https://github.com/tscircuit/bus-lanes-solver.git",
+    "instruction": "Use a clean isolated checkout; these commands describe source reconstruction and are not run by this exporter.",
+    "commands": [
+      ["git", "switch", "--detach", "6f58178c3324c4f6b95c24f242c353e5927b75ce"],
+      [
+        "git",
+        "merge",
+        "--no-ff",
+        "--no-commit",
+        "53814af4da9a0fed9a15d3d2b402ed316bdc2238"
+      ],
+      ["git", "write-tree"],
+      [
+        "git",
+        "ls-tree",
+        "<tree returned by git write-tree>",
+        "lib",
+        "tests/fixtures/am3352-ram"
+      ]
+    ],
+    "expectedProductionLibTree": "926cfe1574b9ed5f6d57394dcbee006222288eaf",
+    "expectedLegacyFixtureTree": "0e6564370d4dde2bbab46f717f79d8042625776e",
+    "harnessVerification": "SHA-256 hash each listed sourceFilesSha256 file in the reconstructed tree; the local integration commit is not required to exist on GitHub."
+  },
+  "benchmarkCommand": [
+    "./benchmark.sh",
+    "--timeout-seconds",
+    "3600",
+    "--require-all-solved",
+    "--output",
+    "/workspace/work/am3352-repros/legacy-full-proof-20261020/benchmark-results.json",
+    "--routes-directory",
+    "/workspace/work/am3352-repros/legacy-full-proof-20261020/routes"
+  ],
+  "benchmarkExitCode": 0,
+  "benchmarkExitCodeEvidence": "Operator supplied --benchmark-exit-code 0 after observing the original strict process completion",
+  "sourceBenchmarkFile": "benchmark-results.json",
+  "sourceBenchmarkSha256": "2132623a7cdc2570e38dea5599e6e2d05de85623763eec2b2cce5d74fa337ba1",
+  "sourceBenchmarkLogFile": "../benchmark.log",
+  "sourceBenchmarkLogSha256": "8110a1ba2d5d664b8e466724e2027ec65def523fa770c6f945e590589dbb6a11",
+  "sourceBenchmarkLogAvailability": "Captured local log locator based at sourceBenchmarkLogLocatorBase; not a published gallery file",
+  "sourceNativeRouteAvailability": "Successful native route JSONs remain local and are not copied. sourceRouteFile/routeFile values are captured relative locators based at sourceRouteLocatorBase, not public gallery links.",
+  "runProvenanceFile": "run-provenance.json",
+  "runProvenanceSha256": "0488eca149a9ecebd37c21e0af587ea734a3a2108d8b084249db693851356938",
+  "auditFile": "independent-validation.json",
+  "auditSha256": "059cb2bf13b6467dad58bcb8b479cd05615b323080be7c2a8ee26becaf7d1ff0",
+  "exportScriptSha256": "debb23200b65e22a78772cc8541533b20438f36f249139ce10202bdbca10064b",
+  "declaredSamples": [
+    "control",
+    "control-inner1",
+    "right",
+    "left",
+    "above",
+    "inner-layers",
+    "inner-layers-right",
+    "inner-layers-left",
+    "inner-layers-above",
+    "inner-layers-complete-ca",
+    "outer-layers"
+  ],
+  "allAccepted": true,
+  "reroutingPerformed": false,
+  "copperUnchanged": true,
+  "runtime": {
+    "bunVersion": "1.4.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "memoryOptions": {
+      "BUN_JSC_forceRAMSize": "2147483648",
+      "BUN_JSC_miniVMHeapGrowthFactor": "1.05"
+    },
+    "installedDependencies": {
+      "@biomejs/biome": {
+        "requested": "^2.2.4",
+        "installedVersion": "2.5.15",
+        "packageJsonSha256": "72bb1900df96d9e24331c9f3d7cf5b4d44aac0aae3ff231e266df0c2cf9d5543"
+      },
+      "@flatten-js/core": {
+        "requested": "1.6.2",
+        "installedVersion": "1.6.2",
+        "packageJsonSha256": "63da846c7ce6c6110ce43512e45be5940c5bc5144c974d4b159f039f96327c3c"
+      },
+      "@tscircuit/checks": {
+        "requested": "0.0.237",
+        "installedVersion": "0.0.237",
+        "packageJsonSha256": "0b46caa7831361237b071d325042b272d1f2dbfd96150d0d6efa3f38630f2831"
+      },
+      "@tscircuit/circuit-json-util": {
+        "requested": "0.0.119",
+        "installedVersion": "0.0.119",
+        "packageJsonSha256": "05d5376b6c76b48b04671f137b3cf5aeb2685e6658112ba5fb9a42d0ff991ec2"
+      },
+      "@tscircuit/fanout-solver": {
+        "requested": "github:tscircuit/fanout-solver#15857f17beed0f228b2e29544f7ce393af297c86",
+        "installedVersion": "0.0.76",
+        "packageJsonSha256": "fd58fddbed687cb8967ab32c596520ccd21c26c9da28788aa0081a58bf12bf9d"
+      },
+      "@tscircuit/math-utils": {
+        "requested": "^0.0.38",
+        "installedVersion": "0.0.38",
+        "packageJsonSha256": "d5f7081373a428e53b0acfa26ef5e952edb0f8f565dff836ef14db08905f1d9c"
+      },
+      "@tscircuit/solver-utils": {
+        "requested": "^0.0.21",
+        "installedVersion": "0.0.21",
+        "packageJsonSha256": "7a345035db462a84c39801a60ac057bd004e1009627f92c5224c29aba5a608e9"
+      },
+      "@types/bun": {
+        "requested": "latest",
+        "installedVersion": "1.4.3",
+        "packageJsonSha256": "9c9594d7d9d10d060a9057bc6941d229b1410806a03285560ea2796ab8bd851c"
+      },
+      "@types/react": {
+        "requested": "^19",
+        "installedVersion": "19.3.0",
+        "packageJsonSha256": "505c0df4cd73d6a02c946bd9b81451584bd9c83ea72d75cff9b826efceaa19c2"
+      },
+      "@types/react-dom": {
+        "requested": "^19",
+        "installedVersion": "19.3.0",
+        "packageJsonSha256": "4a2052bb362c34f1d39cfe0818b6fe01a9f988b609e8b7e4832aff7dbf2f7180"
+      },
+      "circuit-json": {
+        "requested": "0.0.514",
+        "installedVersion": "0.0.514",
+        "packageJsonSha256": "0d0610ff490a2837485a255c086f3c448ad90d34582959f65e381c454c756816"
+      },
+      "circuit-json-to-connectivity-map": {
+        "requested": "^0.0.30",
+        "installedVersion": "0.0.30",
+        "packageJsonSha256": "0d4919fba65498626b37c34039fc04f62f1e5c06058c5fe72b015146d812eae7"
+      },
+      "dts-bundle-generator": {
+        "requested": "^9.5.1",
+        "installedVersion": "9.5.1",
+        "packageJsonSha256": "a2e5bd3d1414a1812d0f793de2cce646f72862df3bca76d49eb27d39313d0775"
+      },
+      "format-si-unit": {
+        "requested": "^0.0.14",
+        "installedVersion": "0.0.14",
+        "packageJsonSha256": "357115dddc1aa1bf448ecff2ba60c79f6e9f498999da8c08704b8f12e43de9df"
+      },
+      "graphics-debug": {
+        "requested": "^0.0.95",
+        "installedVersion": "0.0.95",
+        "packageJsonSha256": "6b329af03ec6c8b16c2b8757c40a324a40a0ed75a86e5d0a22c1646985a60ce7"
+      },
+      "react": {
+        "requested": "^19",
+        "installedVersion": "19.3.1",
+        "packageJsonSha256": "9cc9c3de5441a2eea7f41f52f3f2a15a4fc51f90c0b72741f0d7638643a85e67"
+      },
+      "react-cosmos": {
+        "requested": "^7.0.0",
+        "installedVersion": "7.4.1",
+        "packageJsonSha256": "c8c556672afd149f4483e1a0478d4468362848cff1b2e08f78e20a0f48fd07e2"
+      },
+      "react-cosmos-plugin-vite": {
+        "requested": "^7.0.0",
+        "installedVersion": "7.4.0",
+        "packageJsonSha256": "abc7764cfe4335e919120ab9754fd92c5c1b3691a4050d9832649f2b58b1c327"
+      },
+      "react-dom": {
+        "requested": "^19",
+        "installedVersion": "19.3.1",
+        "packageJsonSha256": "89d54f11575c9b0f7819962d9d72a31970dfb4d103f07e8b1d1b37e6d1fc3258"
+      },
+      "transformation-matrix": {
+        "requested": "^3.1.0",
+        "installedVersion": "3.1.0",
+        "packageJsonSha256": "7548565a728472f003a0ce2d0ba681e07eb038d7cbeb4da40e715c8c80ef263a"
+      },
+      "tsup": {
+        "requested": "^8.5.0",
+        "installedVersion": "8.5.1",
+        "packageJsonSha256": "420725303bff2abcaa95fa33d68b8f11cb974b640c8c0bae8c15863ed5125ec4"
+      },
+      "typescript": {
+        "requested": "5.9.3",
+        "installedVersion": "5.9.3",
+        "packageJsonSha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+      },
+      "vite": {
+        "requested": "^7.3.0",
+        "installedVersion": "7.3.7",
+        "packageJsonSha256": "aae1f593c0e6f320989b60af6e90f8ed4ea5137e5a0b9db663f9b0088333eb3c"
+      },
+      "yalps": {
+        "requested": "0.6.4",
+        "installedVersion": "0.6.4",
+        "packageJsonSha256": "908e43065c989cc5e1a18da5b1117465aab58772d2d2da65b6db4266e3fcb8f8"
+      }
+    },
+    "lockfiles": {},
+    "installedFanoutGeneratorIdentityAtExport": {
+      "name": "@tscircuit/fanout-solver",
+      "version": "0.0.76",
+      "dependency": "github:tscircuit/fanout-solver#15857f17beed0f228b2e29544f7ce393af297c86",
+      "sourceSha256": "e7d8139088c055e67c7ef347c463f2d51bad28477f2c74abc3b95ab8c0247c64"
+    }
+  },
+  "provenanceNotes": [
+    "Run metadata retains its original recording time and values. Captured JSON bytes remain local. Repository Biome formatting preserves parsed values; the public manifest separately adds publication metadata and refreshed public byte hashes.",
+    "Declared dependency versions and package.json hashes match the run recording. The installed fanout implementation source hash is additionally captured at export time.",
+    "The integrated source includes the merged PR61 default-layer fallback; standalone reviewed PR64 head is not claimed to have an identical complete production tree.",
+    "Measurements are full planar pad-to-pad copper, including native escapes and fixed signal copper; via depth and package delay are not inferred.",
+    "Complete 24-member CA/CK matching is requested only by inner-layers-complete-ca. Other cases retain their declared byte and pair constraints.",
+    "This is a local Bun 1.4.0 proof; timings are not a paired comparison against CI or another machine.",
+    "All eleven PNGs passed recorded visual inspection; visualInspectionFile/Sha256 identify the current public review record and its unchanged PNG hashes.",
+    "The trusted exporter generated both PNG and SVG from accepted native scenes; SVG bytes were hashed and discarded. Only the eleven fresh PNGs are retained as image artifacts.",
+    "capturedFileSha256 records original local file bytes before publication. sourceBenchmarkSha256, auditSha256, runProvenanceSha256 and visualInspectionSha256 identify the current formatted public JSON bytes. PNGs and the public export-script text retain their captured bytes."
+  ],
+  "images": [
+    {
+      "sample": "control",
+      "pngFile": "control-solved.png",
+      "pngSha256": "811ee038058ce10218683cf4f714e6857b2923f186222ab5263266e59e614014",
+      "svgSha256": "745d612630312b66d6f167f0dcc1eca78081bd3b546d73d89440671b9ecde91c",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 1560,
+      "graphicsSha256": "07f609ac7c39fcb597d2058b181131e779e613bd33c446484223852bf51489d2",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/control.json",
+      "sourceRouteSha256": "8a6231e91e82b1f9b945998be862331fb48879388acf9815e07fc537e22d0786",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "control-inner1",
+      "pngFile": "control-inner1-solved.png",
+      "pngSha256": "ff8e1114a078b38b6c73e9e1aa6817c6511b88c9addbab315211e8ecd314d1ea",
+      "svgSha256": "8a4604a5554ad658ad2fd63cbac76aaf34bc0be271670c76db334f89472236f8",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 1058,
+      "graphicsSha256": "03d2228c13095ca93ae140dc8910ed7e789584fe4c7076610efa6d7cc0c60d3b",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/control-inner1.json",
+      "sourceRouteSha256": "bdf7550cf77639ca38dab4d05c943c57ed67ccb60eaf861a8da88c88b418f865",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "right",
+      "pngFile": "right-solved.png",
+      "pngSha256": "f3722abc3b2f9f1b68650d5185f938436147ab304656a932156579afdef658a2",
+      "svgSha256": "ad196e276bd4b9625f3dc0a18cc80206c22f0fc5e46908a853c918f1d870e8cd",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 392,
+      "graphicsSha256": "c59d26ed0aac9a812ce99ac46594bc6ea281f8dfa1712c061ac441602be0bc3e",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/right.json",
+      "sourceRouteSha256": "9c3e9d5b761dba882899239297c8beabffd76d68cc1fa323b35babe0c33f1fbc",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "left",
+      "pngFile": "left-solved.png",
+      "pngSha256": "42cebd55f4a15fb4db1c5b3c0e95b803a728fe7b39b89751e9f9c570e3c21777",
+      "svgSha256": "63411b816ff6c5580ec37724a1237e9030f5b6c88f822a746f56bc5bad7b24c4",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 360,
+      "graphicsSha256": "8613aecfddc53635b6b746839ce7719f244eda6faa5d2ce5f5c17200127bdae7",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/left.json",
+      "sourceRouteSha256": "dbd4dd1083aa922fd295911cd903aa1202e0466cdf5c55ea7586072f55a8840b",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "above",
+      "pngFile": "above-solved.png",
+      "pngSha256": "b5f785f1b1ecb3115dc6cac59c94f1cc55c8aa60a6a62dd463c49097b1e712c5",
+      "svgSha256": "d36f4fec3664d0e045b130b952d2eae33b3fe489f7a951455e70579a813b4294",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 1507,
+      "graphicsSha256": "37185a0d36f380534b2621791eb1142e2ed071824000ef998cc19abe63c4c2f5",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/above.json",
+      "sourceRouteSha256": "01af6382f532187f8139b771a357e662f33317e9b131a59987b12b1cffb55059",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "inner-layers",
+      "pngFile": "inner-layers-solved.png",
+      "pngSha256": "69377065f2c849a08976dad9588dd6ed682b6af65eba4ec3505f5d367d2437a3",
+      "svgSha256": "a31c6b5e1f1ae40558c17b56a02ac55b23451984b2bc3bac2108f33d711bafa1",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 1544,
+      "graphicsSha256": "590bfad337764dcfd71dae1e8d022fa780197e09f8c15f830f5619c40fe483ba",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/inner-layers.json",
+      "sourceRouteSha256": "04badac4db68c70c7e4db29005674ae1c3d563dee32c25be591e89e6600a53f4",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "inner-layers-right",
+      "pngFile": "inner-layers-right-solved.png",
+      "pngSha256": "9f14118c44621cded9aa6bb8730d33fe918be854eadb7c4c8662f0a46aeefdda",
+      "svgSha256": "876781966e64326cf7ff747d80d0639ec07f8b94d2dcc581fe27ae8bf2eeb62f",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 419,
+      "graphicsSha256": "23e5e60b69bb1f94e061a1239620e843bf2a9cee7ca511016d4fa6ed45780032",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/inner-layers-right.json",
+      "sourceRouteSha256": "92687317c8fd79b65c92f9248325fd5db53448b42ab0a8bf8813b2eec2994b4b",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "inner-layers-left",
+      "pngFile": "inner-layers-left-solved.png",
+      "pngSha256": "d004f64b7620372b8881eb69480b0240df43f8cd95d4c3a83d06d32a43bc5319",
+      "svgSha256": "22fd80f55e77d56cb49381be6cf013d6542fb9f90c302ba5580b440437cc9b97",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 399,
+      "graphicsSha256": "2930f5fc2c40635bf1c3b369a7404c01df7a279003564951d717a9b3764dba5d",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/inner-layers-left.json",
+      "sourceRouteSha256": "d1815595be204c7bd723f9f4cbeff53210a75da43f22f6e6e3b488d271ed7c6f",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "inner-layers-above",
+      "pngFile": "inner-layers-above-solved.png",
+      "pngSha256": "dbdab10b144c64bc60be42584d232db7e23c7306d62d92402960c57e41ffed8a",
+      "svgSha256": "22c5970d03e896def376e6de44c2ead090be26862d77adb44a2670c523496da0",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 1247,
+      "graphicsSha256": "ae8be1a3933802f643d77275c67724ae31b9a71f2b95ff7f967ff7c974e1b476",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/inner-layers-above.json",
+      "sourceRouteSha256": "1b8d8b75ff3ed04bb0dde6698b9f53072b84ed4b84641309ebc5c0a6dc1b9ada",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "pngFile": "inner-layers-complete-ca-solved.png",
+      "pngSha256": "8d42fb6dd4142834d1971ff1b756f88e91288fc428783599647ad808a3640185",
+      "svgSha256": "38f30731c12749aa442901100aa66c3bfbbbd94026b7d4ddd2ea3eed76bf01ed",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 806,
+      "graphicsSha256": "0c762df304bbef2ada4ec74fc70e45e998946d8195f953996af1ddc345c230d1",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/inner-layers-complete-ca.json",
+      "sourceRouteSha256": "4f77c1c78a561f6478ecce1cfa4e6d1024da60ed0e13b07f54bbd8a4ce2de4bb",
+      "visualInspection": "passed"
+    },
+    {
+      "sample": "outer-layers",
+      "pngFile": "outer-layers-solved.png",
+      "pngSha256": "716ab2b56349756cbe6b1d49bcc53cdbc762d3044bb7a412cd87214d208f7722",
+      "svgSha256": "4df7b191a5529607e5044ed501a1eb08be223e982805c1f35e812491e02a802b",
+      "svgRetained": false,
+      "widthPixels": 2200,
+      "heightPixels": 1123,
+      "graphicsSha256": "696d88639965fedc052a1b6899cd69fbcab987bb1ff699e9ca50d57a284a3a72",
+      "acceptedSignals": 47,
+      "fixedPowerTraces": 161,
+      "sourceRouteFile": "../routes/outer-layers.json",
+      "sourceRouteSha256": "ae3fbd27f8dc5c598110d1702bf24bd009b730c9bfe9f2bf48a953c42291fe77",
+      "visualInspection": "passed"
+    }
+  ],
+  "capturedFileSha256": {
+    "benchmark-results.json": "2147d9bb7cfc73f8047e8127a4c8a611a29d9ac2a7e6acc1fb3ad81cbc2f622e",
+    "independent-validation.json": "24c58bfd5e569fcc5304f2cf3d52ebf56d6a21dd643868a895a4966524a96d6a",
+    "run-provenance.json": "0488eca149a9ecebd37c21e0af587ea734a3a2108d8b084249db693851356938",
+    "visual-inspection.json": "26064083cbf195e243dd120522ad33335351df832a6e3f8ad4047d9a064151a6",
+    "artifact-manifest.json": "707a7948fe6434e2cbfc59f464df0c6618a509c534121541accb0a84a2621080",
+    "README.md": "5d0023ea5891b4db93a7c0a74e52d027e9da42a7b00a9ecf4ac2aa7c2e12132f"
+  },
+  "visualInspectionSha256": "26064083cbf195e243dd120522ad33335351df832a6e3f8ad4047d9a064151a6",
+  "visualInspectionFile": "visual-inspection.json",
+  "exportScriptFile": "revalidate-export.ts.txt",
+  "sourceRouteLocatorBase": "/workspace/work/am3352-repros/legacy-full-proof-20261020/artifacts",
+  "sourceNativeRouteDirectory": "/workspace/work/am3352-repros/legacy-full-proof-20261020/routes",
+  "sourceBenchmarkLogLocatorBase": "/workspace/work/am3352-repros/legacy-full-proof-20261020/artifacts",
+  "publication": {
+    "publishedAtUtc": "2026-10-20T17:36:02.193745+00:00",
+    "formatter": "Installed repository Biome; no installation or network access",
+    "formatterPackageVersion": "2.5.15",
+    "formatterPackageJsonSha256": "72bb1900df96d9e24331c9f3d7cf5b4d44aac0aae3ff231e266df0c2cf9d5543",
+    "formatterConfigSha256": "b486ce35f65c81ad7810fb40ce52e9ec2cd7b95dec20430ce8a6322c51f014bc",
+    "formatterCommand": [
+      "/workspace/work/am3352-repros/byte-worktree/node_modules/.bin/biome",
+      "format",
+      "--write",
+      "docs/routed-am3352-byte/.legacy-full-proof-staging-95f1c841-32d9-4a3c-bb39-144dddc24ef4/benchmark-results.json",
+      "docs/routed-am3352-byte/.legacy-full-proof-staging-95f1c841-32d9-4a3c-bb39-144dddc24ef4/independent-validation.json",
+      "docs/routed-am3352-byte/.legacy-full-proof-staging-95f1c841-32d9-4a3c-bb39-144dddc24ef4/run-provenance.json",
+      "docs/routed-am3352-byte/.legacy-full-proof-staging-95f1c841-32d9-4a3c-bb39-144dddc24ef4/visual-inspection.json",
+      "docs/routed-am3352-byte/.legacy-full-proof-staging-95f1c841-32d9-4a3c-bb39-144dddc24ef4/artifact-manifest.json"
+    ],
+    "formatterWorkingDirectory": "/workspace/work/am3352-repros/byte-worktree",
+    "parsedJsonValuesUnchangedByFormatting": true,
+    "helperSha256": "6e95d444829519bde023edd2da5c2dde6b24b3927e262b9ea890bc290a740a7e",
+    "copiedNativeRouteFiles": false
+  }
+}

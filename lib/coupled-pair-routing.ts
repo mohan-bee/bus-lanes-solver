@@ -6,6 +6,8 @@ import { tuneSmoothLengths } from "./smooth-length-tuning"
 import { minimumLengthTargets } from "./route-lengths"
 import { backwardFacingPackageTerminals } from "./backward-facing-package-terminals"
 import { extendCoupledSectionEnds } from "./extend-coupled-section"
+import { extendPackageCoupling } from "./extend-package-coupling"
+import { exteriorPairSpacingReports } from "./exterior-pair-spacing"
 import { fixedRouteLength, maximumCarrierLength } from "./route-lengths"
 import { coupledPairCache } from "./coupled-pair-cache"
 import { reduceOrdinaryTurns } from "./reduce-ordinary-turns"
@@ -14,7 +16,60 @@ import { distance, length, simplify } from "./geometry"
 import { VectorScene, routeCopper, type Copper } from "./vector-scene"
 import { VectorVisibilitySearch, connectors } from "./vector-visibility"
 import { GridVisibilitySearch } from "./grid-visibility"
+import { isUnroutedComponentPad } from "./is-unrouted-component-pad"
 import type { SimpleRouteJson, Point, Trace, Connection } from "./types"
+
+/** Compare computed pair geometry independently of trace IDs and member order.
+ * Keep exact coordinates and coupling annotations; no nearby route is merged. */
+export function pairRouteKey(traces: readonly Trace[]): string {
+  return JSON.stringify(
+    [...traces]
+      .sort((first, second) => {
+        const a = first.connection_name ?? first.source_trace_id ?? ""
+        const b = second.connection_name ?? second.source_trace_id ?? ""
+        return a < b ? -1 : a > b ? 1 : 0
+      })
+      .map((trace) => [
+        trace.connection_name ?? trace.source_trace_id ?? "",
+        trace.route.map((point) =>
+          point.route_type === "wire"
+            ? [point.route_type, point.x, point.y, point.layer, point.width]
+            : [
+                point.route_type,
+                point.x,
+                point.y,
+                point.from_layer,
+                point.to_layer,
+                point.layers ?? null,
+                point.via_diameter ?? null,
+                point.via_hole_diameter ?? null,
+              ],
+        ),
+        trace.coupledSection ?? null,
+        trace.curvedSegments
+          ? [...trace.curvedSegments].sort((a, b) => a - b)
+          : [],
+      ]),
+  )
+}
+
+/** Fresh pad endpoints in board-world mm (+X right, +Y up), excluding supplied
+ * connected copper and existing fanout handoffs on the same electrical net. */
+export function pairHasUnroutedNativePads(
+  input: SimpleRouteJson,
+  pair: NonNullable<SimpleRouteJson["differentialPairs"]>[number],
+): boolean {
+  return pair.connectionNames.every((name) => {
+    const connection = input.connections.find((c) => c.name === name)
+    return (
+      connection !== undefined &&
+      connection.pointsToConnect.length === 2 &&
+      connection.pointsToConnect.every((point) =>
+        isUnroutedComponentPad(input, connection, point),
+      )
+    )
+  })
+}
 
 /** Offset an octilinear centerline in board-world mm, +X right/+Y up. Positive
  * distance is left of travel. Intersections preserve segment headings. */
@@ -51,6 +106,8 @@ export function* routeCoupledPair(
     preferPackageOnlyTuning?: boolean
     /** Provisional topology; final exterior coupling is still mandatory. */
     allowProvisionalPairTuning?: boolean
+    /** Complete paired geometries already tried by this bounded caller. */
+    excludedPairRoutes?: ReadonlySet<string>
   },
 ): Generator<void, Trace[] | null> {
   const members = pair.connectionNames.map(
@@ -58,6 +115,9 @@ export function* routeCoupledPair(
   )
   if (members.some((c) => !c || c.pointsToConnect.length !== 2))
     throw Error("Pair requires two two-terminal connections")
+  const nativePairPads = pairHasUnroutedNativePads(input, pair)
+  const requireNativePackageCoupling =
+    nativePairPads && !negotiation?.allowProvisionalPairTuning
   const widths = members.map(
     (c) =>
       (input.buses ?? []).find((b) => b.connectionNames.includes(c.name))
@@ -271,12 +331,11 @@ export function* routeCoupledPair(
       (point, index, choices) =>
         choices.findIndex((other) => distance(point, other) < 1e-8) === index,
     )
-    // Pads on the back of a package should first try its nearby edges rather
-    // than crossing the entire via field to reach the edge facing the target.
-    // Keep the remaining corridor distance in the score so a short local
-    // escape does not win by sending the pair away from its destination.
+    // Fresh native pairs must stay coupled between packages, so rank the whole
+    // connection length. Existing fanouts retain their local-escape preference.
     const cost = (point: Point) =>
-      2 * distance(point, centers[end]) + distance(point, centers[1 - end])
+      (requireNativePackageCoupling ? 1 : 2) * distance(point, centers[end]) +
+      distance(point, centers[1 - end])
     handoffChoices[end].sort((a, b) => cost(a) - cost(b))
   }
   const variant = negotiation?.variant ?? 0
@@ -322,6 +381,10 @@ export function* routeCoupledPair(
     bestScore = Infinity,
     viable = 0
   const reachability = new Map<string, { reachable: boolean; length: number }>()
+  // Escape order and corner trims often propose exactly the same native pair.
+  // Its clearance scene and tuning targets are fixed for this invocation.
+  const finishedNativeShapes = new Map<string, Trace[] | null>()
+  const tunedNativeShapes = new Map<string, Trace[] | null>()
   // Most package approaches fit the same half-width grid used by the main
   // search. Explore those handoffs first, then retain the fine grid for narrow
   // gaps. Every grid edge is still checked against continuous copper geometry.
@@ -338,9 +401,18 @@ export function* routeCoupledPair(
     !negotiation.history
       ? coupledPairCache(input, fixed)
       : undefined
+  // Equal shortest central elbows can lead into different package approaches.
+  // Keep stable shortening first, then explicitly try its alternate for native
+  // pairs; all candidates use the same continuous copper and tuning checks.
+  const corridorChoices = [0, -1, 1, -2, 2].flatMap((shift) =>
+    (requireNativePackageCoupling ? [0, 1] : [0]).map((centerAlternative) => ({
+      shift,
+      centerAlternative,
+    })),
+  )
   for (const { point: first, approachStep } of approachChoices)
     for (const second of handoffChoices[1])
-      candidates: for (const shift of [0, -1, 1, -2, 2]) {
+      candidates: for (const { shift, centerAlternative } of corridorChoices) {
         const ends = [first, second].map((p) => ({
           ...p,
           [crossAxis]: p[crossAxis] + shift * envelope,
@@ -354,9 +426,17 @@ export function* routeCoupledPair(
           gap,
           approachStep,
           ends,
+          centerAlternative,
         ])
         const remembered = cached?.get(key)
         if (remembered) {
+          if (
+            remembered.traces &&
+            negotiation?.excludedPairRoutes?.has(
+              pairRouteKey(remembered.traces),
+            )
+          )
+            continue
           if (remembered.traces && remembered.score < bestScore) {
             bestScore = remembered.score
             best = remembered.traces
@@ -367,6 +447,7 @@ export function* routeCoupledPair(
         }
         let handoffBest: Trace[] | null = null,
           handoffScore = Infinity
+        let excludedAlternative = false
         const virtual = {
           name: "pair_corridor",
           pointsToConnect: ends.map((p) => ({ ...p, layer })),
@@ -425,6 +506,8 @@ export function* routeCoupledPair(
         const centerPath = reduceOrdinaryTurns(
           centerSearch.result,
           visibleScene,
+          centerAlternative,
+          nativePairPads,
         )
         // Grid endpoint attachments can briefly backtrack at a blocked
         // handoff. Reject that candidate instead of aborting the whole phase
@@ -596,7 +679,12 @@ export function* routeCoupledPair(
                 }
                 escapes[i][end] = makeTrace(
                   c,
-                  reduceOrdinaryTurns(search.result, visibleEscapeScene),
+                  reduceOrdinaryTurns(
+                    search.result,
+                    visibleEscapeScene,
+                    0,
+                    nativePairPads,
+                  ),
                 )
               }
             if (failed) continue
@@ -637,7 +725,7 @@ export function* routeCoupledPair(
             }
             let finished: Trace[] | undefined
             for (const trim of [1.5, 0.75, 0.375, 0.1875]) {
-              const shaped = chamferOrdinaryCorners(
+              let shaped = chamferOrdinaryCorners(
                 pairInput,
                 traces,
                 fixed,
@@ -658,7 +746,37 @@ export function* routeCoupledPair(
                 )
               )
                 continue
+              const shapeKey = requireNativePackageCoupling
+                ? pairRouteKey(shaped)
+                : undefined
+              if (shapeKey && finishedNativeShapes.has(shapeKey)) {
+                finished = finishedNativeShapes.get(shapeKey) ?? undefined
+                if (finished) break
+                continue
+              }
+              let tuningKey: string | undefined
               try {
+                if (requireNativePackageCoupling) {
+                  // Repair the raw pair before ordinary lanes consume its
+                  // package approach space. Native pad routing has no supplied
+                  // fanout region that can excuse a separated external trunk.
+                  // Length matching follows this bounded geometric proposal.
+                  shaped = yield* extendPackageCoupling(pairInput, shaped, {
+                    preserveMatching: false,
+                  })
+                  if (
+                    exteriorPairSpacingReports(pairInput, shaped).some(
+                      (report) => !report.matched,
+                    )
+                  )
+                    continue
+                  tuningKey = pairRouteKey(shaped)
+                  if (tunedNativeShapes.has(tuningKey)) {
+                    finished = tunedNativeShapes.get(tuningKey) ?? undefined
+                    if (finished) break
+                    continue
+                  }
+                }
                 let tuned = tuneSmoothLengths(
                   pairInput,
                   shaped,
@@ -669,9 +787,9 @@ export function* routeCoupledPair(
                   pairInput,
                   width + gap / 2 + clearance,
                 )
-                // Fresh two-ended escapes have no completed plane copper to
-                // bound a local correction. Retain established pre-fanouted
-                // choices; only retry those fresh banks inside their packages.
+                // Fresh native pads and two-ended escapes need skew correction
+                // inside their packages. A zero-via surface pair is still fresh;
+                // retain established pre-fanouted choices on supplied copper.
                 const memberNames = new Set(
                   members.flatMap((c) => [c.name, c.source_trace_id ?? c.name]),
                 )
@@ -686,21 +804,21 @@ export function* routeCoupledPair(
                     t.connection_name!,
                     (dogboneCounts.get(t.connection_name!) ?? 0) + 1,
                   )
-                const freshSignalEscapes =
-                  memberEscapes.length === members.length * 2 &&
-                  [...dogboneCounts.values()].every((n) => n === 2) &&
-                  memberEscapes.every(
-                    (t) =>
-                      t.route.filter((p) => p.route_type === "via").length ===
-                      1,
-                  )
+                const freshPairApproaches =
+                  nativePairPads ||
+                  (memberEscapes.length === members.length * 2 &&
+                    [...dogboneCounts.values()].every((n) => n === 2) &&
+                    memberEscapes.every(
+                      (t) =>
+                        t.route.filter((p) => p.route_type === "via").length ===
+                        1,
+                    ))
                 let preferPackageOnlyTuning =
                   negotiation?.preferPackageOnlyTuning
                 if (preferPackageOnlyTuning === undefined) {
-                  // Preserve the existing search preference for inputs made
-                  // entirely of fresh signal dogbones. Surface planning opts
-                  // in explicitly so unrelated supplied copper cannot change
-                  // the classification of its paired members.
+                  // Native pads need no via to identify their package. Keep
+                  // the existing preference for fresh signal dogbones too;
+                  // explicit planning intent remains authoritative.
                   const allEscapes = pairInput.traces ?? []
                   const allCounts = new Map<string, number>()
                   for (const escape of allEscapes)
@@ -709,17 +827,18 @@ export function* routeCoupledPair(
                       (allCounts.get(escape.connection_name!) ?? 0) + 1,
                     )
                   preferPackageOnlyTuning =
-                    allEscapes.length > 0 &&
-                    [...allCounts.values()].every((count) => count === 2) &&
-                    allEscapes.every(
-                      (escape) =>
-                        escape.route.filter(
-                          (point) => point.route_type === "via",
-                        ).length === 1,
-                    )
+                    nativePairPads ||
+                    (allEscapes.length > 0 &&
+                      [...allCounts.values()].every((count) => count === 2) &&
+                      allEscapes.every(
+                        (escape) =>
+                          escape.route.filter(
+                            (point) => point.route_type === "via",
+                          ).length === 1,
+                      ))
                 }
                 if (
-                  freshSignalEscapes &&
+                  freshPairApproaches &&
                   preferPackageOnlyTuning &&
                   !negotiation?.allowProvisionalPairTuning &&
                   regions.length &&
@@ -742,6 +861,13 @@ export function* routeCoupledPair(
                   )
                 }
                 if (
+                  requireNativePackageCoupling &&
+                  exteriorPairSpacingReports(pairInput, tuned).some(
+                    (report) => !report.matched,
+                  )
+                )
+                  continue
+                if (
                   routeAnglesAreConventional(tuned) &&
                   sharedPairSpacingReports(pairInput, tuned).every(
                     (p) => p.matched,
@@ -750,10 +876,20 @@ export function* routeCoupledPair(
                   finished = tuned
                   break
                 }
-              } catch {}
+              } catch {
+              } finally {
+                if (shapeKey)
+                  finishedNativeShapes.set(shapeKey, finished ?? null)
+                if (tuningKey)
+                  tunedNativeShapes.set(tuningKey, finished ?? null)
+              }
             }
             if (!finished) continue
             traces = finished
+            if (negotiation?.excludedPairRoutes?.has(pairRouteKey(traces))) {
+              excludedAlternative = true
+              continue
+            }
             // The polygon includes imaginary closures between separate pair
             // terminals. A lane may legally leave through those openings, so
             // check actual reachability before treating this as a sealed pocket.
@@ -900,13 +1036,18 @@ export function* routeCoupledPair(
         // A first connected corridor can leave one rail with a large package
         // detour that matching cannot repair. Explore a bounded set of other
         // handoffs before falling back to the shortest, least skewed candidate.
-        cached?.set(key, {
-          traces: handoffBest,
-          score: handoffScore,
-          hasMatchedAlternative: false,
-          countsAttempt: true,
-        })
-        if (negotiation && best && ++viable >= 4) return best
+        // Exclusions belong to this caller, not the physical scene cache.
+        // An already tried route is neither a new viable option nor evidence
+        // that this handoff is physically unroutable for another caller.
+        const countsAttempt = !excludedAlternative || handoffBest !== null
+        if (countsAttempt)
+          cached?.set(key, {
+            traces: handoffBest,
+            score: handoffScore,
+            hasMatchedAlternative: false,
+            countsAttempt,
+          })
+        if (negotiation && best && countsAttempt && ++viable >= 4) return best
       }
   return best
 }
