@@ -1,6 +1,10 @@
 import { backwardFacingPackageTerminals } from "./backward-facing-package-terminals"
 import { repairGridJogs } from "./repair-grid-jogs"
-import { routeCoupledPair } from "./coupled-pair-routing"
+import {
+  pairHasUnroutedNativePads,
+  pairRouteKey,
+  routeCoupledPair,
+} from "./coupled-pair-routing"
 import { negotiateLanes } from "./negotiate-lanes"
 import type { Copper } from "./vector-scene"
 import type { SimpleRouteJson, Trace } from "./types"
@@ -65,6 +69,7 @@ export function* routeIndependentBuses(
       (c) => !pair?.connectionNames.includes(c.name),
     )
     let solved: Trace[] | null = null
+    const attemptedPairRoutes = new Set<string>()
     // Alternate nearby and distant handoffs for backward-facing packages;
     // consecutive neighboring retries often repeat the same closed topology.
     const variants = backwardFacingPackageTerminals(input)
@@ -78,6 +83,7 @@ export function* routeIndependentBuses(
           copper: [],
           penalty: 0,
           variant,
+          excludedPairRoutes: attemptedPairRoutes,
         })
         let state = search.next(),
           steps = 0
@@ -90,6 +96,9 @@ export function* routeIndependentBuses(
           if (!state.done) search.return(null)
         }
         if (!state.done || !state.value) continue
+        const pairKey = pairRouteKey(state.value)
+        if (attemptedPairRoutes.has(pairKey)) continue
+        attemptedPairRoutes.add(pairKey)
         paired = state.value
       }
       if (!ordinary.length) {
@@ -105,6 +114,8 @@ export function* routeIndependentBuses(
         undefined,
         new Map(),
         () => false,
+        false,
+        !!pair && pairHasUnroutedNativePads(input, pair),
       )
       let state = search.next(),
         steps = 0

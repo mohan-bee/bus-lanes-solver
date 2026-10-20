@@ -1,0 +1,528 @@
+{
+  "schemaVersion": 1,
+  "scope": "Historical 47-signal placement regressions; separate from the exact native 11-signal byte reproduction",
+  "command": "./benchmark.sh --timeout-seconds 180",
+  "timeoutSecondsPerSample": 180,
+  "baseline": {
+    "commit": "5de6291e369aea5e935426cb95545835e867090b",
+    "rawReport": "full-fix-benchmark.json",
+    "rawReportSha256": "2e2a22744e7e005849874675a4daa7f2a9cf82b0922ed5d91e022a4b90dd20f0",
+    "sampleCount": 11,
+    "acceptedCount": 6,
+    "totalSolveSeconds": 1207.352412698,
+    "totalCaseWallSeconds": 1223.269550865
+  },
+  "candidate": {
+    "fixCommit": "53814af4da9a0fed9a15d3d2b402ed316bdc2238",
+    "mainCommit": "6f58178c3324c4f6b95c24f242c353e5927b75ce",
+    "integrationCommit": "49605dc0f56c9532e047c88928f27c8e3b46f8e1",
+    "rawReport": "legacy-placement-benchmark.json",
+    "rawReportSha256": "9fecab4f10f637aaa4696eacaec25c832f581ac34f0671f43f9641e8256eb371",
+    "sampleCount": 11,
+    "acceptedCount": 6,
+    "totalSolveSeconds": 1217.850016614,
+    "totalCaseWallSeconds": 1233.6476275100001,
+    "capturedRawReportSha256": "9870361b1e39488f6fee9b8924877609bd305677017d2115329d3ef91534f185"
+  },
+  "allInputHashesIdentical": true,
+  "allInputsUnchanged": true,
+  "allFixedPowerPreserved": true,
+  "newlyAcceptedSamples": [],
+  "regressedSamples": [],
+  "notes": [
+    "Accepted means solved, independently complete, DRC valid and length matched; partial trace counters do not establish acceptance.",
+    "Bus and pair skews include supplied fixed copper. Null metrics mean no audited accepted output.",
+    "All eleven fixture hashes and per-sample input/fixed-power preservation flags are recorded individually.",
+    "Solve time excludes independent validation and process overhead; one measured run per revision.",
+    "Interrupted earlier candidate runs are excluded. Existing successful reference images remain historical artifacts.",
+    "The public candidate report is JSON formatted; capturedRawReportSha256 identifies the original capture bytes. Baseline capture bytes are identified by hash; normalized baseline measurements are retained here."
+  ],
+  "samples": [
+    {
+      "sample": "control",
+      "baselineInputSha256": "b7a4e9d09a22fe0ed131a544548b14eef20fbf4e88b6dc6ffaa11ca44e6bfe59",
+      "candidateInputSha256": "b7a4e9d09a22fe0ed131a544548b14eef20fbf4e88b6dc6ffaa11ca44e6bfe59",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 39.436778100999994,
+        "caseWallSeconds": 41.19056477,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6350000000675919,
+          "DDR_BYTE1": 0.6350000100064577
+        },
+        "maxPairSkewMm": 0.12688373178988854,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 39.063128342,
+        "caseWallSeconds": 40.706912187,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6350000000675919,
+          "DDR_BYTE1": 0.6350000100064577
+        },
+        "maxPairSkewMm": 0.12688373178988854,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "control-inner1",
+      "baselineInputSha256": "14b5b318540ce7bac367cf22338abd7f9fffd2f7ce6c2a12f903116f50ca9bde",
+      "candidateInputSha256": "14b5b318540ce7bac367cf22338abd7f9fffd2f7ce6c2a12f903116f50ca9bde",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.047967749,
+        "caseWallSeconds": 180.14545554699998,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 182.288964577,
+        "caseWallSeconds": 182.382653514,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "right",
+      "baselineInputSha256": "78c22c8d818ee2c2abe2eec9c6b6e408161a9d0eaf09afbafc3242e71e8f5778",
+      "candidateInputSha256": "78c22c8d818ee2c2abe2eec9c6b6e408161a9d0eaf09afbafc3242e71e8f5778",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 32.119852287,
+        "caseWallSeconds": 34.492947728,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.635000000000467,
+          "DDR_BYTE1": 0.6349999999999696
+        },
+        "maxPairSkewMm": 0.12180230740349174,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 33.5191662,
+        "caseWallSeconds": 35.813341396999995,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.635000000000467,
+          "DDR_BYTE1": 0.6349999999999696
+        },
+        "maxPairSkewMm": 0.12180230740349174,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "left",
+      "baselineInputSha256": "6042ca0f0889a983a6ccf8f929a6a46b18cc57134e1b9f3b49c19063b936caa5",
+      "candidateInputSha256": "6042ca0f0889a983a6ccf8f929a6a46b18cc57134e1b9f3b49c19063b936caa5",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 42.253117552,
+        "caseWallSeconds": 46.517259233000004,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.635000009997654,
+          "DDR_BYTE1": 0.5111468252001927
+        },
+        "maxPairSkewMm": 0.12699999999991718,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 43.020348654,
+        "caseWallSeconds": 47.540204962000004,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.635000009997654,
+          "DDR_BYTE1": 0.5111468252001927
+        },
+        "maxPairSkewMm": 0.12699999999991718,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "above",
+      "baselineInputSha256": "20fc884f08accd368e4ce049ab3fc180a1926f425787a504dbc4040f651bfa69",
+      "candidateInputSha256": "20fc884f08accd368e4ce049ab3fc180a1926f425787a504dbc4040f651bfa69",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 45.817079846,
+        "caseWallSeconds": 48.977630129000005,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6350000000108622,
+          "DDR_BYTE1": 0.635000000003032
+        },
+        "maxPairSkewMm": 0.12700000000002376,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 52.2315266,
+        "caseWallSeconds": 55.320052974,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6350000000108622,
+          "DDR_BYTE1": 0.635000000003032
+        },
+        "maxPairSkewMm": 0.12700000000002376,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "inner-layers",
+      "baselineInputSha256": "1b91e6c5207e4b7e132aa5ac246e94777f926c7beab8675adf0356634b8280ad",
+      "candidateInputSha256": "1b91e6c5207e4b7e132aa5ac246e94777f926c7beab8675adf0356634b8280ad",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 58.321567835,
+        "caseWallSeconds": 60.204042773,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6349999999628082,
+          "DDR_BYTE1": 0.6350000109864098
+        },
+        "maxPairSkewMm": 0.12699999999976797,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 59.99446763,
+        "caseWallSeconds": 61.869726615,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6349999999628082,
+          "DDR_BYTE1": 0.6350000109864098
+        },
+        "maxPairSkewMm": 0.12699999999976797,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "inner-layers-right",
+      "baselineInputSha256": "2eaf3dedcd84fbfed10262f4d4c99370a0ca00a7a060f87b7a1cdcba9de37a8e",
+      "candidateInputSha256": "2eaf3dedcd84fbfed10262f4d4c99370a0ca00a7a060f87b7a1cdcba9de37a8e",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 84.858482287,
+        "caseWallSeconds": 86.85596251499999,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6350000110508631,
+          "DDR_BYTE1": 0.6349999999999696
+        },
+        "maxPairSkewMm": 0.12700001096276736,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "solved",
+        "accepted": true,
+        "solveSeconds": 85.81425210400002,
+        "caseWallSeconds": 87.721712397,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": 47,
+        "combinedDrcValid": true,
+        "combinedDrcIssueCount": 0,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": 0.6350000110508631,
+          "DDR_BYTE1": 0.6349999999999696
+        },
+        "maxPairSkewMm": 0.12700001096276736,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "inner-layers-left",
+      "baselineInputSha256": "1c3db8ee018bc90df7fbbb0c198c42efcc0ca948a6a213338650cf81a51f7ab2",
+      "candidateInputSha256": "1c3db8ee018bc90df7fbbb0c198c42efcc0ca948a6a213338650cf81a51f7ab2",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.022177728,
+        "caseWallSeconds": 180.12372057299999,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 181.895656674,
+        "caseWallSeconds": 181.978205626,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "inner-layers-above",
+      "baselineInputSha256": "68a86ef74f8ec9628954e909464c009d98fb2c902a6376e20b3a32d4b5cff555",
+      "candidateInputSha256": "68a86ef74f8ec9628954e909464c009d98fb2c902a6376e20b3a32d4b5cff555",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 183.60872632,
+        "caseWallSeconds": 183.695204006,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.013060931,
+        "caseWallSeconds": 180.097790186,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "baselineInputSha256": "a6def279fa2d3356a66ee94b1760a76eebb6c6d8e605005ce5903bd2fbca8776",
+      "candidateInputSha256": "a6def279fa2d3356a66ee94b1760a76eebb6c6d8e605005ce5903bd2fbca8776",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.866446562,
+        "caseWallSeconds": 180.96423338099999,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null,
+          "DDR_ADDR_CTRL_CK": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.008996612,
+        "caseWallSeconds": 180.104002263,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 47,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null,
+          "DDR_ADDR_CTRL_CK": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    },
+    {
+      "sample": "outer-layers",
+      "baselineInputSha256": "de3fd915f3c7d8c9bf4fd3c9b197596ba5e08c1be328f9c5223d7ab78736588f",
+      "candidateInputSha256": "de3fd915f3c7d8c9bf4fd3c9b197596ba5e08c1be328f9c5223d7ab78736588f",
+      "sameInputSha256": true,
+      "baseline": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.00021643099998,
+        "caseWallSeconds": 180.10253021,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 0,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      },
+      "candidate": {
+        "status": "timed_out",
+        "accepted": false,
+        "solveSeconds": 180.00044829,
+        "caseWallSeconds": 180.113025389,
+        "requestedSignals": 47,
+        "reportedRoutedSignals": 0,
+        "auditedConnectedSignals": null,
+        "combinedDrcValid": null,
+        "combinedDrcIssueCount": null,
+        "wholeCopperBusSkewsMm": {
+          "DDR_BYTE0": null,
+          "DDR_BYTE1": null
+        },
+        "maxPairSkewMm": null,
+        "inputUnchanged": true,
+        "fixedPowerDogbones": 161,
+        "fixedPowerPreserved": true
+      }
+    }
+  ]
+}

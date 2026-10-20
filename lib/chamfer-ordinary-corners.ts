@@ -1,3 +1,4 @@
+import { pointInBox } from "./package-approach-regions"
 import { distance } from "./geometry"
 import { tuningPathIsSelfClear } from "./length-tuning"
 import { fixedCopper, VectorScene, type Copper } from "./vector-scene"
@@ -14,6 +15,7 @@ export function chamferOrdinaryCorners(
   traces: Trace[],
   fixed: Copper[] = fixedCopper(input),
   maxTrimInTraceWidths = 1.5,
+  approachBounds?: SimpleRouteJson["bounds"],
 ): Trace[] {
   if (!Number.isFinite(maxTrimInTraceWidths) || maxTrimInTraceWidths <= 0)
     throw Error("Corner trim must be a positive finite number of trace widths")
@@ -95,6 +97,13 @@ export function chamferOrdinaryCorners(
           y: start.y + (u.y + turn * u.x) * Math.SQRT1_2 * bevel,
         }
         const inserted = acute ? [start, middle, end] : [start, end]
+        // A local paired reconnect must finish its individual bevel inside
+        // the package. Rounding back into the shared exterior separates rails.
+        if (
+          approachBounds &&
+          inserted.some((p) => !pointInBox(p, approachBounds))
+        )
+          continue
         const added = inserted.length - 1
         const route = [
           ...trace.route.slice(0, i),

@@ -1,0 +1,72 @@
+{
+  "status": "complete",
+  "reviewedAtUtc": "2026-10-20T17:36:01.547353+00:00",
+  "images": [
+    {
+      "sample": "control",
+      "pngSha256": "811ee038058ce10218683cf4f714e6857b2923f186222ab5263266e59e614014",
+      "reviewed": true,
+      "findings": "Opened all four physical layer panels. RAM below CPU; inner1/inner2/bottom show 19/16/12 routed carriers, visible byte meanders and terminal escapes. Labels and full extents are legible; no clipping or missing panel."
+    },
+    {
+      "sample": "control-inner1",
+      "pngSha256": "ff8e1114a078b38b6c73e9e1aa6817c6511b88c9addbab315211e8ecd314d1ea",
+      "reviewed": true,
+      "findings": "Opened all four panels. All 47 carriers appear on inner1, with dense matching meanders and perimeter detours; top shows native terminal access. Inner2/bottom show through vias without carriers. Full extents and acceptance caption are visible."
+    },
+    {
+      "sample": "right",
+      "pngSha256": "f3722abc3b2f9f1b68650d5185f938436147ab304656a932156579afdef658a2",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM appears right of CPU. The 21/18/8 inner1/inner2/bottom carriers span both packages with visible matching meanders; top escape panel and acceptance caption are present without clipping."
+    },
+    {
+      "sample": "left",
+      "pngSha256": "42cebd55f4a15fb4db1c5b3c0e95b803a728fe7b39b89751e9f9c570e3c21777",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM appears left of CPU. The 18/20/9 inner1/inner2/bottom carriers and byte meanders are visible; complete package extents, top dogbones and acceptance caption are retained."
+    },
+    {
+      "sample": "above",
+      "pngSha256": "b5f785f1b1ecb3115dc6cac59c94f1cc55c8aa60a6a62dd463c49097b1e712c5",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM appears above CPU. The 18/15/14 carrier split is shown on inner1/inner2/bottom; central meanders and outer detours are visible in full, along with top dogbones and acceptance caption."
+    },
+    {
+      "sample": "inner-layers",
+      "pngSha256": "69377065f2c849a08976dad9588dd6ed682b6af65eba4ec3505f5d367d2437a3",
+      "reviewed": true,
+      "findings": "Opened all four panels. The 24/23 inner1/inner2 carriers span RAM below CPU with dense central matching meanders. Top access and bottom through vias are visible; no outer-layer carriers or clipped routes."
+    },
+    {
+      "sample": "inner-layers-right",
+      "pngSha256": "9f14118c44621cded9aa6bb8730d33fe918be854eadb7c4c8662f0a46aeefdda",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM is right of CPU, with 22/25 inner1/inner2 carriers and both perimeter and diagonal matching regions. Top escape and bottom via panels are present; all plotted extents and labels are visible."
+    },
+    {
+      "sample": "inner-layers-left",
+      "pngSha256": "d004f64b7620372b8881eb69480b0240df43f8cd95d4c3a83d06d32a43bc5319",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM is left of CPU, with 28/19 inner1/inner2 carriers and matching meanders on upper/lower corridors. Top escapes and bottom through vias are shown; no missing or clipped panel."
+    },
+    {
+      "sample": "inner-layers-above",
+      "pngSha256": "dbdab10b144c64bc60be42584d232db7e23c7306d62d92402960c57e41ffed8a",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM is above CPU, with 21/26 inner1/inner2 carriers and large matching regions between packages. Top native dogbones and bottom through vias remain visible; full detours and acceptance caption are retained."
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "pngSha256": "8d42fb6dd4142834d1971ff1b756f88e91288fc428783599647ad808a3640185",
+      "reviewed": true,
+      "findings": "Opened all four panels. RAM is below CPU, with 19/28 inner1/inner2 carriers and extensive matching meanders on both. Caption reports three bus skews, consistent with complete CA/CK matching; outer-layer access/vias and all route extents are visible."
+    },
+    {
+      "sample": "outer-layers",
+      "pngSha256": "716ab2b56349756cbe6b1d49bcc53cdbc762d3044bb7a412cd87214d208f7722",
+      "reviewed": true,
+      "findings": "Opened all four panels. The 8 top and 39 bottom carriers include matching meanders and perimeter detours; both inner panels show through vias and zero carriers. RAM below CPU and full copper extents are visible without clipping."
+    }
+  ]
+}

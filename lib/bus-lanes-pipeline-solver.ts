@@ -8,6 +8,7 @@ import {
   type NativeSingleCarrierOptions,
 } from "./route-matched-native-single-carrier"
 import { initialSignalDogbones } from "./initial-signal-dogbones"
+import { independentBusGroups } from "./route-independent-buses"
 import { retargetGeneratedEscape } from "./retarget-generated-escape"
 import { joinSignalEscapes } from "./join-signal-escapes"
 import { tuneGeneratedPairEscapes } from "./tune-generated-pair-escapes"
@@ -782,7 +783,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
       this.options.smoothTuning &&
       this.options.denseSearch &&
       (this.input.buses?.length ?? 0) > 1 &&
-      canRouteOnPadLayers(this.input)
+      canRouteOnPadLayers(this.input) &&
+      !independentBusGroups(laneInput)
     ) {
       this.sharedPackages = routeFreshSurfaceBuses(
         this.input,
