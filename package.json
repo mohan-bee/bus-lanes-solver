@@ -20,7 +20,7 @@
     "benchmark:shared-pairs": "bun scripts/benchmark-am3352-shared-pairs.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
+    "@biomejs/biome": "2.5.15",
     "@flatten-js/core": "1.6.2",
     "@tscircuit/checks": "0.0.237",
     "@tscircuit/circuit-json-util": "0.0.119",
