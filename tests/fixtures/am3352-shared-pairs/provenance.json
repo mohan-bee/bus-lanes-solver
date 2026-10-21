@@ -1,0 +1,12 @@
+{
+  "sourceCliInputSha256": "20bde743677e9728ff7ce13a8a6b3d01ffefbfa97d447a5ebdb67bce64d8ed2c",
+  "baseFixtureSha256": "3aaecdebece8150ea60c95e17995996e2d84f71d035df51603d5a8e136f15164",
+  "capturePatchSha256": "ddee778f0f6690c692429196fed59aa3da1adef80a6d4d664f02865addd391c4",
+  "allocationSha256": "5d80c3c5d62ab59e9c5c20f13690223dc439dd026326b14fe8710d0133a484fb",
+  "sourceCoreVersion": "0.0.2182",
+  "sourceSolverVersion": "0.0.28",
+  "connections": 46,
+  "obstacles": 1144,
+  "fixedPairEscapes": 8,
+  "sourceGeneratedEscapes": 66
+}

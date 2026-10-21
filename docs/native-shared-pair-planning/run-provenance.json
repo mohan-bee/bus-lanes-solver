@@ -1,0 +1,34 @@
+{
+  "validatedSolverCommit": "1627ad4260da3d16cd93a22977a84e1514f5b270",
+  "snapshotValidation": "exportAm3352RoutedSnapshots: all eleven cases independently revalidated before rendering",
+  "runtime": "Bun1.4.0, Linux4CPU/16GiB",
+  "runtimeNotes": "Concurrent correctness runs included other verification jobs; wall times are not a paired performance comparison.",
+  "legacyRouteSearchRevisions": [
+    "f535c57c69535b849707e81906019bffb6d3f9a3",
+    "7422b077b49fdf83ff410cd2550e1e0b4c7040ff"
+  ],
+  "revisionNotes": "Successful outputs retained from earlier commits were revalidated on the final branch. Inner-left was rerun after restricting the new policy to fresh-surface planning. All eleven trace arrays and regenerated PNGs equal the unchanged prior proof.",
+  "solveSeconds": {
+    "control": 53.015,
+    "control-inner1": 2033.604,
+    "right": 32.503,
+    "left": 45.964,
+    "above": 51.555,
+    "inner-layers-right": 101.567803913,
+    "inner-layers-complete-ca": 483.94335049399996,
+    "inner-layers-left": 503.808452034,
+    "outer-layers": 1435.5530296170002,
+    "inner-layers-above": 426.26541569200003,
+    "inner-layers": 71.929706693
+  },
+  "nativePlanningStepBudget": 20000,
+  "nativePlanningCandidateSteps": 12286,
+  "ci": "494 tests pass, including complete legacy inner-left route; format/type/package/preview all green",
+  "regressionCaughtAndFixed": {
+    "sample": "inner-layers-left",
+    "initialFailure": "search_budget_exhausted",
+    "initialIterations": 800000,
+    "finalIterations": 246078,
+    "fixedPolicy": "Retain the established variant ordering and no new neighbor repairs in the separate inner-layer negotiation path."
+  }
+}

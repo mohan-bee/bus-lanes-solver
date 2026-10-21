@@ -4,7 +4,7 @@ import { routeCoupledPair } from "./coupled-pair-routing"
 import { length } from "./geometry"
 import { RouteConflictIndex } from "./route-conflict-index"
 import { runBoundedRouting } from "./run-bounded-routing"
-import { fixedCopper } from "./vector-scene"
+import { fixedCopper, routeCopper } from "./vector-scene"
 import type { SimpleRouteJson, Trace, Wire } from "./types"
 
 interface Choice {
@@ -55,8 +55,24 @@ export function* planSharedPairCorridors(
         ),
       ),
     )
+  // The native surface planner benefits from a direct corridor first. Retain
+  // the established ordering for the separate inner-layer negotiation path.
   const alternatives: (number | readonly [number, number])[] = freshDogbones
-    ? [100, 2, 3, 0, 1, 101, 102, 103, 4, 104, 5, 105, 6, 106, 7, 107]
+    ? [
+        ...(options.preferPackageOnlyTuning ? [0, 100, 2, 3] : [100, 2, 3, 0]),
+        1,
+        101,
+        102,
+        103,
+        4,
+        104,
+        5,
+        105,
+        6,
+        106,
+        7,
+        107,
+      ]
     : [1, 2, [0, 1], [1, 0], 0, [0, 2], [2, 0], 3, [1, 2], [2, 1], 4, 5, 6, 7]
   // Prefer corrections inside package approaches. A secondary provisional
   // shape may still help ordinary lanes connect; final pipeline acceptance
@@ -70,89 +86,110 @@ export function* planSharedPairCorridors(
       allowProvisionalPairTuning,
     })),
   )
-  for (const { variant, allowProvisionalPairTuning } of searches) {
-    for (const [index, pair] of pairs.entries()) {
-      const members = pair.connectionNames.map(
-        (name) => input.connections.find((c) => c.name === name)!,
-      )
-      const layers = terminalLayers
-        .get(members[0].name)
-        ?.filter((layer) =>
-          members.every((c) => terminalLayers.get(c.name)?.includes(layer)),
-        ) ?? [members[0].pointsToConnect[0].layer]
-      for (const layer of layers.filter(
-        (layer) => !input.allowedLayers || input.allowedLayers.includes(layer),
-      )) {
-        const reserved = typeof variant === "number" && variant >= 100
-        const sceneKey = JSON.stringify([index, layer, reserved])
-        const local = scenes.get(sceneKey) ?? {
-          ...input,
-          connections: input.connections.map((c) =>
-            pair.connectionNames.includes(c.name)
-              ? {
-                  ...c,
-                  pointsToConnect: c.pointsToConnect.map((p) => ({
-                    ...p,
-                    layer,
-                  })),
-                }
-              : c,
-          ),
-        }
-        scenes.set(sceneKey, local)
-        const search = runBoundedRouting(
-          routeCoupledPair(
-            local,
-            pair,
-            reserved
-              ? [...fixed, ...reserveBusPackageExits(local, pair)]
-              : fixed,
-            {
-              copper: [],
-              penalty: 0,
-              preferPackageOnlyTuning: options.preferPackageOnlyTuning,
-              allowProvisionalPairTuning,
-              ...(typeof variant === "number"
-                ? { variant: reserved ? variant - 100 : variant }
-                : { handoffOffsets: variant }),
-            },
-          ),
-          6000,
-        )
-        let state = search.next()
-        try {
-          while (!state.done) {
-            yield undefined
-            state = search.next()
-          }
-        } finally {
-          if (!state.done) search.return(null)
-        }
-        if (!state.value) continue
-        if (
-          bounded &&
-          state.value.some(
-            (trace) =>
-              length(trace.route) >
-              maximumCarrierLength(input, trace.connection_name!) + 1e-7,
-          )
-        )
-          continue
-        const key = JSON.stringify([
-          allowProvisionalPairTuning,
-          state.value.map((t) => t.route),
-        ])
-        if (geometry[index].has(key)) continue
-        geometry[index].add(key)
-        domains[index].push({
-          id: serial++,
-          layer,
-          provisional: allowProvisionalPairTuning,
-          traces: state.value,
-          length: state.value.reduce((sum, t) => sum + length(t.route), 0),
-        })
-      }
+  const pairLayers = (index: number) => {
+    const members = pairs[index].connectionNames.map(
+      (name) =>
+        input.connections.find((connection) => connection.name === name)!,
+    )
+    const layers = terminalLayers
+      .get(members[0].name)
+      ?.filter((layer) =>
+        members.every((member) =>
+          terminalLayers.get(member.name)?.includes(layer),
+        ),
+      ) ?? [members[0].pointsToConnect[0].layer]
+    return layers.filter(
+      (layer) => !input.allowedLayers || input.allowedLayers.includes(layer),
+    )
+  }
+  function* searchChoice(
+    index: number,
+    layer: string,
+    variant: number | readonly [number, number],
+    allowProvisionalPairTuning: boolean,
+    neighbors: Choice[] = [],
+  ): Generator<undefined, void> {
+    const pair = pairs[index]
+    const reserved = typeof variant === "number" && variant >= 100
+    const sceneKey = JSON.stringify([index, layer, reserved])
+    const local = scenes.get(sceneKey) ?? {
+      ...input,
+      connections: input.connections.map((c) =>
+        pair.connectionNames.includes(c.name)
+          ? {
+              ...c,
+              pointsToConnect: c.pointsToConnect.map((p) => ({
+                ...p,
+                layer,
+              })),
+            }
+          : c,
+      ),
     }
+    scenes.set(sceneKey, local)
+    const neighborCopper = neighbors.flatMap((choice) =>
+      choice.traces.flatMap(routeCopper),
+    )
+    const search = runBoundedRouting(
+      routeCoupledPair(
+        local,
+        pair,
+        reserved
+          ? [
+              ...fixed,
+              ...neighborCopper,
+              ...reserveBusPackageExits(local, pair),
+            ]
+          : [...fixed, ...neighborCopper],
+        {
+          copper: [],
+          penalty: 0,
+          preferPackageOnlyTuning: options.preferPackageOnlyTuning,
+          allowProvisionalPairTuning,
+          ...(typeof variant === "number"
+            ? { variant: reserved ? variant - 100 : variant }
+            : { handoffOffsets: variant }),
+        },
+      ),
+      6000,
+    )
+    let state = search.next()
+    try {
+      while (!state.done) {
+        yield undefined
+        state = search.next()
+      }
+    } finally {
+      if (!state.done) search.return(null)
+    }
+    if (!state.value) return
+    if (
+      bounded &&
+      state.value.some(
+        (trace) =>
+          length(trace.route) >
+          maximumCarrierLength(input, trace.connection_name!) + 1e-7,
+      )
+    )
+      return
+    const key = JSON.stringify([
+      allowProvisionalPairTuning,
+      state.value.map((t) => t.route),
+    ])
+    if (geometry[index].has(key)) return
+    geometry[index].add(key)
+    domains[index].push({
+      id: serial++,
+      layer,
+      provisional: allowProvisionalPairTuning,
+      traces: state.value,
+      length: state.value.reduce((sum, t) => sum + length(t.route), 0),
+    })
+  }
+  for (const { variant, allowProvisionalPairTuning } of searches) {
+    for (const index of pairs.keys())
+      for (const layer of pairLayers(index))
+        yield* searchChoice(index, layer, variant, allowProvisionalPairTuning)
     if (bounded)
       for (const choices of domains) choices.sort((a, b) => a.length - b.length)
     const plans: Choice[][] = []
@@ -173,6 +210,53 @@ export function* planSharedPairCorridors(
           visit([...selected, choice], index + 1)
     }
     visit([], 0)
+    // Independent shortest corridors can block one another on every offered
+    // combination. Give each pair one bounded attempt around the other pairs'
+    // best choices instead of repeating only unconstrained searches.
+    if (
+      freshDogbones &&
+      options.preferPackageOnlyTuning &&
+      !plans.length &&
+      domains.every((choices) => choices.length)
+    ) {
+      let repairs = 0
+      const repairLimit = pairs.length * 2
+      for (
+        let index = pairs.length - 1;
+        index >= 0 && !plans.length && repairs < repairLimit;
+        index--
+      ) {
+        const neighborChoices: Choice[][] = []
+        const selectNeighbors = (selected: Choice[], other: number) => {
+          if (neighborChoices.length >= pairs.length) return
+          if (other === pairs.length) {
+            neighborChoices.push(selected)
+            return
+          }
+          if (other === index) return selectNeighbors(selected, other + 1)
+          for (const choice of domains[other])
+            if (!selected.some((neighbor) => collides(choice, neighbor)))
+              selectNeighbors([...selected, choice], other + 1)
+        }
+        selectNeighbors([], 0)
+        for (const neighbors of neighborChoices) {
+          for (const layer of pairLayers(index)) {
+            if (repairs >= repairLimit) break
+            repairs++
+            yield* searchChoice(
+              index,
+              layer,
+              variant,
+              allowProvisionalPairTuning,
+              neighbors,
+            )
+            visit([], 0)
+            if (plans.length) break
+          }
+          if (plans.length) break
+        }
+      }
+    }
     const busNames = new Set(input.buses?.flatMap((bus) => bus.connectionNames))
     const pairNames = new Set(pairs.flatMap((pair) => pair.connectionNames))
     const costs = new Map(
