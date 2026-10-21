@@ -34,6 +34,7 @@ interface SignalSiteOptions {
   allowExpandedSites?: boolean
   maxCandidateSearchNodes?: number
   retainExistingRoutes?: boolean
+  onBlockedConnection?: (name: string) => void
 }
 
 interface SiteOption {
@@ -503,7 +504,10 @@ export function* negotiateSignalSites(
       }
     }
     choices.sort((a, b) => a.length - b.length)
-    if (!choices.length) return null
+    if (!choices.length) {
+      options.onBlockedConnection?.(connection.name)
+      return null
+    }
     variants.set(connection.name, choices)
   }
   const copperConflicts = new CopperConflictIndex()
