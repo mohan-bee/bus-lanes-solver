@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from "bun:test"
-import { BusLanesPipelineSolver, BusLanesSolver } from "../lib"
+import { BusLanesPipelineSolver } from "../lib"
+import * as dogboneAllocation from "../lib/initial-signal-dogbones"
 import type { SimpleRouteJson } from "../lib"
 import { loadAm3352FreshNativeInput } from "../scripts/load-am3352-fresh-native"
 
@@ -7,27 +8,28 @@ test("fresh full DDR assigns local escapes when optional allowedLayers is omitte
   const input = loadAm3352FreshNativeInput()
   const before = structuredClone(input)
   expect(input.allowedLayers).toBeUndefined()
-  const attempts: SimpleRouteJson[] = []
-  // Exercise the real layer allocation and dogbone matcher, then stop at the
-  // planar child. This is an escape regression, not a completed DDR route.
-  const childStep = spyOn(BusLanesSolver.prototype, "_step").mockImplementation(
-    function (this: BusLanesSolver) {
-      attempts.push(structuredClone(this.input))
-      this.failed = true
-      this.error =
-        "Planar routing intentionally stopped after escape assignment"
-    },
-  )
+  // Capture the real allocation at its boundary. The following strategy may
+  // be shared-surface routing rather than a BusLanesSolver child.
+  const allocation = spyOn(dogboneAllocation, "initialSignalDogbones")
+  const solver = new BusLanesPipelineSolver(input)
+  let assigned: SimpleRouteJson
   try {
-    const solver = new BusLanesPipelineSolver(input)
-    solver.solve()
-    expect(solver.failed).toBe(true)
+    solver.step()
+    expect(solver.failed).toBe(false)
+    expect(allocation).toHaveBeenCalledTimes(1)
+    const result = allocation.mock.results[0]!.value as ReturnType<
+      typeof dogboneAllocation.initialSignalDogbones
+    >
+    assigned = {
+      ...input,
+      connections: result.connections as SimpleRouteJson["connections"],
+      traces: (solver as any).escapes,
+    }
   } finally {
-    childStep.mockRestore()
+    allocation.mockRestore()
+    solver.tryFinalAcceptance()
   }
   expect(input).toEqual(before)
-  expect(attempts.length).toBeGreaterThan(0)
-  const assigned = attempts[0]!
   expect(
     assigned.connections.map((connection) => [
       connection.name,

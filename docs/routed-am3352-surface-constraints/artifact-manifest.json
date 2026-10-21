@@ -1,0 +1,46 @@
+[
+  {
+    "file": "above-solved.png",
+    "sha256": "b5f785f1b1ecb3115dc6cac59c94f1cc55c8aa60a6a62dd463c49097b1e712c5"
+  },
+  {
+    "file": "control-inner1-solved.png",
+    "sha256": "ff8e1114a078b38b6c73e9e1aa6817c6511b88c9addbab315211e8ecd314d1ea"
+  },
+  {
+    "file": "control-solved.png",
+    "sha256": "811ee038058ce10218683cf4f714e6857b2923f186222ab5263266e59e614014"
+  },
+  {
+    "file": "inner-layers-above-solved.png",
+    "sha256": "dbdab10b144c64bc60be42584d232db7e23c7306d62d92402960c57e41ffed8a"
+  },
+  {
+    "file": "inner-layers-complete-ca-solved.png",
+    "sha256": "8d42fb6dd4142834d1971ff1b756f88e91288fc428783599647ad808a3640185"
+  },
+  {
+    "file": "inner-layers-left-solved.png",
+    "sha256": "d004f64b7620372b8881eb69480b0240df43f8cd95d4c3a83d06d32a43bc5319"
+  },
+  {
+    "file": "inner-layers-right-solved.png",
+    "sha256": "9f14118c44621cded9aa6bb8730d33fe918be854eadb7c4c8662f0a46aeefdda"
+  },
+  {
+    "file": "inner-layers-solved.png",
+    "sha256": "69377065f2c849a08976dad9588dd6ed682b6af65eba4ec3505f5d367d2437a3"
+  },
+  {
+    "file": "left-solved.png",
+    "sha256": "42cebd55f4a15fb4db1c5b3c0e95b803a728fe7b39b89751e9f9c570e3c21777"
+  },
+  {
+    "file": "outer-layers-solved.png",
+    "sha256": "716ab2b56349756cbe6b1d49bcc53cdbc762d3044bb7a412cd87214d208f7722"
+  },
+  {
+    "file": "right-solved.png",
+    "sha256": "f3722abc3b2f9f1b68650d5185f938436147ab304656a932156579afdef658a2"
+  }
+]

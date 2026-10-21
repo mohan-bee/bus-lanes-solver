@@ -1,0 +1,33 @@
+{
+  "concurrency": 3,
+  "elapsedSeconds": 1706.1476770169993,
+  "command": "./benchmark.sh --worker <sample> --timeout-seconds 3600 --routes-directory <routes>",
+  "sourceCommit": "cda168704d44104e2ca5f8f4a2d15224312170de",
+  "inputFixtures": "unchanged legacy eleven placements",
+  "runtime": "bun 1.4.0",
+  "jscForceRAMSize": 2147483648,
+  "memoryOptions": {
+    "BUN_JSC_forceRAMSize": "2147483648",
+    "BUN_JSC_miniVMHeapGrowthFactor": "1.05"
+  },
+  "cgroupMemoryBytes": 17179869184,
+  "cpuQuotaCores": 4,
+  "sourceTree": "31851de518adee7b9dc5af104e60265cf84b49fb",
+  "legacyInputHashes": {
+    "control-inner1": "14b5b318540ce7bac367cf22338abd7f9fffd2f7ce6c2a12f903116f50ca9bde",
+    "outer-layers": "de3fd915f3c7d8c9bf4fd3c9b197596ba5e08c1be328f9c5223d7ab78736588f",
+    "inner-layers-complete-ca": "a6def279fa2d3356a66ee94b1760a76eebb6c6d8e605005ce5903bd2fbca8776",
+    "inner-layers-above": "68a86ef74f8ec9628954e909464c009d98fb2c902a6376e20b3a32d4b5cff555",
+    "inner-layers-left": "1c3db8ee018bc90df7fbbb0c198c42efcc0ca948a6a213338650cf81a51f7ab2",
+    "inner-layers-right": "2eaf3dedcd84fbfed10262f4d4c99370a0ca00a7a060f87b7a1cdcba9de37a8e",
+    "inner-layers": "1b91e6c5207e4b7e132aa5ac246e94777f926c7beab8675adf0356634b8280ad",
+    "control": "b7a4e9d09a22fe0ed131a544548b14eef20fbf4e88b6dc6ffaa11ca44e6bfe59",
+    "right": "78c22c8d818ee2c2abe2eec9c6b6e408161a9d0eaf09afbafc3242e71e8f5778",
+    "left": "6042ca0f0889a983a6ccf8f929a6a46b18cc57134e1b9f3b49c19063b936caa5",
+    "above": "20fc884f08accd368e4ce049ab3fc180a1926f425787a504dbc4040f651bfa69"
+  },
+  "scriptHashes": {
+    "scripts/benchmark.ts": "0480f451c9473b970d54dfa86ed80b3c7802fed680acb0fc057b3a94c27bb78d",
+    "scripts/validate-am3352-sample.ts": "28d2a3ee5f3498298e88d9062b169655c3731156ffd2a305a6ea62db05b50753"
+  }
+}
