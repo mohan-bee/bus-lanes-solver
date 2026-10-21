@@ -143,3 +143,16 @@ test("surface feedback repairs CK while preserving both strobes and CSn0 access"
   ).toBe(true)
   expect(state).toEqual(before)
 }, 120000)
+
+test("expanded D13 and repaired CK coexist in one ordinary negotiation", () => {
+  const state = loadAm3352OrdinaryEscapes(),
+    before = structuredClone(state)
+  const result = solve(state, ["source_trace_1", "source_trace_5"])
+  expect(result.retained).toHaveLength(6)
+  expect(result.traces.map((trace) => trace.connection_name).sort()).toEqual([
+    "source_trace_1",
+    "source_trace_5",
+  ])
+  validateCandidate(result)
+  expect(state).toEqual(before)
+}, 120000)
