@@ -32,6 +32,7 @@ import {
 
 interface SignalSiteOptions {
   allowExpandedSites?: boolean
+  expandEmptyDomainsOnly?: boolean
   maxCandidateSearchNodes?: number
   retainExistingRoutes?: boolean
   onBlockedConnection?: (name: string) => void
@@ -464,6 +465,7 @@ export function* negotiateSignalSites(
     for (const layer of carrierLayers) {
       if (
         options.allowExpandedSites === false ||
+        (options.expandEmptyDomainsOnly && choices.length > 0) ||
         !connection.pointsToConnect.every((point) =>
           explicitlyAllowsCarrierLayer(native, connection, point.layer),
         ) ||

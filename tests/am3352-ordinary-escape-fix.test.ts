@@ -1,3 +1,5 @@
+import { negotiateSignalSites } from "../lib/negotiate-signal-sites"
+import { runBoundedRouting } from "../lib/run-bounded-routing"
 import { expect, test } from "bun:test"
 import { loadAm3352OrdinaryEscapes } from "../scripts/load-am3352-ordinary-escapes"
 import { routeSurfaceOrdinarySignals } from "../lib/route-surface-ordinary-signals"
@@ -155,4 +157,42 @@ test("expanded D13 and repaired CK coexist in one ordinary negotiation", () => {
   ])
   validateCandidate(result)
   expect(state).toEqual(before)
+}, 120000)
+
+test("unbounded surface buses preserve the established ordinary search", () => {
+  const state = loadAm3352OrdinaryEscapes(),
+    before = structuredClone(state)
+  for (const bus of state.native.buses ?? []) {
+    delete bus.maxLength
+    delete bus.minLength
+  }
+  const names = new Set(["source_trace_1", "source_trace_5"])
+  const original = runBoundedRouting(
+    negotiateSignalSites(state, names, false, false, {
+      allowExpandedSites: false,
+      maxCandidateSearchNodes: 12000,
+    }),
+    50000,
+  )
+  const updated = routeSurfaceOrdinarySignals(state, names, { maxSteps: 50000 })
+  let a = original.next(),
+    b = updated.next(),
+    steps = 0
+  try {
+    while (!a.done && !b.done && steps++ < 50010) {
+      a = original.next()
+      b = updated.next()
+    }
+    expect(a.done).toBe(true)
+    expect(b.done).toBe(true)
+    expect(b).toEqual(a)
+    for (const bus of before.native.buses!) {
+      delete bus.maxLength
+      delete bus.minLength
+    }
+    expect(state).toEqual(before)
+  } finally {
+    if (!a.done) original.return(null)
+    if (!b.done) updated.return(null)
+  }
 }, 120000)

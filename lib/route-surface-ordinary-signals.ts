@@ -11,6 +11,16 @@ export function* routeSurfaceOrdinarySignals(
   ordinaryNames: ReadonlySet<string>,
   options: { maxSteps?: number; maxPairRepairs?: number } = {},
 ): Generator<void, FlexibleSignalState | null> {
+  // Unbounded legacy buses retain their established site search exactly.
+  // The new feedback is for hard length-limited surface escape allocation.
+  if (!initial.native.buses?.some((bus) => bus.maxLength !== undefined))
+    return yield* runBoundedRouting(
+      negotiateSignalSites(initial, ordinaryNames, false, false, {
+        allowExpandedSites: false,
+        maxCandidateSearchNodes: 12000,
+      }),
+      options.maxSteps ?? 250000,
+    )
   let state = initial
   const seen = new Set([
     JSON.stringify(state.retained.map((trace) => trace.route)),
@@ -20,6 +30,7 @@ export function* routeSurfaceOrdinarySignals(
     const routed = yield* runBoundedRouting(
       negotiateSignalSites(state, ordinaryNames, false, false, {
         allowExpandedSites: true,
+        expandEmptyDomainsOnly: true,
         retainExistingRoutes: state.traces.length > 0,
         maxCandidateSearchNodes: 12000,
         onBlockedConnection: (name) => {

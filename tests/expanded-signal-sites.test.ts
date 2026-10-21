@@ -276,3 +276,38 @@ test("a collective retry can widen reachable adjacent sites while the default st
   ).toHaveLength(2)
   expect(native).toEqual(original)
 })
+
+test("empty-domain fallback preserves already feasible local site choices", () => {
+  const native = blockedAdjacentCells()
+  native.traces = []
+  native.buses = [
+    { busId: "bottom", connectionNames: ["signal"], allowedLayers: ["bottom"] },
+  ]
+  const before = structuredClone(native)
+  const solve = (fallback: boolean) => {
+    const work = negotiateSignalSites(
+      { native, pending: native, escapes: [], retained: [], traces: [] },
+      new Set(["signal"]),
+      false,
+      false,
+      {
+        allowExpandedSites: fallback,
+        expandEmptyDomainsOnly: true,
+      },
+    )
+    let next = work.next(),
+      steps = 0
+    try {
+      while (!next.done && steps++ < 20000) next = work.next()
+      expect(next.done).toBe(true)
+      expect(next.value).not.toBeNull()
+      return next.value
+    } finally {
+      if (!next.done) work.return(null)
+    }
+  }
+  const original = solve(false),
+    fallback = solve(true)
+  expect(fallback).toEqual(original)
+  expect(native).toEqual(before)
+})

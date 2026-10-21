@@ -37,6 +37,7 @@ export function* repairSurfacePairEscape(
     const ordinary = yield* runBoundedRouting(
       negotiateSignalSites(released, new Set([blocked]), false, false, {
         allowExpandedSites: true,
+        expandEmptyDomainsOnly: true,
         maxCandidateSearchNodes: 12000,
       }),
       12000,
