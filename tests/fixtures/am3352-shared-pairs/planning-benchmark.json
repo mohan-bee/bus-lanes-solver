@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "stage": "shared_pair_planning",
+    "jointPlanFound": false,
+    "inputUnchanged": true,
+    "pairCount": 3,
+    "plannedConductors": 0,
+    "steps": 20000,
+    "stepBudget": 20000,
+    "milliseconds": 64232.991491
+  },
+  "candidate": {
+    "stage": "shared_pair_planning",
+    "jointPlanFound": true,
+    "inputUnchanged": true,
+    "pairCount": 3,
+    "plannedConductors": 6,
+    "steps": 12286,
+    "stepBudget": 20000,
+    "milliseconds": 18467.397922
+  }
+}

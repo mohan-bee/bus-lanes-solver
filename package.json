@@ -16,7 +16,8 @@
     "start": "cosmos",
     "build:site": "cosmos-export",
     "build": "tsup && dts-bundle-generator --config dts-bundle.config.json",
-    "test:package": "bun run build && bun scripts/check-package.ts"
+    "test:package": "bun run build && bun scripts/check-package.ts",
+    "benchmark:shared-pairs": "bun scripts/benchmark-am3352-shared-pairs.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",

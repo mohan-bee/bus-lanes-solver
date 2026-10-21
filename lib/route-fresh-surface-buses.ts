@@ -350,25 +350,22 @@ function* priorityPairPlans(
   allocation: SimpleRouteJson,
   terminalLayers: ReadonlyMap<string, string[]>,
 ): Generator<Trace[] | undefined> {
-  const preferred = new Map(
+  // Keep preferences first, but expose allowed alternatives to the same joint
+  // search so incompatible preferred corridors cannot starve other layers.
+  const preferredFirst = new Map(
     allocation.connections.map((connection) => [
       connection.name,
-      [connection.pointsToConnect[0].layer],
+      [
+        connection.pointsToConnect[0].layer,
+        ...(terminalLayers.get(connection.name) ?? []).filter(
+          (layer) => layer !== connection.pointsToConnect[0].layer,
+        ),
+      ],
     ]),
   )
-  yield* planSharedPairCorridors(allocation, preferred, true, {
+  yield* planSharedPairCorridors(allocation, preferredFirst, true, {
     preferPackageOnlyTuning: true,
   })
-  if (
-    allocation.connections.some((connection) =>
-      terminalLayers
-        .get(connection.name)
-        ?.some((layer) => layer !== connection.pointsToConnect[0].layer),
-    )
-  )
-    yield* planSharedPairCorridors(allocation, terminalLayers, true, {
-      preferPackageOnlyTuning: true,
-    })
 }
 
 function scopeInput(
