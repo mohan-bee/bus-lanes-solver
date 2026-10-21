@@ -28,7 +28,7 @@ test("native surface search changes preserve the complete legacy inner-left rout
     })
     expect(report.combinedDrc?.valid).toBe(true)
     expect(report.issues).toEqual([])
-    expect(report.quality.issues).toEqual([])
+    expect(report.quality?.issues).toEqual([])
   } finally {
     if (!solver.solved && !solver.failed) solver.tryFinalAcceptance()
   }
