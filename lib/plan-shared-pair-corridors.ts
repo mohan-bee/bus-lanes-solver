@@ -55,9 +55,24 @@ export function* planSharedPairCorridors(
         ),
       ),
     )
-  // Offer the direct corridor before spending bounded searches on detours.
+  // The native surface planner benefits from a direct corridor first. Retain
+  // the established ordering for the separate inner-layer negotiation path.
   const alternatives: (number | readonly [number, number])[] = freshDogbones
-    ? [0, 100, 2, 3, 1, 101, 102, 103, 4, 104, 5, 105, 6, 106, 7, 107]
+    ? [
+        ...(options.preferPackageOnlyTuning ? [0, 100, 2, 3] : [100, 2, 3, 0]),
+        1,
+        101,
+        102,
+        103,
+        4,
+        104,
+        5,
+        105,
+        6,
+        106,
+        7,
+        107,
+      ]
     : [1, 2, [0, 1], [1, 0], 0, [0, 2], [2, 0], 3, [1, 2], [2, 1], 4, 5, 6, 7]
   // Prefer corrections inside package approaches. A secondary provisional
   // shape may still help ordinary lanes connect; final pipeline acceptance
@@ -200,6 +215,7 @@ export function* planSharedPairCorridors(
     // best choices instead of repeating only unconstrained searches.
     if (
       freshDogbones &&
+      options.preferPackageOnlyTuning &&
       !plans.length &&
       domains.every((choices) => choices.length)
     ) {
