@@ -1,7 +1,7 @@
 import type { FlexibleSignalState } from "../lib/flexible-signal-state"
 import { planSharedPairCorridors } from "../lib/plan-shared-pair-corridors"
 import { retargetGeneratedEscape } from "../lib/retarget-generated-escape"
-import type { Wire } from "../lib/types"
+import type { Obstacle, Trace, Wire } from "../lib/types"
 import { loadAm3352FreshNativeInput } from "./load-am3352-fresh-native"
 import { loadAm3352SharedPairs } from "./load-am3352-shared-pairs"
 
@@ -18,7 +18,11 @@ export function loadAm3352OrdinaryEscapes(): FlexibleSignalState {
   native.obstacles = allocation.obstacles
   for (const connection of native.connections)
     for (const point of connection.pointsToConnect) {
-      const pad = native.obstacles.find(
+      const pad = (
+        native.obstacles as (Obstacle & {
+          circuitJsonMetadata?: { pcb_port_id?: string }
+        })[]
+      ).find(
         (obstacle) =>
           obstacle.circuitJsonMetadata?.pcb_port_id === point.pcb_port_id,
       )
@@ -29,7 +33,7 @@ export function loadAm3352OrdinaryEscapes(): FlexibleSignalState {
   // Standalone maximums are supported after the merged core conversion fix.
   for (const bus of native.buses ?? [])
     if (bus.busId !== "DDR_ADDR_CTRL_CK") delete bus.minLength
-  native.allowViaInPad = false
+  Object.assign(native, { allowViaInPad: false })
   delete native.allowedLayers
   allocation.buses = native.buses
   const plans = planSharedPairCorridors(allocation, terminalLayers, true, {
@@ -41,7 +45,7 @@ export function loadAm3352OrdinaryEscapes(): FlexibleSignalState {
     while (!next.done && !next.value && steps++ < 20_000) next = plans.next()
     if (!next.value)
       throw Error("Public AM3352 fixture did not produce a joint pair seed")
-    const retained = next.value
+    const retained: Trace[] = next.value
     const escapes = allocation.traces!.map((escape) => {
       const carrier = retained.find(
         (trace) => trace.connection_name === escape.connection_name,
