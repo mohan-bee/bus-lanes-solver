@@ -228,16 +228,14 @@ export function tuningPathIsSelfClear(path: Point[], required: number) {
   const padding = Math.max(required, 1e-9)
   if (path.length > 64) {
     const owners: string[] = []
-    const copper = path
-      .slice(1)
-      .map((b, index) => ({
-        a: path[index],
-        b,
-        radius: 0,
-        layer: "",
-        owners,
-        index,
-      }))
+    const copper = path.slice(1).map((b, index) => ({
+      a: path[index],
+      b,
+      radius: 0,
+      layer: "",
+      owners,
+      index,
+    }))
     const spatial = new CopperIndex(copper)
     let scale = 1
     for (const p of path) scale = Math.max(scale, Math.abs(p.x), Math.abs(p.y))
