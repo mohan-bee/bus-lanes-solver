@@ -1,0 +1,68 @@
+[
+  {
+    "file": "snapshots/control-inner1-solved.png",
+    "gitBlobSha": "0cf031366413ab205151290b85d9a98fdf40a68b",
+    "sha256": "ff8e1114a078b38b6c73e9e1aa6817c6511b88c9addbab315211e8ecd314d1ea",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/control-solved.png",
+    "gitBlobSha": "9cbf4071b3e575be2e7e4cd605ad61746b64600f",
+    "sha256": "f27cc655e833f287c05b3da989932db9620693d01015ce5f353d225102c9563a",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/left-solved.png",
+    "gitBlobSha": "138188064dac6c37cb945a15295178659febb59b",
+    "sha256": "42cebd55f4a15fb4db1c5b3c0e95b803a728fe7b39b89751e9f9c570e3c21777",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/above-solved.png",
+    "gitBlobSha": "0428926e5a7a1624ff3aaf005ea04037f5e04759",
+    "sha256": "b5f785f1b1ecb3115dc6cac59c94f1cc55c8aa60a6a62dd463c49097b1e712c5",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/right-solved.png",
+    "gitBlobSha": "fa5a5d7d67b90ff7c63d621601952c79ca237ec9",
+    "sha256": "f3722abc3b2f9f1b68650d5185f938436147ab304656a932156579afdef658a2",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/outer-layers-solved.png",
+    "gitBlobSha": "f60e0833f8fbe37c697fc669ddfc4e19eef49374",
+    "sha256": "716ab2b56349756cbe6b1d49bcc53cdbc762d3044bb7a412cd87214d208f7722",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/inner-layers-solved.png",
+    "gitBlobSha": "16ed12e3d1f6a5b321db703d1246d4f2228890d8",
+    "sha256": "69377065f2c849a08976dad9588dd6ed682b6af65eba4ec3505f5d367d2437a3",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/inner-layers-right-solved.png",
+    "gitBlobSha": "55f49b124fa8af78d90c5f558c24058777887445",
+    "sha256": "9f14118c44621cded9aa6bb8730d33fe918be854eadb7c4c8662f0a46aeefdda",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/inner-layers-above-solved.png",
+    "gitBlobSha": "d3f56e42759c0c918460f6c66450a84baa25926f",
+    "sha256": "c76cb73a91ef21b0d4c40adae880089b1e7a2c016ada88b8331e94d855c190a3",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/inner-layers-left-solved.png",
+    "gitBlobSha": "9fb7cdef8bf3758c97fb4828f875fa48833a756c",
+    "sha256": "4da375717ef4c8fececf38fbc3bcfbe6d8bf8f7bb8896a8551ccba6cbac9a7d8",
+    "visuallyInspected": true
+  },
+  {
+    "file": "snapshots/inner-layers-complete-ca-solved.png",
+    "gitBlobSha": "d43bba7becc4de248958a44f7e19068c27413f68",
+    "sha256": "f476c031b29d47dafa7d17332f389680544bc4454447995f47403d6fdd18ba27",
+    "visuallyInspected": true
+  }
+]
