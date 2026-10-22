@@ -1,0 +1,251 @@
+{
+  "baselineRevision": "81256f907408004329344fd4731bfe29f8d47534",
+  "bunVersion": "1.3.2",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "sampleCount": 11,
+  "baselineSeconds": 2371.601225833,
+  "optimizedSeconds": 1646.857751457,
+  "reductionPercent": 30.559246912239292,
+  "speedup": 1.4400765480411462,
+  "identicalOutputs": 11,
+  "samples": [
+    {
+      "sample": "control",
+      "baselineSeconds": 30.319293541,
+      "optimizedSeconds": 25.976983917,
+      "reductionPercent": 14.321935364780213,
+      "outputSha256": "449aae26e27feed1fb7ed5471c22c376325885ede55487a1aed8a7fd294619d0",
+      "identicalOutput": true,
+      "iterations": 50026,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6350000000675919,
+        "DDR_BYTE1": 0.6350000099910531
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.0778683245814662,
+        "pair_1": 0.12688373178988854,
+        "pair_2": 0.07282965286481868
+      }
+    },
+    {
+      "sample": "control-inner1",
+      "baselineSeconds": 1081.560396083,
+      "optimizedSeconds": 487.519990417,
+      "reductionPercent": 54.924385898132755,
+      "outputSha256": "3fd24f3af02e233e3c47a5adab28bda2a7c0bcbc37e71e26fc007f46a1259ddb",
+      "identicalOutput": true,
+      "iterations": 70649,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.635000000000538,
+        "DDR_BYTE1": 0.6349999999999554
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.048899644670022724,
+        "pair_1": 0.004719837709245667,
+        "pair_2": 0.0027919647571117423
+      }
+    },
+    {
+      "sample": "right",
+      "baselineSeconds": 26.633912916999996,
+      "optimizedSeconds": 20.196268832999998,
+      "reductionPercent": 24.170853543231928,
+      "outputSha256": "e7eb32976b14742b7234aee9486bb65af8416af97d4935532d28f7cd103d8d80",
+      "identicalOutput": true,
+      "iterations": 51405,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.635000000000467,
+        "DDR_BYTE1": 0.6349999999999696
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.09604665360951259,
+        "pair_1": 0.12180230740349174,
+        "pair_2": 0.10264381675825973
+      }
+    },
+    {
+      "sample": "left",
+      "baselineSeconds": 28.290290084,
+      "optimizedSeconds": 24.803386833,
+      "reductionPercent": 12.325441841163975,
+      "outputSha256": "b030fa2922f465137407fd8e7484d6fe818d5247d1f711c09c951fe7005bb4d3",
+      "identicalOutput": true,
+      "iterations": 82820,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.635000009997654,
+        "DDR_BYTE1": 0.5111468252001927
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.010514368851048062,
+        "pair_1": 0.1269999999999314,
+        "pair_2": 0.10542851386562901
+      }
+    },
+    {
+      "sample": "above",
+      "baselineSeconds": 38.322724,
+      "optimizedSeconds": 31.656081417,
+      "reductionPercent": 17.396056144130057,
+      "outputSha256": "4cfc386057b7f89b09c4cc5194cd2c72d8fc94e1b748432c483ca0c12dfda6d9",
+      "identicalOutput": true,
+      "iterations": 101425,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6350000000108622,
+        "DDR_BYTE1": 0.635000000003032
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.12700000000002376,
+        "pair_1": 0.1269999999999456,
+        "pair_2": 0.12699999999998823
+      }
+    },
+    {
+      "sample": "inner-layers",
+      "baselineSeconds": 41.984643082999995,
+      "optimizedSeconds": 37.804098874999994,
+      "reductionPercent": 9.957317488052542,
+      "outputSha256": "f583a0bed85d3387d97858e279ce11bf9b753742c9e2fa02f7c6fda45e9eddce",
+      "identicalOutput": true,
+      "iterations": 123305,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6349999999628082,
+        "DDR_BYTE1": 0.6350000109864098
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.0778683245814662,
+        "pair_1": 0.12688373178988854,
+        "pair_2": 0.12699999999976797
+      }
+    },
+    {
+      "sample": "inner-layers-right",
+      "baselineSeconds": 71.766093708,
+      "optimizedSeconds": 59.88795925,
+      "reductionPercent": 16.55117875905221,
+      "outputSha256": "22e20525b9d6456ad5d3cf558d913ee0df6e84324e943416e5ac649cc9878604",
+      "identicalOutput": true,
+      "iterations": 159782,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6350000110508773,
+        "DDR_BYTE1": 0.6349999999999696
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.12700001096278157,
+        "pair_1": 0.12699999999996692,
+        "pair_2": 0.1270000000000593
+      }
+    },
+    {
+      "sample": "inner-layers-left",
+      "baselineSeconds": 126.33167925000001,
+      "optimizedSeconds": 123.362581333,
+      "reductionPercent": 2.350240204695142,
+      "outputSha256": "8483d8ca0c445a8d9883e0445cfc90cdd63254bdbd2cbbb5eae3feae26bb00c9",
+      "identicalOutput": true,
+      "iterations": 246079,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.634990371865257,
+        "DDR_BYTE1": 0.6349920303628309
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.12698999999984295,
+        "pair_1": 5.274709806712963e-7,
+        "pair_2": 0.10542851386563257
+      }
+    },
+    {
+      "sample": "inner-layers-above",
+      "baselineSeconds": 171.97135291700002,
+      "optimizedSeconds": 148.433136375,
+      "reductionPercent": 13.687289273906256,
+      "outputSha256": "6537943beac9222e3f221ceeffdc01f6ffa31fdb43e4114d890fbf18688bca22",
+      "identicalOutput": true,
+      "iterations": 323177,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6349909196649861,
+        "DDR_BYTE1": 0.6349915472511043
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.12691534384289582,
+        "pair_1": 0.12698980000068616,
+        "pair_2": 6.186337131453001e-7
+      }
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "baselineSeconds": 172.87752245800002,
+      "optimizedSeconds": 151.42543116599998,
+      "reductionPercent": 12.408837763863566,
+      "outputSha256": "3a4b9529d7a966d30b1a9d527ec7b1b64412adf9d9682fb6f271fef3b373d752",
+      "identicalOutput": true,
+      "iterations": 72630,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6349902427763041,
+        "DDR_BYTE1": 0.6349916843630794,
+        "DDR_ADDR_CTRL_CK": 0.6349928861123431
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.07535887199946956,
+        "pair_1": 8.526512829121202e-14,
+        "pair_2": 0.06638387191047457
+      }
+    },
+    {
+      "sample": "outer-layers",
+      "baselineSeconds": 581.543317792,
+      "optimizedSeconds": 535.7918330409999,
+      "reductionPercent": 7.867253109314198,
+      "outputSha256": "2aa0f37a1e9b6f922cabfd76e6dde43e518c412ff261e87ce12c115d638d3a96",
+      "identicalOutput": true,
+      "iterations": 4174041,
+      "signals": 47,
+      "drcValid": true,
+      "matched": true,
+      "busSkewsMm": {
+        "DDR_BYTE0": 0.6350000110165794,
+        "DDR_BYTE1": 0.6349999999999838
+      },
+      "pairSkewsMm": {
+        "pair_0": 0.019219371674388697,
+        "pair_1": 0.12700000000001666,
+        "pair_2": 0.12699999999989586
+      }
+    }
+  ],
+  "optimizedRevision": "34a61baf9f182be9c8bb35eeb4bf9503a03bd3f3",
+  "baselineWorkerSeconds": 2431.7662549570005,
+  "optimizedWorkerSeconds": 1704.912990918,
+  "workerReductionPercent": 29.889931343415775,
+  "measurement": "One full run per revision on the same host. Each revision runs samples serially in fresh processes; the two revisions overlapped. Same harness, fixtures and runtime dependencies."
+}

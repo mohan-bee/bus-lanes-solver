@@ -221,8 +221,15 @@ export function* planNativePairedCarriers(
     router = new NativeCarrierRouter(input, step, history),
     routed = new Map<string, Trace>(),
     index = new CopperConflictIndex()
-  const copper = (t: Trace) =>
-    fixedCopper({ ...input, obstacles: [], traces: [t] })
+  const copperCache = new WeakMap<Trace, ReturnType<typeof fixedCopper>>()
+  const copper = (t: Trace) => {
+    let physical = copperCache.get(t)
+    if (!physical) {
+      physical = fixedCopper({ ...input, obstacles: [], traces: [t] })
+      copperCache.set(t, physical)
+    }
+    return physical
+  }
   let trouble = new Map<string, number>(),
     clear = false
   progress?.("native_pair_approaches")

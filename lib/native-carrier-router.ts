@@ -221,13 +221,18 @@ export class NativeCarrierRouter {
           if (stage !== 1 && !within(b, stage === 0 ? sourceBox : targetBox))
             continue
           if (goalStage === 1 && stage === 1 && !within(b, targetBox)) continue
-          if (!grid.hardEdgeIsClear(cell, n)) continue
-          const softCost = grid.softEdgeIsClear(a, b) ? 0 : penalty
-          if (options.strict && softCost) continue
           const ni = stage * N + next,
             travelled = Number.isFinite(cap)
               ? label.travelled + n.cost * step
               : 0
+          if (travelled + remaining(ni) > cap + 1e-8) continue
+          const minimumCost =
+            label.cost + n.cost + 0 + (this.history[plane][next] ?? 0)
+          if (penalty >= 0 && frontier.dominated(ni, minimumCost, travelled))
+            continue
+          if (!grid.hardEdgeIsClear(cell, n)) continue
+          const softCost = grid.softEdgeIsClear(a, b) ? 0 : penalty
+          if (options.strict && softCost) continue
           if (travelled + remaining(ni) <= cap + 1e-8)
             frontier.add(
               ni,

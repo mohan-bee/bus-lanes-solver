@@ -12,7 +12,7 @@ export function initialSignalDogbones(
   input: SimpleRouteJson,
   options: Options,
   attempt: number,
-) {
+): ReturnType<typeof routeAlternateSignalDogbones> {
   try {
     return routeAlternateSignalDogbones(input, options, attempt)
   } catch (error) {

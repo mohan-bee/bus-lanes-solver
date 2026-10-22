@@ -84,8 +84,17 @@ export function* matchNativeCarrierSignals(
     original.defaultObstacleMargin ??
     0.075
   const index = new CopperConflictIndex()
-  const physical = (t: Trace) =>
-    fixedCopper({ ...original, obstacles: [], traces: [t] })
+  // Negotiation replaces traces rather than mutating them. Keep each trace's
+  // immutable copper identity so unchanged pairs can reuse conflict answers.
+  const physicalCache = new WeakMap<Trace, ReturnType<typeof fixedCopper>>()
+  const physical = (t: Trace) => {
+    let copper = physicalCache.get(t)
+    if (!copper) {
+      copper = fixedCopper({ ...original, obstacles: [], traces: [t] })
+      physicalCache.set(t, copper)
+    }
+    return copper
+  }
   const graph = (traces: Trace[]) => {
     const copper = traces.map(physical),
       hits: Array<
