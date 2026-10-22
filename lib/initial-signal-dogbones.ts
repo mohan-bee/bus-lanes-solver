@@ -39,9 +39,10 @@ export function initialSignalDogbones(
       fromLayer: string | undefined
       toLayer: string
     }[] = []
+    let cohortTrials = 0
     const contextualError = (cause: Error, stage: string) =>
       new Error(
-        `${cause.message}; stage=${stage}; attempt=${attempt}; fixedTraces=${input.traces?.length ?? 0}; unavailableLocalVia=${JSON.stringify(unavailableLocalVia)}; nativeFallbacks=${JSON.stringify(nativeFallbacks)}`,
+        `${cause.message}; stage=${stage}; attempt=${attempt}; fixedTraces=${input.traces?.length ?? 0}; unavailableLocalVia=${JSON.stringify(unavailableLocalVia)}; nativeFallbacks=${JSON.stringify(nativeFallbacks)}; cohortTrials=${cohortTrials}`,
         { cause },
       )
     let changed = false
@@ -84,20 +85,69 @@ export function initialSignalDogbones(
       }
       changed = true
     }
-    if (!changed) throw contextualError(error, "preferred_assignment")
-    try {
-      return routeAlternateSignalDogbones(
-        input,
-        { ...options, targetLayers: targets },
-        attempt,
-      )
-    } catch (fallbackError) {
-      if (
-        !(fallbackError instanceof Error) ||
-        fallbackError.message !== "No collision-free local dogbone assignment"
-      )
-        throw fallbackError
-      throw contextualError(fallbackError, "native_fallback_assignment")
+    const tryTargets = (candidate: Map<string, string>) => {
+      try {
+        return routeAlternateSignalDogbones(
+          input,
+          { ...options, targetLayers: candidate },
+          attempt,
+        )
+      } catch (failure) {
+        if (
+          !(failure instanceof Error) ||
+          failure.message !== "No collision-free local dogbone assignment"
+        )
+          throw failure
+        return null
+      }
     }
+    if (changed) {
+      const result = tryTargets(targets)
+      if (result) return result
+    }
+    // Nonempty individual site domains do not imply a compatible collective
+    // assignment. Relax one eligible native-pad cohort at a time, ordinary
+    // signals before pairs, while preserving all supplied copper and layers.
+    const cohorts = input.connections.map((c) => new Set([c.name]))
+    for (const pair of input.differentialPairs ?? []) {
+      const related = cohorts.filter((cohort) =>
+        pair.connectionNames.some((name) => cohort.has(name)),
+      )
+      const merged = new Set(related.flatMap((cohort) => [...cohort]))
+      for (const cohort of related) cohorts.splice(cohorts.indexOf(cohort), 1)
+      cohorts.push(merged)
+    }
+    cohorts.sort((a, b) => a.size - b.size)
+    const alternatives = cohorts.flatMap((names) => {
+      const members = input.connections.filter((c) => names.has(c.name))
+      const layer = members[0].pointsToConnect[0].layer
+      return members.every((c) => available(c, layer)) &&
+        members.some((c) => targets.get(c.name) !== layer)
+        ? [{ members, layer }]
+        : []
+    })
+    // Bound this fallback to at most two trials per eligible cohort rather than
+    // enumerating every subset of native/carrier allocations.
+    for (const { members, layer } of alternatives) {
+      const candidate = new Map(targets)
+      for (const member of members) candidate.set(member.name, layer)
+      cohortTrials++
+      const result = tryTargets(candidate)
+      if (result) return result
+    }
+    if (alternatives.length > 1) {
+      const candidate = new Map(targets)
+      for (const [index, { members, layer }] of alternatives.entries()) {
+        for (const member of members) candidate.set(member.name, layer)
+        if (index === 0) continue // Already tried this one-cohort allocation.
+        cohortTrials++
+        const result = tryTargets(candidate)
+        if (result) return result
+      }
+    }
+    throw contextualError(
+      error,
+      changed ? "native_fallback_assignment" : "preferred_assignment",
+    )
   }
 }
