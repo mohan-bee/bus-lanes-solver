@@ -1,5 +1,9 @@
 import { routeAlternateSignalDogbones } from "./alternate-signal-dogbones"
-import { routeCoupledPair } from "./coupled-pair-routing"
+import { NATIVE_PAIR_SEARCH_STEPS } from "./plan-native-pair-seed"
+import {
+  pairHasUnroutedNativePads,
+  routeCoupledPair,
+} from "./coupled-pair-routing"
 import { generatedEscapeHolesConflict } from "./expanded-signal-sites"
 import { signalLayers, type FlexibleSignalState } from "./flexible-signal-state"
 import { length } from "./geometry"
@@ -116,7 +120,11 @@ export function* repairSurfacePairEscape(
               variant,
               preferPackageOnlyTuning: true,
             }),
-            6000,
+            surface &&
+              state.native.traces?.length &&
+              pairHasUnroutedNativePads(state.native, pair)
+              ? NATIVE_PAIR_SEARCH_STEPS
+              : 6000,
           )
           if (
             !paired ||

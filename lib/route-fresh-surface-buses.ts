@@ -1,3 +1,4 @@
+import { planNativePairSeed } from "./plan-native-pair-seed"
 import { routeSurfaceOrdinarySignals } from "./route-surface-ordinary-signals"
 import { finishSurfaceTiming } from "./finish-surface-timing"
 import { insertNativeSurfaceSignal } from "./insert-native-surface-signal"
@@ -202,7 +203,12 @@ export function* routeFreshSurfaceSeeds(
     ),
     traces: [...(native.traces ?? []), ...pairEscapes],
   }
-  const plans = priorityPairPlans(timingAllocation, terminalLayers)
+  const plans = freshPairPlans(
+    timing,
+    timingAllocation,
+    pairEscapes,
+    terminalLayers,
+  )
   let plan = plans.next()
   let greatest: FlexibleSignalState | null = null
   try {
@@ -212,13 +218,13 @@ export function* routeFreshSurfaceSeeds(
         plan = plans.next()
         continue
       }
-      const paired: Trace[] = plan.value
+      const paired: Trace[] = plan.value.traces
       const ordinaryNames = new Set(
         timing.connections
           .filter((connection) => !timingPairs.has(connection.name))
           .map((connection) => connection.name),
       )
-      const selectedEscapes = pairEscapes.map((escape) => {
+      const selectedEscapes = plan.value.escapes.map((escape) => {
         const carrier = paired.find(
           (trace) => trace.connection_name === escape.connection_name,
         )!
@@ -239,8 +245,11 @@ export function* routeFreshSurfaceSeeds(
       }
       if (ordinaryNames.size)
         state = yield* routeSurfaceOrdinarySignals(state, ordinaryNames, {
-          maxSteps:
-            paired.length && !isProvisionalPairPlan(paired) ? 250000 : 1500000,
+          maxSteps: plan.value.nativeSeed
+            ? 2000000
+            : paired.length && !isProvisionalPairPlan(paired)
+              ? 250000
+              : 1500000,
         })
       if (!state) {
         plan = plans.next()
@@ -342,6 +351,36 @@ export function* routeFreshSurfaceSeeds(
 
 function carrierCount(state: FlexibleSignalState) {
   return state.retained.length + state.traces.length
+}
+
+interface SurfacePairPlan {
+  traces: Trace[]
+  escapes: Trace[]
+  nativeSeed: boolean
+}
+
+/** Native endpoints are an additional plan; retain all existing handoff/layer
+ * alternatives if ordinary routing cannot complete around this pair. */
+function* freshPairPlans(
+  native: SimpleRouteJson,
+  allocation: SimpleRouteJson,
+  escapes: Trace[],
+  terminalLayers: ReadonlyMap<string, string[]>,
+): Generator<SurfacePairPlan | void> {
+  const paired = yield* planNativePairSeed(native)
+  if (paired) yield { traces: paired, escapes: [], nativeSeed: true }
+  const original = priorityPairPlans(allocation, terminalLayers)
+  let next = original.next()
+  try {
+    while (!next.done) {
+      yield next.value
+        ? { traces: next.value, escapes, nativeSeed: false }
+        : undefined
+      next = original.next()
+    }
+  } finally {
+    if (!next.done) original.return(undefined)
+  }
 }
 
 function* priorityPairPlans(
