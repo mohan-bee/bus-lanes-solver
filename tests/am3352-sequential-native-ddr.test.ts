@@ -44,10 +44,16 @@ test("second DDR byte cannot assign dogbones around a freshly routed first byte"
   while (!first.solved && !first.failed && first.iterations < 35000)
     first.step()
   expect(first.solved).toBe(true)
-  expect(
-    first.stats.busLengths.every((b) => b.matched && b.withinLengthLimit),
-  ).toBe(true)
-  expect(first.stats.pairLengths.every((p) => p.matched)).toBe(true)
+  expect(first.stats.busLengths).toEqual([
+    expect.objectContaining({
+      busId: "DDR_BYTE1",
+      matched: true,
+      withinLengthLimit: true,
+    }),
+  ])
+  expect(first.stats.pairLengths).toEqual([
+    expect.objectContaining({ matched: true }),
+  ])
   expect(JSON.stringify(firstInput)).toBe(firstBefore)
 
   const secondInput = scope("DDR_BYTE0")
