@@ -1,3 +1,4 @@
+import { CopperIndex } from "./copper-index"
 import { createTerminalViaClearanceChecker } from "./terminal-via-clearance"
 import { fixedRouteLength } from "./route-lengths"
 import { distance, length, simplify, segmentDistance } from "./geometry"
@@ -179,50 +180,92 @@ export function tuningPathIsSelfClear(path: Point[], required: number) {
   }
   for (let i = 1; i < path.length; i++)
     cumulative.push(cumulative[i - 1] + distance(path[i - 1], path[i]))
-  for (let i = 0; i < path.length - 1; i++)
-    for (let j = i + 2; j < path.length - 1; j++) {
-      const a = path[i],
-        b = path[i + 1],
-        c = path[j],
-        d = path[j + 1]
-      // Far-apart segments cannot cross or violate copper spacing. Use a
-      // conservative bound before either exact distance check, even on arcs.
-      const padding = Math.max(required, 1e-9)
-      if (
-        Math.max(a.x, b.x) + padding < Math.min(c.x, d.x) ||
-        Math.max(c.x, d.x) + padding < Math.min(a.x, b.x) ||
-        Math.max(a.y, b.y) + padding < Math.min(c.y, d.y) ||
-        Math.max(c.y, d.y) + padding < Math.min(a.y, b.y)
-      )
-        continue
-      const separation = segmentDistance([a, b], [c, d])
-      if (separation < 1e-9 && cumulative[j] - cumulative[i + 1] > 1e-8)
-        return false
-      // Chords on the same smooth bend can be closer than the clearance while
-      // forming one uninterrupted copper body. Check returning arms outside a
-      // half-circle neighborhood; intersections above are never exempted.
-      if (
-        cumulative[j] - cumulative[i + 1] <= Math.PI * required + 1e-8 &&
-        (turning[j] - turning[i] <= Math.PI / 2 + 1e-8 ||
-          (turning[j] - turning[i] <= Math.PI + 1e-8 &&
-            unsafeBends[j] === unsafeBends[i]))
-      )
-        continue
-      if (separation >= required - 1e-8) continue
-      let sx = 0,
-        sy = 0
-      for (let k = i; k <= j; k++) {
-        const dx = path[k + 1].x - path[k].x,
-          dy = path[k + 1].y - path[k].y
-        if (Math.abs(dx) > 1e-8) {
-          if (sx && sx !== Math.sign(dx)) return false
-          sx = Math.sign(dx)
-        }
-        if (Math.abs(dy) > 1e-8) {
-          if (sy && sy !== Math.sign(dy)) return false
-          sy = Math.sign(dy)
-        }
+  const pairIsClear = (i: number, j: number) => {
+    const a = path[i],
+      b = path[i + 1],
+      c = path[j],
+      d = path[j + 1]
+    // Far-apart segments cannot cross or violate copper spacing. Use a
+    // conservative bound before either exact distance check, even on arcs.
+    const padding = Math.max(required, 1e-9)
+    if (
+      Math.max(a.x, b.x) + padding < Math.min(c.x, d.x) ||
+      Math.max(c.x, d.x) + padding < Math.min(a.x, b.x) ||
+      Math.max(a.y, b.y) + padding < Math.min(c.y, d.y) ||
+      Math.max(c.y, d.y) + padding < Math.min(a.y, b.y)
+    )
+      return true
+    const separation = segmentDistance([a, b], [c, d])
+    if (separation < 1e-9 && cumulative[j] - cumulative[i + 1] > 1e-8)
+      return false
+    // Chords on the same smooth bend can be closer than the clearance while
+    // forming one uninterrupted copper body. Check returning arms outside a
+    // half-circle neighborhood; intersections above are never exempted.
+    if (
+      cumulative[j] - cumulative[i + 1] <= Math.PI * required + 1e-8 &&
+      (turning[j] - turning[i] <= Math.PI / 2 + 1e-8 ||
+        (turning[j] - turning[i] <= Math.PI + 1e-8 &&
+          unsafeBends[j] === unsafeBends[i]))
+    )
+      return true
+    if (separation >= required - 1e-8) return true
+    let sx = 0,
+      sy = 0
+    for (let k = i; k <= j; k++) {
+      const dx = path[k + 1].x - path[k].x,
+        dy = path[k + 1].y - path[k].y
+      if (Math.abs(dx) > 1e-8) {
+        if (sx && sx !== Math.sign(dx)) return false
+        sx = Math.sign(dx)
+      }
+      if (Math.abs(dy) > 1e-8) {
+        if (sy && sy !== Math.sign(dy)) return false
+        sy = Math.sign(dy)
       }
     }
+    return true
+  }
+  const padding = Math.max(required, 1e-9)
+  if (path.length > 64) {
+    const owners: string[] = []
+    const copper = path
+      .slice(1)
+      .map((b, index) => ({
+        a: path[index],
+        b,
+        radius: 0,
+        layer: "",
+        owners,
+        index,
+      }))
+    const spatial = new CopperIndex(copper)
+    let scale = 1
+    for (const p of path) scale = Math.max(scale, Math.abs(p.x), Math.abs(p.y))
+    const rounding = 4 * Number.EPSILON * scale
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = path[i],
+        b = path[i + 1],
+        margin = padding + rounding
+      if (
+        spatial.some(
+          {
+            minX: Math.min(a.x, b.x) - margin,
+            maxX: Math.max(a.x, b.x) + margin,
+            minY: Math.min(a.y, b.y) - margin,
+            maxY: Math.max(a.y, b.y) + margin,
+          },
+          (c) => {
+            const j = (c as (typeof copper)[number]).index
+            return j >= i + 2 && !pairIsClear(i, j)
+          },
+        )
+      )
+        return false
+    }
+  } else {
+    for (let i = 0; i < path.length - 1; i++)
+      for (let j = i + 2; j < path.length - 1; j++)
+        if (!pairIsClear(i, j)) return false
+  }
   return true
 }

@@ -1,4 +1,5 @@
 import { clearanceToCopper, type Copper } from "./vector-scene"
+import { CopperIndex } from "./copper-index"
 
 interface Geometry {
   copper: Copper[]
@@ -7,12 +8,21 @@ interface Geometry {
   maxX: number
   minY: number
   maxY: number
+  index?: CopperIndex
+  positions?: Map<Copper, number>
 }
 
 /** Request-local broad phase for immutable site/carrier candidates. Preserve
  * nested-loop order: the first conflicting chord determines routing history. */
 export class CopperConflictIndex {
   private geometry = new WeakMap<Copper[], Geometry>()
+  private conflicts = new WeakMap<
+    Copper[],
+    WeakMap<
+      Copper[],
+      { clearance: number; result: [Copper, Copper] | undefined }
+    >
+  >()
   private prepare(copper: Copper[]): Geometry {
     const cached = this.geometry.get(copper)
     if (cached) return cached
@@ -50,6 +60,19 @@ export class CopperConflictIndex {
     second: Copper[],
     clearance: number,
   ): [Copper, Copper] | undefined {
+    let row = this.conflicts.get(first)
+    const cached = row?.get(second)
+    if (cached?.clearance === clearance) return cached.result
+    if (!row) this.conflicts.set(first, (row = new WeakMap()))
+    const result = this.findConflict(first, second, clearance)
+    row.set(second, { clearance, result })
+    return result
+  }
+  private findConflict(
+    first: Copper[],
+    second: Copper[],
+    clearance: number,
+  ): [Copper, Copper] | undefined {
     const a = this.prepare(first),
       b = this.prepare(second)
     if (
@@ -62,7 +85,52 @@ export class CopperConflictIndex {
     for (let i = 0; i < first.length; i++) {
       const c = first[i],
         ai = i * 4
-      for (let j = 0; j < second.length; j++) {
+      let candidates: number[] | undefined
+      if (second.length > 32) {
+        if (!b.index) {
+          b.index = new CopperIndex(second)
+          b.positions = new Map()
+          for (let j = 0; j < second.length; j++)
+            if (!b.positions.has(second[j])) b.positions.set(second[j], j)
+        }
+        candidates = []
+        // Query subtraction and the reference's addition can round in opposite
+        // directions near tangency. Pad only the broad phase; the exact tests
+        // below retain the original bounds and clearance arithmetic.
+        const padding =
+          clearance +
+          4 *
+            Number.EPSILON *
+            Math.max(
+              1,
+              Math.abs(a.bounds[ai]),
+              Math.abs(a.bounds[ai + 1]),
+              Math.abs(a.bounds[ai + 2]),
+              Math.abs(a.bounds[ai + 3]),
+              Math.abs(b.minX),
+              Math.abs(b.maxX),
+              Math.abs(b.minY),
+              Math.abs(b.maxY),
+            )
+        b.index.some(
+          {
+            minX: a.bounds[ai] - padding,
+            maxX: a.bounds[ai + 1] + padding,
+            minY: a.bounds[ai + 2] - padding,
+            maxY: a.bounds[ai + 3] + padding,
+          },
+          (other) => {
+            if (other.layer === c.layer)
+              candidates!.push(b.positions!.get(other)!)
+            return false
+          },
+        )
+        // BVH traversal order is spatial. Restore the original inner-loop
+        // order before exact tests, preserving the conflict used by history.
+        candidates.sort((a, b) => a - b)
+      }
+      for (let k = 0; k < (candidates?.length ?? second.length); k++) {
+        const j = candidates ? candidates[k] : k
         const d = second[j],
           bj = j * 4
         if (

@@ -27,14 +27,12 @@ export class LengthSearchFrontier {
     this.sequence = 0
   }
   dominated(node: number, cost: number, travelled: number) {
-    return (
-      this.labels
-        .get(node)
-        ?.some(
-          (label) =>
-            label.cost <= cost + 1e-10 && label.travelled <= travelled + 1e-10,
-        ) ?? false
-    )
+    const labels = this.labels.get(node)
+    if (labels)
+      for (const label of labels)
+        if (label.cost <= cost + 1e-10 && label.travelled <= travelled + 1e-10)
+          return true
+    return false
   }
   add(
     node: number,
@@ -46,13 +44,14 @@ export class LengthSearchFrontier {
   ) {
     if (this.dominated(node, cost, travelled)) return
     const previous = this.labels.get(node) ?? []
-    const retained = previous.filter((label) => {
-      if (cost <= label.cost + 1e-10 && travelled <= label.travelled + 1e-10) {
+    const retained = previous
+    let count = 0
+    for (const label of previous) {
+      if (cost <= label.cost + 1e-10 && travelled <= label.travelled + 1e-10)
         label.active = false
-        return false
-      }
-      return true
-    })
+      else retained[count++] = label
+    }
+    retained.length = count
     const label: LengthSearchLabel = {
       node,
       cost,

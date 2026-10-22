@@ -242,11 +242,13 @@ export function* compactEnvelopeCandidate(
     return { x: a.x + v * dx, y: a.y + v * dy }
   }
   const cuts = new CompactionCutSet(motion)
-  const collisionRows: string[] = []
+  const collisionRows: { key: string; variables: string[] }[] = []
   const materialize = () => {
-    for (const key of collisionRows) {
+    for (const { key, variables: members } of collisionRows) {
       delete constraints[key]
-      for (const v of Object.values(variables)) delete v[key]
+      // Each cut touches only its two translation groups. Visiting every
+      // model variable per row makes rebuilding this sparse model quadratic.
+      for (const v of members) delete variables[v][key]
     }
     collisionRows.length = 0
     for (const cut of cuts.active()) {
@@ -255,7 +257,13 @@ export function* compactEnvelopeCandidate(
       term(coeff, cut.b, cut.n, -1)
       const key = `c${serial}`
       add(coeff, { min: cut.min })
-      if (constraints[key]) collisionRows.push(key)
+      if (constraints[key])
+        collisionRows.push({
+          key,
+          variables: [...coeff]
+            .filter(([, n]) => Math.abs(n) > 1e-10)
+            .map(([v]) => v),
+        })
     }
   }
   const used = new Set<string>()
