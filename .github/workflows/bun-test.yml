@@ -7,5 +7,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      # Expensive full-board comparisons run on demand with /benchmark.
+      # Full-board 11/11 acceptance runs separately on Blacksmith for every PR.
       - run: bun test --timeout 120000
