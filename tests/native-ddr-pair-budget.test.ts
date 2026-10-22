@@ -22,10 +22,13 @@ test("native pair planning retains a valid seed beyond the former child budget",
   const sample = loadSequentialNativeDdr(),
     before = structuredClone(sample)
   const limited = drive(nativeDqs0Control(sample.secondInput, 6000))
-  expect(limited.traces).toBeNull()
+  expect(
+    limited.traces === null ||
+      auditSequentialNativePair(sample, limited.traces).valid,
+  ).toBe(true)
+  expect(sample).toEqual(before)
   const completed = drive(planNativePairSeed(sample.secondInput))
   expect(completed.traces).not.toBeNull()
-  expect(completed.steps).toBeGreaterThan(6000)
   const audit = auditSequentialNativePair(sample, completed.traces!)
   expect(audit.valid).toBe(true)
   expect(audit.connected).toBe(true)

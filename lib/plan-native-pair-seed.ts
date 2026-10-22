@@ -10,6 +10,7 @@ import { fixedCopper } from "./vector-scene"
 import type { SimpleRouteJson, Trace } from "./types"
 
 export const NATIVE_PAIR_SEARCH_STEPS = 60000
+export const NATIVE_PAIR_REPAIR_STEPS = 300000
 
 /** Try original native pad endpoints before generated via handoffs around
  * previous-phase copper. Positions are board-world XY mm, +X right/+Y up.

@@ -1,5 +1,5 @@
 import { routeAlternateSignalDogbones } from "./alternate-signal-dogbones"
-import { NATIVE_PAIR_SEARCH_STEPS } from "./plan-native-pair-seed"
+import { NATIVE_PAIR_REPAIR_STEPS } from "./plan-native-pair-seed"
 import {
   pairHasUnroutedNativePads,
   routeCoupledPair,
@@ -123,7 +123,7 @@ export function* repairSurfacePairEscape(
             surface &&
               state.native.traces?.length &&
               pairHasUnroutedNativePads(state.native, pair)
-              ? NATIVE_PAIR_SEARCH_STEPS
+              ? NATIVE_PAIR_REPAIR_STEPS
               : 6000,
           )
           if (
