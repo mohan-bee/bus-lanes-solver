@@ -1,0 +1,678 @@
+{
+  "validatedSolverCommit": "378a1cd29dcd6fcf1f96d6a685298de1473c08a6",
+  "validationMethod": "All eleven completed fixture outputs revalidated by exportAm3352RoutedSnapshots before rendering; no incomplete artifacts accepted",
+  "legacyAcceptancePassed": 11,
+  "freshSearchCompletions": 9,
+  "retainedPriorCompletions": 2,
+  "freshSearchBudgetSeconds": 1800,
+  "freshSearchRevision": "f5f4154242bac006f6bc912be6b5475321b31700",
+  "freshSearchLimits": [
+    {
+      "sample": "control-inner1",
+      "status": "timed_out",
+      "seconds": 1800.555,
+      "presentTraces": 47,
+      "finalAcceptanceNotRun": true
+    },
+    {
+      "sample": "outer-layers",
+      "status": "timed_out",
+      "seconds": 1800.107801,
+      "presentTraces": 0,
+      "iterations": 5500473
+    }
+  ],
+  "policyCorrection": "New feedback restricted to hard length-limited buses; unbounded legacy ordinary search restored exactly and guarded by step/result equivalence regression. Expanded sites are considered only for empty domains.",
+  "runtime": "Bun 1.4.0, Linux 4 CPU / 16 GiB; concurrent correctness runs, not a paired speed comparison",
+  "focusedTests": {
+    "passed": 10,
+    "assertions": 2803,
+    "seconds": 53.98
+  },
+  "nativeBulkTrial": {
+    "ordinarySignals": 40,
+    "complete": false,
+    "elapsedSeconds": 263.15768,
+    "yields": 262136,
+    "ordinaryChildBudget": 250000
+  },
+  "completeNativeBoardVerified": false,
+  "samples": [
+    {
+      "sample": "control",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 43.712,
+      "inputSha256": "b7a4e9d09a22fe0ed131a544548b14eef20fbf4e88b6dc6ffaa11ca44e6bfe59",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6350000000675919,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6350000100064577,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.0778683245814662,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12688373178988854,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.07282965286481868,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "control-inner1",
+      "routeSource": "retained_prior_completed_proof",
+      "searchCommit": null,
+      "previousValidationCommit": "1627ad4260da3d16cd93a22977a84e1514f5b270",
+      "solveSeconds": 2033.604,
+      "inputSha256": "14b5b318540ce7bac367cf22338abd7f9fffd2f7ce6c2a12f903116f50ca9bde",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.635000000000538,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349999999999554,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.048899644670022724,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.004719837709245667,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.0027919647571117423,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "right",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 43.537109102,
+      "inputSha256": "78c22c8d818ee2c2abe2eec9c6b6e408161a9d0eaf09afbafc3242e71e8f5778",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.635000000000467,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349999999999696,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.09604665360949838,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12180230740349174,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.10264381675825973,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "left",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 54.358306558,
+      "inputSha256": "6042ca0f0889a983a6ccf8f929a6a46b18cc57134e1b9f3b49c19063b936caa5",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.635000009997654,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.5111468252001927,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.010514368851048062,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12699999999991718,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.10542851386562901,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "above",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 59.91532698,
+      "inputSha256": "20fc884f08accd368e4ce049ab3fc180a1926f425787a504dbc4040f651bfa69",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6350000000108622,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.635000000003032,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.12700000000002376,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.1269999999999527,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.12699999999998823,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "inner-layers",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 78.20743799799999,
+      "inputSha256": "1b91e6c5207e4b7e132aa5ac246e94777f926c7beab8675adf0356634b8280ad",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6349999999628082,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6350000109864098,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.0778683245814662,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12688373178988854,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.12699999999976797,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "inner-layers-right",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 106.55692566799999,
+      "inputSha256": "2eaf3dedcd84fbfed10262f4d4c99370a0ca00a7a060f87b7a1cdcba9de37a8e",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6350000110508631,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349999999999696,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.12700001096276736,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12699999999996692,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.1270000000000593,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "inner-layers-left",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 275.37339282100004,
+      "inputSha256": "1c3db8ee018bc90df7fbbb0c198c42efcc0ca948a6a213338650cf81a51f7ab2",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.634990371865257,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349920303628309,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.1269899999998998,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 5.274709806712963e-7,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.10542851386563257,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "inner-layers-above",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 395.417408479,
+      "inputSha256": "68a86ef74f8ec9628954e909464c009d98fb2c902a6376e20b3a32d4b5cff555",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6349909882941347,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349927153210047,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.12691534384289582,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12698980000070037,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 6.186337131453001e-7,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "inner-layers-complete-ca",
+      "routeSource": "fresh_search_before_policy_narrowing",
+      "searchCommit": "f5f4154242bac006f6bc912be6b5475321b31700",
+      "previousValidationCommit": null,
+      "solveSeconds": 318.65897715000006,
+      "inputSha256": "a6def279fa2d3356a66ee94b1760a76eebb6c6d8e605005ce5903bd2fbca8776",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6349902427763041,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349916843630794,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_ADDR_CTRL_CK",
+          "skewMm": 0.6349944579905653,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.07535887199949798,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 8.526512829121202e-14,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.06638387191047457,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    },
+    {
+      "sample": "outer-layers",
+      "routeSource": "retained_prior_completed_proof",
+      "searchCommit": null,
+      "previousValidationCommit": "1627ad4260da3d16cd93a22977a84e1514f5b270",
+      "solveSeconds": 1435.5530296170002,
+      "inputSha256": "de3fd915f3c7d8c9bf4fd3c9b197596ba5e08c1be328f9c5223d7ab78736588f",
+      "signals": 47,
+      "complete": true,
+      "valid": true,
+      "matched": true,
+      "combinedDrc": true,
+      "fixedPowerTraces": 161,
+      "fixedPowerVias": 161,
+      "fixedPowerPadJoins": 161,
+      "busSkews": [
+        {
+          "busId": "DDR_BYTE0",
+          "skewMm": 0.6350000110165794,
+          "toleranceMm": 0.635,
+          "matched": true
+        },
+        {
+          "busId": "DDR_BYTE1",
+          "skewMm": 0.6349999999999838,
+          "toleranceMm": 0.635,
+          "matched": true
+        }
+      ],
+      "pairSkews": [
+        {
+          "pairId": "pair_0",
+          "skewMm": 0.019219371674388697,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_1",
+          "skewMm": 0.12700000000001666,
+          "toleranceMm": 0.127,
+          "matched": true
+        },
+        {
+          "pairId": "pair_2",
+          "skewMm": 0.12699999999989586,
+          "toleranceMm": 0.127,
+          "matched": true
+        }
+      ],
+      "exteriorPairCoupling": true,
+      "sameTracesAsPreviousProof": true
+    }
+  ],
+  "imagesInspected": true,
+  "images": [
+    {
+      "file": "control-solved.png",
+      "sha256": "811ee038058ce10218683cf4f714e6857b2923f186222ab5263266e59e614014",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "control-inner1-solved.png",
+      "sha256": "ff8e1114a078b38b6c73e9e1aa6817c6511b88c9addbab315211e8ecd314d1ea",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "right-solved.png",
+      "sha256": "f3722abc3b2f9f1b68650d5185f938436147ab304656a932156579afdef658a2",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "left-solved.png",
+      "sha256": "42cebd55f4a15fb4db1c5b3c0e95b803a728fe7b39b89751e9f9c570e3c21777",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "above-solved.png",
+      "sha256": "b5f785f1b1ecb3115dc6cac59c94f1cc55c8aa60a6a62dd463c49097b1e712c5",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "inner-layers-solved.png",
+      "sha256": "69377065f2c849a08976dad9588dd6ed682b6af65eba4ec3505f5d367d2437a3",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "inner-layers-right-solved.png",
+      "sha256": "9f14118c44621cded9aa6bb8730d33fe918be854eadb7c4c8662f0a46aeefdda",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "inner-layers-left-solved.png",
+      "sha256": "d004f64b7620372b8881eb69480b0240df43f8cd95d4c3a83d06d32a43bc5319",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "inner-layers-above-solved.png",
+      "sha256": "dbdab10b144c64bc60be42584d232db7e23c7306d62d92402960c57e41ffed8a",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "inner-layers-complete-ca-solved.png",
+      "sha256": "8d42fb6dd4142834d1971ff1b756f88e91288fc428783599647ad808a3640185",
+      "samePngAsPreviousProof": true
+    },
+    {
+      "file": "outer-layers-solved.png",
+      "sha256": "716ab2b56349756cbe6b1d49bcc53cdbc762d3044bb7a412cd87214d208f7722",
+      "samePngAsPreviousProof": true
+    }
+  ]
+}

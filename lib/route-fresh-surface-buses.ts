@@ -1,3 +1,4 @@
+import { routeSurfaceOrdinarySignals } from "./route-surface-ordinary-signals"
 import { finishSurfaceTiming } from "./finish-surface-timing"
 import { insertNativeSurfaceSignal } from "./insert-native-surface-signal"
 import { surfaceBusShortcutCandidates } from "./surface-bus-shortcuts"
@@ -237,13 +238,10 @@ export function* routeFreshSurfaceSeeds(
         traces: [],
       }
       if (ordinaryNames.size)
-        state = yield* runBoundedRouting(
-          negotiateSignalSites(state, ordinaryNames, false, false, {
-            allowExpandedSites: false,
-            maxCandidateSearchNodes: 12000,
-          }),
-          paired.length && !isProvisionalPairPlan(paired) ? 250000 : 1500000,
-        )
+        state = yield* routeSurfaceOrdinarySignals(state, ordinaryNames, {
+          maxSteps:
+            paired.length && !isProvisionalPairPlan(paired) ? 250000 : 1500000,
+        })
       if (!state) {
         plan = plans.next()
         continue
