@@ -6,9 +6,14 @@ export function pruneCandidateDomains<T>(
   input: readonly (readonly T[])[],
   compatible: (first: T, second: T) => boolean,
   maxSupportChecks = 1_000_000,
+  onEmptyDomain?: (index: number) => void,
 ): T[][] | null {
   const domains = input.map((domain) => [...domain])
-  if (domains.some((domain) => !domain.length)) return null
+  const empty = domains.findIndex((domain) => !domain.length)
+  if (empty >= 0) {
+    onEmptyDomain?.(empty)
+    return null
+  }
   const count = domains.length
   const queue: Array<[number, number]> = []
   const queued = new Uint8Array(count * count)
@@ -42,7 +47,10 @@ export function pruneCandidateDomains<T>(
     }
     if (retained.length === domains[first].length) continue
     domains[first] = retained
-    if (!retained.length) return null
+    if (!retained.length) {
+      onEmptyDomain?.(first)
+      return null
+    }
     // Only support in the revised domain changed. Revisit those incoming arcs.
     for (let other = 0; other < count; other++)
       if (other !== second) enqueue(other, first)
