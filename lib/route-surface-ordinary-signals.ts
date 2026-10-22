@@ -29,6 +29,7 @@ export function* routeSurfaceOrdinarySignals(
     let blocked: string | undefined
     const routed = yield* runBoundedRouting(
       negotiateSignalSites(state, ordinaryNames, false, false, {
+        checkEscapeCompatibility: true,
         allowExpandedSites: true,
         expandEmptyDomainsOnly: true,
         retainExistingRoutes: state.traces.length > 0,

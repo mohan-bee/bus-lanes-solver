@@ -1,3 +1,4 @@
+import { pruneCandidateDomains } from "./prune-candidate-domains"
 import { explicitlyAllowsCarrierLayer } from "./effective-carrier-layers"
 import { getCopperLayerNames } from "@tscircuit/fanout-solver"
 import { routeAlternateSignalDogbones } from "./alternate-signal-dogbones"
@@ -31,6 +32,7 @@ import {
 } from "./vector-scene"
 
 interface SignalSiteOptions {
+  checkEscapeCompatibility?: boolean
   allowExpandedSites?: boolean
   expandEmptyDomainsOnly?: boolean
   maxCandidateSearchNodes?: number
@@ -515,6 +517,22 @@ export function* negotiateSignalSites(
   const copperConflicts = new CopperConflictIndex()
   const overlap = (a: Copper[], b: Copper[]) =>
     copperConflicts.firstConflict(a, b, clearance - 1e-8)
+  // Individually reachable sites can have no jointly compatible assignment.
+  // Reject that pair seed before spending the carrier negotiation budget on
+  // paths that cannot repair fixed escape copper or full-stack drill conflicts.
+  // A support-check cap retains unproven choices, never a false rejection.
+  if (options.checkEscapeCompatibility && variants.size > 1) {
+    const entries = [...variants]
+    const domains = pruneCandidateDomains(
+      entries.map(([, choices]) => choices),
+      (a, b) =>
+        !overlap(a.escapeCopper, b.escapeCopper) &&
+        !generatedEscapeHolesConflict(native, a.escapes, b.escapes),
+    )
+    if (!domains) return null
+    for (const [index, [name]] of entries.entries())
+      variants.set(name, domains[index])
+  }
   const conflicts = new RouteConflictIndex(),
     pools = new Map<string, Candidate[]>(),
     signatures = new Map<string, Set<string>>(),
