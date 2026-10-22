@@ -4,8 +4,7 @@ import { gunzipSync } from "node:zlib"
 import { BusLanesPipelineSolver } from "../lib/bus-lanes-pipeline-solver"
 import type { SimpleRouteJson } from "../lib/types"
 
-// Expected failure until the stacked strategy fix; unexpected success fails CI.
-test.failing("one hard-length native DDR byte uses joint surface escapes and passes matching", () => {
+test("one hard-length native DDR byte uses joint surface escapes and passes matching", () => {
   const input: SimpleRouteJson = JSON.parse(
     gunzipSync(
       readFileSync(
