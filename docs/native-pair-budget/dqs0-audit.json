@@ -117,10 +117,7 @@
   ],
   "firstCoupling": [
     {
-      "connectionNames": [
-        "source_trace_27",
-        "source_trace_26"
-      ],
+      "connectionNames": ["source_trace_27", "source_trace_26"],
       "applicable": true,
       "matched": true,
       "maxExteriorEdgeGapMm": 0.13774616136918438,
@@ -189,10 +186,7 @@
   ],
   "coupling": [
     {
-      "connectionNames": [
-        "source_trace_15",
-        "source_trace_16"
-      ],
+      "connectionNames": ["source_trace_15", "source_trace_16"],
       "applicable": true,
       "matched": true,
       "maxExteriorEdgeGapMm": 0.1377475919285825,
