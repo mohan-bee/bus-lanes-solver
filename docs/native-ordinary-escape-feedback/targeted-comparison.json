@@ -1,0 +1,76 @@
+{
+  "base": "f965d0041703021d851728b29fc0f6c71be8d805",
+  "head": "378a1cd29dcd6fcf1f96d6a685298de1473c08a6",
+  "scope": "candidate ordinary assignment, not full pipeline acceptance",
+  "seedSeconds": 15.961135284,
+  "maxChildSteps": 50000,
+  "maxTotalYields": 100000,
+  "maxPairRepairs": 2,
+  "cases": [
+    {
+      "name": "D13",
+      "base": {
+        "seconds": 0.27010187600000063,
+        "yields": 4,
+        "complete": true,
+        "candidateFound": false,
+        "ordinaryTraces": 0,
+        "retainedPairConductors": null,
+        "inputUnchanged": true
+      },
+      "head": {
+        "seconds": 1.3252917359999992,
+        "yields": 314,
+        "complete": true,
+        "candidateFound": true,
+        "ordinaryTraces": 1,
+        "retainedPairConductors": 6,
+        "inputUnchanged": true
+      }
+    },
+    {
+      "name": "CSn0",
+      "base": {
+        "seconds": 0.1956279480000012,
+        "yields": 4,
+        "complete": true,
+        "candidateFound": false,
+        "ordinaryTraces": 0,
+        "retainedPairConductors": null,
+        "inputUnchanged": true
+      },
+      "head": {
+        "seconds": 14.339870871999999,
+        "yields": 11052,
+        "complete": true,
+        "candidateFound": true,
+        "ordinaryTraces": 1,
+        "retainedPairConductors": 6,
+        "inputUnchanged": true
+      }
+    },
+    {
+      "name": "D13+CSn0",
+      "base": {
+        "seconds": 0.16732657599999948,
+        "yields": 4,
+        "complete": true,
+        "candidateFound": false,
+        "ordinaryTraces": 0,
+        "retainedPairConductors": null,
+        "inputUnchanged": true
+      },
+      "head": {
+        "seconds": 15.546556104000002,
+        "yields": 11579,
+        "complete": true,
+        "candidateFound": true,
+        "ordinaryTraces": 2,
+        "retainedPairConductors": 6,
+        "inputUnchanged": true
+      }
+    }
+  ],
+  "runtime": "Bun 1.4.0, Linux, 4 CPU / 16 GiB; sequential cases and policies in one process; one measurement per policy/case; seed generation excluded",
+  "method": "Base negotiateSignalSites(initial, names, false, false, {allowExpandedSites:false,maxCandidateSearchNodes:12000}) wrapped in base runBoundedRouting(...,50000); head routeSurfaceOrdinarySignals(initial,names,{maxSteps:50000,maxPairRepairs:2}); identical cloned public-fixture seed from loadAm3352OrdinaryEscapes(); stop after 100000 yielded steps; no cached copper output"
+}
