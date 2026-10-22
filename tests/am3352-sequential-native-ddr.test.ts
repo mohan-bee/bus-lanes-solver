@@ -69,6 +69,12 @@ test("second DDR byte cannot assign dogbones around a freshly routed first byte"
   expect(second.failed).toBe(true)
   expect(second.failureCode).toBe("local_dogbone_failed")
   expect(second.error).toContain("No collision-free local dogbone assignment")
+  expect(second.error).toContain("stage=native_fallback_assignment")
+  expect(second.error).toContain("fixedTraces=11")
+  expect(second.error).toContain('unavailableLocalVia=["source_trace_29"]')
+  expect(second.error).toContain(
+    '"connectionName":"source_trace_29","fromLayer":"bottom","toLayer":"top"',
+  )
   expect(JSON.stringify(secondInput)).toBe(secondBefore)
   expect(JSON.stringify(secondInput.traces)).toBe(fixedBefore)
 }, 120000)

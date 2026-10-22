@@ -33,6 +33,17 @@ export function initialSignalDogbones(
           !b.allowedLayers ||
           b.allowedLayers.includes(layer),
       )
+    const unavailableLocalVia: string[] = []
+    const nativeFallbacks: {
+      connectionName: string
+      fromLayer: string | undefined
+      toLayer: string
+    }[] = []
+    const contextualError = (cause: Error, stage: string) =>
+      new Error(
+        `${cause.message}; stage=${stage}; attempt=${attempt}; fixedTraces=${input.traces?.length ?? 0}; unavailableLocalVia=${JSON.stringify(unavailableLocalVia)}; nativeFallbacks=${JSON.stringify(nativeFallbacks)}`,
+        { cause },
+      )
     let changed = false
     for (const c of input.connections) {
       const layer = c.pointsToConnect[0].layer
@@ -55,6 +66,7 @@ export function initialSignalDogbones(
         } catch {}
       }
       if (hasSite) continue
+      unavailableLocalVia.push(c.name)
       const pair = input.differentialPairs?.find((p) =>
         p.connectionNames.includes(c.name),
       )
@@ -62,14 +74,30 @@ export function initialSignalDogbones(
         pair ? pair.connectionNames.includes(p.name) : p.name === c.name,
       )
       if (!cohort.every((p) => available(p, layer))) continue
-      for (const p of cohort) targets.set(p.name, layer)
+      for (const p of cohort) {
+        nativeFallbacks.push({
+          connectionName: p.name,
+          fromLayer: targets.get(p.name),
+          toLayer: layer,
+        })
+        targets.set(p.name, layer)
+      }
       changed = true
     }
-    if (!changed) throw error
-    return routeAlternateSignalDogbones(
-      input,
-      { ...options, targetLayers: targets },
-      attempt,
-    )
+    if (!changed) throw contextualError(error, "preferred_assignment")
+    try {
+      return routeAlternateSignalDogbones(
+        input,
+        { ...options, targetLayers: targets },
+        attempt,
+      )
+    } catch (fallbackError) {
+      if (
+        !(fallbackError instanceof Error) ||
+        fallbackError.message !== "No collision-free local dogbone assignment"
+      )
+        throw fallbackError
+      throw contextualError(fallbackError, "native_fallback_assignment")
+    }
   }
 }
