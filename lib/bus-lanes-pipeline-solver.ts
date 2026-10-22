@@ -801,7 +801,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
       this.attempt === 0 &&
       this.options.smoothTuning &&
       this.options.denseSearch &&
-      (this.routingInput.buses?.length ?? 0) > 1 &&
+      ((this.routingInput.buses?.length ?? 0) > 1 ||
+        this.routingInput.buses?.some((bus) => bus.maxLength !== undefined)) &&
       canRouteOnPadLayers(this.routingInput) &&
       !independentBusGroups(laneInput)
     ) {
