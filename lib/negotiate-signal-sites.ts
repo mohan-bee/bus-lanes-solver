@@ -528,6 +528,8 @@ export function* negotiateSignalSites(
       (a, b) =>
         !overlap(a.escapeCopper, b.escapeCopper) &&
         !generatedEscapeHolesConflict(native, a.escapes, b.escapes),
+      undefined,
+      (index) => options.onBlockedConnection?.(entries[index][0]),
     )
     if (!domains) return null
     for (const [index, [name]] of entries.entries())

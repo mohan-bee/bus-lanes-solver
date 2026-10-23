@@ -78,3 +78,40 @@ test("support-check exhaustion retains unproven options and permits bounded sele
     solveSignalCandidatePool(domains, neighboringChannelsAgree, 0, 0),
   ).toBeNull()
 })
+
+test("collective contradiction reports the proved empty domain", () => {
+  const domains = [[option(0, 0)], [option(1, 0), option(1, 1)], [option(2, 1)]]
+  const blocked: number[] = []
+  expect(
+    pruneCandidateDomains(
+      domains,
+      neighboringChannelsAgree,
+      undefined,
+      (index) => blocked.push(index),
+    ),
+  ).toBeNull()
+  expect(blocked).toEqual([1])
+})
+
+test("initially empty domains report feedback without modifying the input", () => {
+  const domains = [[], [option(1, 0)]]
+  const blocked: number[] = []
+  expect(
+    pruneCandidateDomains(domains, neighboringChannelsAgree, 0, (index) =>
+      blocked.push(index),
+    ),
+  ).toBeNull()
+  expect(blocked).toEqual([0])
+  expect(domains).toEqual([[], [option(1, 0)]])
+})
+
+test("support budget exhaustion does not claim a blocked domain", () => {
+  const domains = [[option(0, 0), option(0, 1)], [option(1, 1)]]
+  const blocked: number[] = []
+  expect(
+    pruneCandidateDomains(domains, neighboringChannelsAgree, 1, (index) =>
+      blocked.push(index),
+    ),
+  ).not.toBeNull()
+  expect(blocked).toEqual([])
+})
