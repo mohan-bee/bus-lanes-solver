@@ -8,6 +8,7 @@ import {
   type NativeSingleCarrierOptions,
 } from "./route-matched-native-single-carrier"
 import { withInferredSurfaceLayers } from "./effective-carrier-layers"
+import { tracesInsideBoardOutline } from "./board-outline"
 import { initialSignalDogbones } from "./initial-signal-dogbones"
 import { independentBusGroups } from "./route-independent-buses"
 import { retargetGeneratedEscape } from "./retarget-generated-escape"
@@ -180,6 +181,7 @@ export class BusLanesPipelineSolver extends BaseSolver {
               continue
             }
             const complete = view.join(carriers)
+            if (!tracesInsideBoardOutline(this.routingInput, complete)) continue
             const after = signalEnvelope(complete)
             if (
               !Number.isFinite(after.areaMm2) ||
@@ -272,6 +274,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
           )) {
             if (carriers) {
               const complete = view.join(carriers)
+              if (!tracesInsideBoardOutline(this.routingInput, complete))
+                continue
               const area = signalEnvelope(complete).areaMm2
               if (
                 area < signalEnvelope(this.acceptedTraces!).areaMm2 - 1e-6 &&
@@ -1207,6 +1211,8 @@ export class BusLanesPipelineSolver extends BaseSolver {
           )
         )
           throw Error("Final absolute bus length violation")
+        if (!tracesInsideBoardOutline(this.routingInput, this.traces))
+          throw Error("Final board outline clearance violation")
         this.acceptedTraces = structuredClone(this.traces)
         this.phase = "optimize_envelope"
         this.envelopeOptimization = this.optimizeEnvelope()

@@ -1,4 +1,5 @@
 import { highDemandPairedLanes } from "./tuning-bank-demands"
+import { isValidBoardOutline } from "./board-outline"
 import { routePairedNetwork } from "./route-paired-network"
 import { roundCoupledReturnBends } from "./round-coupled-return-bends"
 import {
@@ -159,8 +160,11 @@ export class BusLanesSolver extends BaseSolver {
   }
   private initialize() {
     const input = this.input
-    if (input.outline?.length) {
-      this.fail("unsupported_outline", "Custom board outlines are unsupported")
+    if (input.outline?.length && !isValidBoardOutline(input.outline)) {
+      this.fail(
+        "invalid_outline",
+        "Board outline must be a finite simple polygon",
+      )
       return
     }
     const names = new Set<string>()

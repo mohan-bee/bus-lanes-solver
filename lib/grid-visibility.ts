@@ -3,6 +3,7 @@ import {
   type LengthSearchLabel,
 } from "./length-search-frontier"
 import { GridComponents } from "./grid-components"
+import { isSegmentInsideBoardOutline } from "./board-outline"
 import type { Point, SimpleRouteJson } from "./types"
 import type { GridHeap } from "./grid-heap"
 import { acquireGridScratch, type GridScratchLease } from "./grid-scratch"
@@ -505,6 +506,7 @@ export class GridVisibilitySearch extends GridHistoryProjector {
       scene.width,
       scene.input.minBoardEdgeClearance,
       scene.input.bounds,
+      scene.input.outline,
       scene.copper.map((c) => [c.a.x, c.a.y, c.b.x, c.b.y, c.radius, c.rect]),
     ])
     let cachedGrid = grids.get(gridKey)
@@ -523,6 +525,22 @@ export class GridVisibilitySearch extends GridHistoryProjector {
       this.lengthFrontier = new LengthSearchFrontier()
     let componentIndex = cachedGrid?.components
     if (!cachedGrid) {
+      if (scene.input.outline?.length) {
+        for (let y = 0; y < this.ny; y++) {
+          for (let x = 0; x < this.nx; x++) {
+            const point = { x: this.xs[x], y: this.ys[y] }
+            if (
+              !isSegmentInsideBoardOutline({
+                segment: [point, point],
+                outline: scene.input.outline,
+                clearance:
+                  scene.width / 2 + (scene.input.minBoardEdgeClearance ?? 0),
+              })
+            )
+              this.blocked[x + y * this.nx] = 1
+          }
+        }
+      }
       // Adjacent samples of a long segment overlap. Test each cell at most
       // once per copper item, including clear cells in its bounding halo.
       const testedBy = new Uint32Array(n)
@@ -1017,6 +1035,19 @@ export class GridVisibilitySearch extends GridHistoryProjector {
     buckets: CopperBuckets | undefined,
     margin = this.scene.margin,
   ): boolean {
+    if (
+      this.scene.input.outline?.length &&
+      !isSegmentInsideBoardOutline({
+        segment: [
+          { x: fromX, y: fromY },
+          { x: toX, y: toY },
+        ],
+        outline: this.scene.input.outline,
+        clearance:
+          this.scene.width / 2 + (this.scene.input.minBoardEdgeClearance ?? 0),
+      })
+    )
+      return false
     if (!buckets) return true
     const minX = Math.min(fromX, toX),
       maxX = Math.max(fromX, toX)

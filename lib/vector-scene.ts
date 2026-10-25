@@ -1,5 +1,9 @@
 import { CopperIndex } from "./copper-index"
 import {
+  boardOutlineRoutingVertices,
+  isSegmentInsideBoardOutline,
+} from "./board-outline"
+import {
   distance,
   segmentDistance,
   pointSegmentDistance,
@@ -335,6 +339,15 @@ export class VectorScene {
       )
     )
       return false
+    if (
+      this.input.outline?.length &&
+      !isSegmentInsideBoardOutline({
+        segment: [a, b],
+        outline: this.input.outline,
+        clearance: m,
+      })
+    )
+      return false
     const minX = Math.min(a.x, b.x) - this.margin,
       maxX = Math.max(a.x, b.x) + this.margin,
       minY = Math.min(a.y, b.y) - this.margin,
@@ -367,6 +380,14 @@ export class VectorScene {
     const result: Point[] = [],
       k = Math.SQRT2 - 1,
       epsilon = 1e-5
+    if (this.input.outline?.length)
+      result.push(
+        ...boardOutlineRoutingVertices({
+          outline: this.input.outline,
+          clearance:
+            this.width / 2 + (this.input.minBoardEdgeClearance ?? 0) + epsilon,
+        }),
+      )
     for (const c of this.copper) {
       if (c.rect) {
         const r = c.rect,

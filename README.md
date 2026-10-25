@@ -28,6 +28,12 @@ const routed = solver.getOutput()
 
 The `BusLanesSolver` core requires exactly two terminals on the same fixed layer and emits a planar carrier without vias. The integrated pipeline composes this core with owned terminal escapes and can add manufactured surface transitions for explicit TOP/BOTTOM inputs. Existing copper and obstacles remain fixed. Geometric winding sweeps, seam rotations and reverse searches choose lane order; planar congestion, crossed lane orders, unsupported constraints, and exhausted search budgets produce explicit failures. A bounded visibility-graph search failure is not a proof that no continuous planar solution exists.
 
+The matched solvers accept a finite simple polygon in `outline`, including
+rounded board outlines emitted by tscircuit. Every routed wire and generated via
+retains `minBoardEdgeClearance` from that boundary, measured from the copper
+edge. Concave outlines constrain complete segments, including grid searches and
+length tuning. Omitting `outline` retains rectangular `bounds` routing.
+
 ## Matched single-layer routing
 
 The `control-inner1` AM3352 sample uses the pipeline's default matched goal.
